@@ -6,7 +6,7 @@ const cheerio = require("cheerio");
 const { client } = global;
 
 const { configCommands } = global.GoatBot;
-const { log, loading, removeHomeDir } = global.utils;
+const { log, loading, removeHomeDir, getPrefix } = global.utils;
 
 function getDomain(url) {
 	const regex = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:/\n]+)/im;
@@ -27,8 +27,8 @@ function isURL(str) {
 module.exports = {
 	config: {
 		name: "cmd",
-		version: "1.17",
-		author: "NTKhang",
+		version: "2.3.5",
+		author: "ST",
 		countDown: 5,
 		role: 2,
 		description: {
@@ -170,16 +170,51 @@ module.exports = {
 		else if (args[0] == "del" || args[0] == "delete") {
 			if (!args[1])
 				return message.reply(getLang("missingCommandNameUnload"));
-			
+
 			const fileName = args[1].endsWith('.js') ? args[1] : args[1] + '.js';
 			const filePath = path.join(__dirname, fileName);
-			
+
 			if (!fs.existsSync(filePath))
 				return message.reply(getLang("missingFile", fileName));
-			
-			return message.reply(getLang("confirmDelete", fileName), (err, info) => {
+
+			// If user provided "confirm" as third argument, delete immediately
+			if (args[2] && args[2].toLowerCase() === "confirm") {
+				try {
+					// First unload the command if it's loaded
+					try {
+						const commandNameFromFile = fileName.endsWith('.js') ? fileName.slice(0, -3) : fileName;
+						unloadScripts("cmds", commandNameFromFile, configCommands, getLang);
+					} catch (unloadError) {
+						// Continue with deletion even if unload fails
+					}
+
+					// Then delete the file
+					if (fs.existsSync(filePath)) {
+						fs.unlinkSync(filePath);
+						message.reply(getLang("deletedFile", fileName));
+					} else {
+						message.reply(getLang("missingFile", fileName));
+					}
+				} catch (error) {
+					message.reply(getLang("deleteError", fileName, error.message));
+				}
+			}
+
+			// Otherwise, ask for confirmation via reaction or reply
+			return message.reply(getLang("confirmDelete", fileName) + "\n\n💡 You can also reply 'yes' to confirm or use: " + getPrefix(event.threadID) + "cmd del " + args[1] + " confirm", (err, info) => {
 				global.GoatBot.onReaction.set(info.messageID, {
 					commandName,
+					messageID: info.messageID,
+					type: "delete",
+					author: event.senderID,
+					data: {
+						fileName: args[1],
+						filePath
+					}
+				});
+
+				global.GoatBot.onReply.set(info.messageID, {
+					commandName: "cmd",
 					messageID: info.messageID,
 					type: "delete",
 					author: event.senderID,
@@ -277,14 +312,80 @@ module.exports = {
 			message.SyntaxError();
 	},
 
+	onReply: async function ({ Reply, message, event, getLang }) {
+		const { author, type, data } = Reply;
+
+		// Check if the user replying is the same as the author of the original command
+		if (event.senderID != author) {
+			return message.reply("❌ Only the original command author can confirm this action");
+		}
+
+		// Check if user is bot admin
+		const { config } = global.GoatBot;
+		const userID = event.senderID;
+		const isAdminBot = config.adminBot.includes(userID.toString()) || config.adminBot.includes(userID);
+
+		if (!isAdminBot) {
+			return message.reply("❌ Only bot's admin can use this command");
+		}
+
+		const userResponse = event.body.toLowerCase().trim();
+
+		if (type == "delete" && (userResponse === "yes" || userResponse === "y" || userResponse === "confirm")) {
+			const { unloadScripts } = global.utils;
+			const { fileName, filePath } = data;
+			const { configCommands } = global.GoatBot;
+
+			// Delete the reply message
+			Reply.delete();
+
+			try {
+				// First unload the command if it's loaded
+				try {
+					const commandNameFromFile = fileName.endsWith('.js') ? fileName.slice(0, -3) : fileName;
+					unloadScripts("cmds", commandNameFromFile, configCommands, getLang);
+				} catch (unloadError) {
+					// Continue with deletion even if unload fails
+				}
+
+				// Then delete the file
+				if (fs.existsSync(filePath)) {
+					fs.unlinkSync(filePath);
+					message.reply(getLang("deletedFile", fileName));
+				} else {
+					message.reply(getLang("missingFile", fileName));
+				}
+			} catch (error) {
+				message.reply(getLang("deleteError", fileName, error.message));
+			}
+		} else if (type == "delete") {
+			Reply.delete();
+			message.reply("❌ Deletion cancelled. Please reply with 'yes' or 'confirm' to delete the file.");
+		}
+	},
+
 	onReaction: async function ({ Reaction, message, event, api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, getLang }) {
 		const { loadScripts, unloadScripts } = global.utils;
 		const { author, type, data } = Reaction;
-		if (event.userID != author)
-			return;
-		
+
+		// Check if user is bot admin first
+		const { config } = global.GoatBot;
+		const userID = event.userID;
+		const isAdminBot = config.adminBot.includes(userID.toString()) || config.adminBot.includes(userID);
+
+		if (!isAdminBot) {
+			return message.reply("❌ Only bot's admin can use the reaction function of the command 'cmd'");
+		}
+
+		// For cmd command, allow any admin to react, not just the author
+		// This is because cmd is an admin-only command
+
+		// Delete the reaction message after processing
+		Reaction.delete();
+
 		if (type == "install") {
 			const { fileName, rawCode } = data;
+			const { configCommands } = global.GoatBot;
 			const infoLoad = loadScripts("cmds", fileName, log, configCommands, api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, getLang, rawCode);
 			infoLoad.status == "success" ?
 				message.reply(getLang("installed", infoLoad.name, path.join(__dirname, fileName).replace(process.cwd(), ""))) :
@@ -292,17 +393,23 @@ module.exports = {
 		}
 		else if (type == "delete") {
 			const { fileName, filePath } = data;
+			const { configCommands } = global.GoatBot;
 			try {
 				// First unload the command if it's loaded
 				try {
-					unloadScripts("cmds", fileName, configCommands, getLang);
-				} catch (err) {
-					// Ignore if command is not loaded
+					const commandNameFromFile = fileName.endsWith('.js') ? fileName.slice(0, -3) : fileName;
+					unloadScripts("cmds", commandNameFromFile, configCommands, getLang);
+				} catch (unloadError) {
+					// Continue with deletion even if unload fails
 				}
-				
-				// Delete the file
-				fs.unlinkSync(filePath);
-				message.reply(getLang("deletedFile", fileName));
+
+				// Then delete the file
+				if (fs.existsSync(filePath)) {
+					fs.unlinkSync(filePath);
+					message.reply(getLang("deletedFile", fileName));
+				} else {
+					message.reply(getLang("missingFile", fileName));
+				}
 			} catch (error) {
 				message.reply(getLang("deleteError", fileName, error.message));
 			}

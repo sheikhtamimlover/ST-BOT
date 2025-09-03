@@ -1,8 +1,8 @@
 module.exports = {
 	config: {
 		name: "autoUpdateThreadInfo",
-		version: "1.4",
-		author: "NTKhang",
+		version: "2.3.5",
+		author: "ST",
 		category: "events"
 	},
 
@@ -18,8 +18,20 @@ module.exports = {
 			case "log:subscribe":
 				return async function () {
 					const { addedParticipants } = event.logMessageData;
-					const threadInfo_Fca = await api.getThreadInfo(threadID);
-					threadsData.refreshInfo(threadID, threadInfo_Fca);
+					let threadInfo_Fca;
+					try {
+						threadInfo_Fca = await api.getThreadInfo(threadID);
+						threadsData.refreshInfo(threadID, threadInfo_Fca);
+					} catch (err) {
+						// Check if it's a thread disabled error
+						if (err.error === 1545116 || err.errorSummary === 'Thread disabled') {
+							console.log(`Thread ${threadID} is disabled, skipping refresh`);
+							return;
+						} else {
+							console.error(`Failed to refresh thread info for ${threadID}:`, err.message);
+							return;
+						}
+					}
 
 					for (const user of addedParticipants) {
 						let oldData = members.find(member => member.userID === user.userFbId);

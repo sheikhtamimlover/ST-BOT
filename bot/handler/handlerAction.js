@@ -14,8 +14,32 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 		if (!reaction || !reactMessageID)
 			return;
 
-		// Check if user is bot admin
-		const isAdminBot = antiReact.onlyAdminBot ? config.adminBot.includes(userID) : true;
+		// Skip antiReact if this is a command reaction (onReaction system)
+		const { onReaction } = global.GoatBot;
+		const reactionData = onReaction.get(reactMessageID);
+		if (reactionData) {
+			// Always skip antiReact for any command reaction
+			return; // Let the command reaction system handle this
+		}
+
+		// Check thread approval for anti-react
+		const { threadApproval } = config;
+		if (threadApproval && threadApproval.enable) {
+			try {
+				const threadData = await threadsData.get(threadID);
+				const isAdminBot = config.adminBot.includes(userID.toString()) || config.adminBot.includes(userID);
+				
+				// Block anti-react in unapproved threads for non-admins
+				if (threadData.approved !== true && !isAdminBot) {
+					return;
+				}
+			} catch (err) {
+				console.error(`Thread approval check failed for anti-react in ${threadID}:`, err.message);
+			}
+		}
+
+		// Check if user is bot admin - convert to string for comparison
+		const isAdminBot = antiReact.onlyAdminBot ? (config.adminBot.includes(userID.toString()) || config.adminBot.includes(userID)) : true;
 		
 		try {
 			// Handle remove user reaction

@@ -1,6 +1,6 @@
 {
   "name": "st-bot",
-  "version": "2.3.0",
+  "version": "2.3.5",
   "description": "A simple Bot chat messenger using personal account. Made by ST | Sheikh Tamim",
   "main": "index.js",
   "engines": {
@@ -17,6 +17,7 @@
     "child_process": "^1.0.2",
     "connect-flash": "^0.1.1",
     "cookie-parser": "^1.4.6",
+    "crypto-js": "^4.2.0",
     "eta": "^1.12.3",
     "express": "^4.18.1",
     "express-fileupload": "^1.4.0",
@@ -30,7 +31,7 @@
     "gradient-string": "^2.0.2",
     "graphql-query-to-json": "^2.0.1",
     "https": "^1.0.0",
-    "imgur-link": "^1.0.5",
+    "imgur-link": "^1.0.4",
     "jsonlint-mod": "^1.7.6",
     "moment-timezone": "^0.5.34",
     "mongoose": "^6.3.1",

@@ -150,7 +150,18 @@
     "autoApproveExisting": true,
     "sendNotifications": true,
     "sendThreadMessage": true,
-    "notes": "Thread approval system. When enabled, bot will only respond in approved threads. adminNotificationThreads: array of thread IDs where approval notifications will be sent. autoApproveExisting: if true, all existing threas will be automatically approved when this feature is first enabled. sendNotifications: if false, no admin notifications sent. sendThreadMessage: if false, no message sent to new thread."
+    "autoApprovedThreads": [],
+    "notes": "Thread approval system. When enabled, bot will only respond in approved threads. adminNotificationThreads: array of thread IDs where approval notifications will be sent. autoApproveExisting: if true, all existing threas will be automatically approved when this feature is first enabled. sendNotifications: if false, no admin notifications sent. sendThreadMessage: if false, no message sent to new thread. autoApprovedThreads: array of thread IDs that will be automatically approved without manual intervention."
+  },
+  "botLogging": {
+    "enable": false,
+    "sendToThreads": true,
+    "logThreadIds": [],
+    "sendToAdmins": false,
+    "silentOnDisabledThreads": true,
+    "logBotAdded": false,
+    "logBotKicked": true,
+    "notes": "Bot logging system. sendToThreads: if true, sends bot logs to specified thread IDs. logThreadIds: array of thread IDs where bot logs will be sent. sendToAdmins: if true, sends logs to admin IDs. silentOnDisabledThreads: if true, suppresses console errors for disabled threads. logBotAdded/logBotKicked: separate controls for added/kicked events."
   },
   "antiReact": {
     "enable": true,

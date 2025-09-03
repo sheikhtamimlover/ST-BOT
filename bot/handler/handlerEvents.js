@@ -82,10 +82,10 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
 		return true;
 	}
 
-	// check if only admin bot
+	// check if only admin bot - convert to string for comparison
 	if (
 		config.adminOnly.enable == true
-		&& !adminBot.includes(senderID)
+		&& !adminBot.includes(senderID.toString()) && !adminBot.includes(senderID)
 		&& !config.adminOnly.ignoreCommand.includes(commandName)
 	) {
 		if (hideNotiMessage.adminOnly == false)
@@ -148,34 +148,32 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 		let { hideNotiMessage = {} } = config;
 		const { body } = event;
 
-		const { senderID, threadID, messageID, isGroup, isReply, isEdit, isFirst, botID, bot } = event;
+		const { senderID, threadID, messageID, isGroup, isReply, isEdit, isFirst, botID, bot, author } = event;
 		const { threadApproval } = config;
 
-		// STRICT THREAD APPROVAL CHECK - Block ALL bot activity for unapproved threads
-		if (threadApproval && threadApproval.enable && threadID) {
+		// THREAD APPROVAL CHECK - Block bot activity for unapproved threads
+		if (threadApproval && threadApproval.enable && threadID && senderID) {
 			try {
 				const threadData = await threadsData.get(threadID);
-				const isAdminBot = config.adminBot.includes(senderID);
+				const isAdminBot = config.adminBot.includes(senderID.toString()) || config.adminBot.includes(senderID);
+				const isAutoApprovedThread = threadApproval.autoApprovedThreads && threadApproval.autoApprovedThreads.includes(threadID);
 
-				// If thread approval status is not explicitly true, block everything
-				if (threadData.approved !== true) {
-					// Only allow admin thread management commands in unapproved threads
-					if (isAdminBot && event.body && event.body.startsWith(utils.getPrefix(threadID))) {
-						const commandName = event.body.split(' ')[0].slice(utils.getPrefix(threadID).length).toLowerCase();
-						const allowedCommands = ['mthread', 'threadapprove', 'approvethread', 'tapprove', 'threadreject', 'rejectthread', 'treject'];
-
-						if (allowedCommands.includes(commandName)) {
-							// Allow this command to proceed
-						} else {
-							return null; // Block all other commands
-						}
-					} else {
-						return null; // Block all non-admin activity and non-command messages
+				// Auto-approve threads that are in the autoApprovedThreads list
+				if (isAutoApprovedThread && threadData.approved !== true) {
+					try {
+						await threadsData.set(threadID, { approved: true });
+						console.log(`Auto-approved thread ${threadID} from autoApprovedThreads list`);
+					} catch (err) {
+						console.error(`Failed to auto-approve thread ${threadID}:`, err.message);
 					}
+				}
+
+				// Block non-admin users in unapproved threads (unless it's an auto-approved thread)
+				if (threadData.approved !== true && !isAdminBot && !isAutoApprovedThread) {
+					return null;
 				}
 			} catch (err) {
 				console.error(`Thread approval check failed for ${threadID}:`, err.message);
-				// If we can't check approval status, allow to proceed to avoid blocking everything
 			}
 		}
 
@@ -593,6 +591,17 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			const Reaction = onReaction.get(messageID);
 			if (!Reaction)
 				return;
+			
+			// Check if the user reacting is authorized for this reaction
+			if (Reaction.author && event.userID !== Reaction.author) {
+				// For cmd command, allow any user to react since it's now role 0
+				if (Reaction.commandName === 'cmd') {
+					// Allow any user to react to cmd
+				} else {
+					return; // For other commands, only author can react
+				}
+			}
+			
 			Reaction.delete = () => onReaction.delete(messageID);
 			const commandName = Reaction.commandName;
 			if (!commandName) {
@@ -606,9 +615,12 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			}
 
 			// —————————————— CHECK PERMISSION —————————————— //
+			// Get the user role for the person reacting (not the original author)
+			const reactingUserRole = getRole(threadData, event.userID);
 			const roleConfig = getRoleConfig(utils, command, isGroup, threadData, commandName);
 			const needRole = roleConfig.onReaction;
-			if (needRole > userRole) {
+			
+			if (needRole > reactingUserRole) {
 				if (!hideNotiMessage.needRoleToUseCmdOnReaction) {
 					if (needRole == 1)
 						return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "onlyAdminToUseOnReaction", commandName));
@@ -669,7 +681,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 					});
 					if (typeof handler == "function") {
 						await handler();
-						log.info("EVENT COMMAND", `Event: ${commandName} | ${author} | ${userData?.name || 'Unknown'} | ${threadID}`);
+						const authorName = userData?.name || (author ? await usersData.getName(author).catch(() => `User ${author}`) : 'Unknown');
+						log.info("EVENT COMMAND", `Event: ${commandName} | ${author} | ${authorName} | ${threadID}`);
 					}
 				}
 				catch (err) {

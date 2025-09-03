@@ -5,8 +5,8 @@ if (!global.temp.welcomeEvent)
 module.exports = {
 	config: {
 		name: "welcome",
-		version: "1.7",
-		author: "NTKhang",
+		version: "2.3.5",
+		author: "ST",
 		category: "events"
 	},
 
@@ -50,47 +50,117 @@ module.exports = {
 					const { threadApproval } = global.GoatBot.config;
 					if (threadApproval && threadApproval.enable) {
 						try {
-							let threadData = await threadsData.get(threadID);
+							// Check if this thread is in the auto-approved list
+							const isAutoApprovedThread = threadApproval.autoApprovedThreads && threadApproval.autoApprovedThreads.includes(threadID);
 							
-							// Always set new threads as unapproved
-							await threadsData.set(threadID, { approved: false });
-							
-							// Send notification to admin notification threads only (not to admin IDs)
-							if (threadApproval.adminNotificationThreads && threadApproval.adminNotificationThreads.length > 0 && threadApproval.sendNotifications !== false) {
-								// Use setTimeout to avoid immediate API conflicts
+							if (isAutoApprovedThread) {
+								// Auto-approve the thread
+								await threadsData.set(threadID, { approved: true });
+								console.log(`Auto-approved thread ${threadID} from autoApprovedThreads list`);
+								
+								// Send welcome message for auto-approved threads
 								setTimeout(async () => {
 									try {
-										// Get thread info safely with retries
-										let threadInfo;
-										let addedByUser;
+										await api.sendMessage(getLang("welcomeMessage", prefix), threadID);
+									} catch (err) {
+										console.error(`Failed to send welcome message to auto-approved thread ${threadID}:`, err.message);
+									}
+								}, 2000);
+								return null;
+							}
+							
+							// Always set new threads as unapproved (if not auto-approved)
+							await threadsData.set(threadID, { approved: false });
+							
+							// Send notification to admin notification threads
+							if (threadApproval.adminNotificationThreads && threadApproval.adminNotificationThreads.length > 0 && threadApproval.sendNotifications !== false) {
+								setTimeout(async () => {
+									try {
+										let threadInfo = { threadName: "Unknown", participantIDs: [] };
+										let addedByName = "Unknown";
 										
+										// Get thread info with better error handling
 										try {
-											threadInfo = await api.getThreadInfo(threadID);
+											// First try to get from threadsData (more reliable)
+											try {
+												const threadData = await threadsData.get(threadID);
+												if (threadData && threadData.threadName && threadData.threadName !== "Unknown") {
+													threadInfo.threadName = threadData.threadName;
+													threadInfo.participantIDs = threadData.members || [];
+												} else {
+													throw new Error("threadsData returned unknown or empty");
+												}
+											} catch (threadsDataErr) {
+												// Fallback to API call
+												await new Promise(resolve => setTimeout(resolve, 3000));
+												const info = await api.getThreadInfo(threadID);
+												if (info && info.threadName) {
+													threadInfo = info;
+												} else {
+													threadInfo.threadName = `Thread ${threadID}`;
+													threadInfo.participantIDs = [];
+												}
+											}
 										} catch (err) {
 											console.error(`Failed to get thread info for ${threadID}:`, err.message);
-											threadInfo = { threadName: "Unknown", participantIDs: [] };
+											threadInfo.threadName = `Thread ${threadID}`;
+											threadInfo.participantIDs = [];
 										}
 										
+										// Get user info with better error handling
 										try {
-											addedByUser = await api.getUserInfo(event.author);
+											if (dataAddedParticipants[0] && dataAddedParticipants[0].addedBy) {
+												const addedByID = dataAddedParticipants[0].addedBy;
+												
+												// First try to get from usersData (more reliable)
+												try {
+													const userData = await global.utils.usersData.get(addedByID);
+													if (userData && userData.name && userData.name !== "Unknown") {
+														addedByName = userData.name;
+													} else {
+														throw new Error("usersData returned unknown");
+													}
+												} catch (usersDataErr) {
+													// Fallback to getName method
+													try {
+														addedByName = await global.utils.usersData.getName(addedByID);
+														if (!addedByName || addedByName === "Unknown") {
+															throw new Error("getName returned unknown");
+														}
+													} catch (nameErr) {
+														// Final fallback to API call
+														try {
+															const userInfo = await api.getUserInfo(addedByID);
+															if (userInfo && userInfo[addedByID] && userInfo[addedByID].name) {
+																addedByName = userInfo[addedByID].name;
+															} else {
+																addedByName = `User ${addedByID}`;
+															}
+														} catch (apiErr) {
+															addedByName = `User ${addedByID}`;
+														}
+													}
+												}
+											}
 										} catch (err) {
-											console.error(`Failed to get user info for ${event.author}:`, err.message);
-											addedByUser = { [event.author]: { name: "Unknown" } };
+											console.error(`Failed to get user info:`, err.message);
+											addedByName = "Unknown User";
 										}
 										
 										const notificationMessage = `🔔 BOT ADDED TO NEW THREAD 🔔\n\n` +
 											`📋 Thread Name: ${threadInfo.threadName || "Unknown"}\n` +
 											`🆔 Thread ID: ${threadID}\n` +
-											`👤 Added by: ${addedByUser[event.author]?.name || "Unknown"}\n` +
+											`👤 Added by: ${addedByName}\n` +
 											`👥 Members: ${threadInfo.participantIDs?.length || 0}\n` +
 											`⏰ Time: ${new Date().toLocaleString()}\n\n` +
 											`⚠️ This thread is NOT APPROVED. Bot will not respond to any commands.\n` +
 											`Use "${prefix}mthread" to manage thread approvals.`;
 										
-										// Send notifications with proper error handling
-										for (const notifyThreadID of threadApproval.adminNotificationThreads) {
+										for (let i = 0; i < threadApproval.adminNotificationThreads.length; i++) {
+											const notifyThreadID = threadApproval.adminNotificationThreads[i];
 											try {
-												await message.send(notificationMessage, notifyThreadID);
+												if (i > 0) await new Promise(resolve => setTimeout(resolve, 1500));
+												await api.sendMessage(notificationMessage, notifyThreadID);
 											} catch (err) {
 												console.error(`Failed to send notification to thread ${notifyThreadID}:`, err.message);
 											}
@@ -98,7 +168,7 @@ module.exports = {
 									} catch (err) {
 										console.error(`Failed to send notifications:`, err.message);
 									}
-								}, 3000); // 3 second delay to avoid API conflicts
+								}, 5000);
 							}
 							
 							// Send warning message to the new thread if enabled
@@ -106,12 +176,19 @@ module.exports = {
 								// Use setTimeout to avoid immediate API conflicts after bot addition
 								setTimeout(async () => {
 									try {
+										// Wait longer before sending to thread to ensure it's ready
+										await new Promise(resolve => setTimeout(resolve, 5000));
 										const warningMessage = `⚠️ This thread is not approved yet. Bot will not respond to any commands until approved by an admin.\n\nUse "${prefix}help" after approval to see available commands.`;
-										await message.send(warningMessage);
+										await api.sendMessage(warningMessage, threadID);
 									} catch (err) {
-										console.error(`Failed to send approval message to thread ${threadID}:`, err.message);
+										// Check if it's a thread disabled error and handle silently
+										if (err.error === 1545116 || err.errorSummary === 'Thread disabled') {
+											console.log(`Thread ${threadID} is disabled, skipping approval message`);
+										} else {
+											console.error(`Failed to send approval message to thread ${threadID}:`, err.message);
+										}
 									}
-								}, 5000); // 5 second delay for thread message
+								}, 10000); // 10 second delay for thread message
 							}
 							
 							return null; // Don't send welcome message for unapproved threads
@@ -124,7 +201,7 @@ module.exports = {
 					// Use setTimeout to avoid immediate API conflicts
 					setTimeout(async () => {
 						try {
-							await message.send(getLang("welcomeMessage", prefix));
+							await api.sendMessage(getLang("welcomeMessage", prefix), threadID);
 						} catch (err) {
 							console.error(`Failed to send welcome message to thread ${threadID}:`, err.message);
 						}

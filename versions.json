@@ -66,6 +66,21 @@
 			"scripts/events/welcome.js": "update to V2.3",
 			"config.json": "update to V2.3, added bio , threadapprove features"
 		}
+	},
+	{
+		"version": "2.3.5",
+		"files": {
+			"bot/handler/handlerAction.js": "update to V2.3.5",
+			"bot/handler/handlerEvents.js": "update to V2.3.5",
+			"bot/login/botacc.js": "fix login issue",
+			"scripts/cmds/botlog.js": "added for owner",
+			"scripts/cmds/cmd.js": "fix cmd install and del functions",
+			"scripts/cmds/threadapprove.js": "modity newly remake it",
+			"scripts/events/autoUpdateInfoThread.js": "fix issues",
+			"scripts/events/logsbot.js": "fix logs notification",
+			"scripts/events/welcome.js": "fix and update to v2.3.5",
+			"config.json": "update to V2.3, added botlogs configure"
+		}
 	}
 
 ]
