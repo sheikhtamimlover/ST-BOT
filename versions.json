@@ -81,6 +81,13 @@
 			"scripts/events/welcome.js": "fix and update to v2.3.5",
 			"config.json": "update to V2.3, added botlogs configure"
 		}
+	},
+	{
+		"version": "2.3.6",
+		"files": {
+			"bot/login/botacc.js": "fix login issue",
+			"scripts/events/welcome.js": "fix name show"
+		}
 	}
 
 ]

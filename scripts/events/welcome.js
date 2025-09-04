@@ -5,7 +5,7 @@ if (!global.temp.welcomeEvent)
 module.exports = {
 	config: {
 		name: "welcome",
-		version: "2.3.5",
+		version: "2.3.6",
 		author: "ST",
 		category: "events"
 	},
@@ -33,7 +33,7 @@ module.exports = {
 		}
 	},
 
-	onStart: async ({ threadsData, message, event, api, getLang }) => {
+	onStart: async ({ threadsData, message, event, api, getLang, usersData }) => {
 		if (event.logMessageType == "log:subscribe")
 			return async function () {
 				const hours = getTime("HH");
@@ -107,38 +107,22 @@ module.exports = {
 											threadInfo.participantIDs = [];
 										}
 										
-										// Get user info with better error handling
+										// Get user info with better error handling - use event.author like in w.js and logsbot.js
 										try {
-											if (dataAddedParticipants[0] && dataAddedParticipants[0].addedBy) {
-												const addedByID = dataAddedParticipants[0].addedBy;
-												
-												// First try to get from usersData (more reliable)
-												try {
-													const userData = await global.utils.usersData.get(addedByID);
-													if (userData && userData.name && userData.name !== "Unknown") {
-														addedByName = userData.name;
-													} else {
-														throw new Error("usersData returned unknown");
-													}
-												} catch (usersDataErr) {
-													// Fallback to getName method
+											if (event.author) {
+												// Use the same pattern as logsbot.js which works correctly
+												addedByName = await usersData.getName(event.author);
+												if (!addedByName || addedByName === "Unknown") {
+													// Fallback to API call if getName fails
 													try {
-														addedByName = await global.utils.usersData.getName(addedByID);
-														if (!addedByName || addedByName === "Unknown") {
-															throw new Error("getName returned unknown");
+														const userInfo = await api.getUserInfo(event.author);
+														if (userInfo && userInfo[event.author] && userInfo[event.author].name) {
+															addedByName = userInfo[event.author].name;
+														} else {
+															addedByName = `User ${event.author}`;
 														}
-													} catch (nameErr) {
-														// Final fallback to API call
-														try {
-															const userInfo = await api.getUserInfo(addedByID);
-															if (userInfo && userInfo[addedByID] && userInfo[addedByID].name) {
-																addedByName = userInfo[addedByID].name;
-															} else {
-																addedByName = `User ${addedByID}`;
-															}
-														} catch (apiErr) {
-															addedByName = `User ${addedByID}`;
-														}
+													} catch (apiErr) {
+														addedByName = `User ${event.author}`;
 													}
 												}
 											}
