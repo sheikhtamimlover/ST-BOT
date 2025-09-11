@@ -88,6 +88,21 @@
 			"bot/login/botacc.js": "fix login issue",
 			"scripts/events/welcome.js": "fix name show"
 		}
+	},
+	{
+		"version": "2.4.0",
+		"files": {
+			"bot/login/loginMbasic.js": "removed",
+			"bot/login/login.js": "updated to V2.4.0",
+			"scripts/cmds/status.js": "updated to V2.4.0",
+			"scripts/cmds/streport.js": "added new command",
+			"scripts/cmds/threadapprove.js": "updated to V2.4.0",
+			"scripts/cmds/update.js": "updated to V2.4.0",
+			"config.json": "update to V2.4.0",
+			"updater.js": "update to V2.4.0",
+			"utils.js": "update to V2.4.0"
+		},
+		"note": "Some user using wrong login method so old useless method removed.Added new command streport (using this you can direct report about source any issue to owner).Updated update(now you can see ST Bot update details),Modify status,threadapprove(now you can after approved thread rejeect or use cancel/c by approved to pending again without left bot from thread)."
 	}
 
 ]

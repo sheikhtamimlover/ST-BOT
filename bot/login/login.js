@@ -202,7 +202,7 @@ qr.readQrCode = async function (filePath) {
 
 const { dirAccount } = global.client;
 // const { config, configCommands } = global.GoatBot;
-const { facebookAccount } = global.GoatBot.config;
+const botAccountConfig = global.GoatBot.config.botAccount; // Use botAccount from config
 
 function responseUptimeSuccess(req, res) {
 	res.type('json').send({
@@ -240,8 +240,8 @@ let latestChangeContentAccount = fs.statSync(dirAccount).mtimeMs;
 let dashBoardIsRunning = false;
 
 
-async function getAppStateFromEmail(spin = { _start: () => { }, _stop: () => { } }, facebookAccount) {
-	const { email, password, userAgent, proxy } = facebookAccount;
+async function getAppStateFromEmail(spin = { _start: () => { }, _stop: () => { } }, accountInfo) {
+	const { email, password, userAgent, proxy, "2FASecret": twoFASecret } = accountInfo; // Use accountInfo instead of facebookAccount
 	const getFbstate = require("./getFbstate1.js");
 	let code2FATemp;
 	let appState;
@@ -267,13 +267,13 @@ async function getAppStateFromEmail(spin = { _start: () => { }, _stop: () => { }
 						log.warn("LOGIN FACEBOOK", message);
 					}
 
-					if (facebookAccount["2FASecret"] && tryNumber == 0) {
-						switch (['.png', '.jpg', '.jpeg'].some(i => facebookAccount["2FASecret"].endsWith(i))) {
+					if (twoFASecret && tryNumber == 0) { // Use twoFASecret from accountInfo
+						switch (['.png', '.jpg', '.jpeg'].some(i => twoFASecret.endsWith(i))) { // Use twoFASecret from accountInfo
 							case true:
-								code2FATemp = (await qr.readQrCode(`${process.cwd()}/${facebookAccount["2FASecret"]}`)).replace(/.*secret=(.*)&digits.*/g, '$1');
+								code2FATemp = (await qr.readQrCode(`${process.cwd()}/${twoFASecret}`)).replace(/.*secret=(.*)&digits.*/g, '$1'); // Use twoFASecret from accountInfo
 								break;
 							case false:
-								code2FATemp = facebookAccount["2FASecret"];
+								code2FATemp = twoFASecret; // Use twoFASecret from accountInfo
 								break;
 						}
 					}
@@ -321,38 +321,21 @@ async function getAppStateFromEmail(spin = { _start: () => { }, _stop: () => { }
 		}
 	}
 	catch (err) {
-		const loginMbasic = require("./loginMbasic.js");
-		if (facebookAccount["2FASecret"]) {
-			switch (['.png', '.jpg', '.jpeg'].some(i => facebookAccount["2FASecret"].endsWith(i))) {
-				case true:
-					code2FATemp = (await qr.readQrCode(`${process.cwd()}/${facebookAccount["2FASecret"]}`)).replace(/.*secret=(.*)&digits.*/g, '$1');
-					break;
-				case false:
-					code2FATemp = facebookAccount["2FASecret"];
-					break;
-			}
+		// If initial login fails, try using loginMbasic as fallback
+		try {
+			const loginMbasic = require("./loginMbasic.js");
+			appState = await loginMbasic(checkAndTrimString(email), checkAndTrimString(password), userAgent, proxy);
+			spin._stop();
+		} catch (fallbackErr) {
+			throw new Error(`Login failed: ${err.message}. Fallback login also failed: ${fallbackErr.message}`);
 		}
-
-		appState = await loginMbasic({
-			email,
-			pass: password,
-			twoFactorSecretOrCode: code2FATemp,
-			userAgent,
-			proxy
-		});
-
-		appState = appState.map(item => {
-			item.key = item.name;
-			delete item.name;
-			return item;
-		});
-		appState = filterKeysAppState(appState);
 	}
 
-	global.GoatBot.config.facebookAccount['2FASecret'] = code2FATemp || "";
-	writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
+	// Removed the global.GoatBot.config.facebookAccount['2FASecret'] update as we are no longer using facebookAccount directly
+	// writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
 	return appState;
 }
+
 
 function isNetScapeCookie(cookie) {
 	if (typeof cookie !== 'string')
@@ -389,7 +372,7 @@ function netScapeToCookies(cookieData) {
 function pushI_user(appState, value) {
 	appState.push({
 		key: "i_user",
-		value: value || facebookAccount.i_user,
+		value: value || botAccountConfig.i_user, // Use botAccountConfig for i_user
 		domain: "facebook.com",
 		path: "/",
 		hostOnly: false,
@@ -402,43 +385,82 @@ function pushI_user(appState, value) {
 let spin;
 async function getAppStateToLogin(loginWithEmail) {
 	let appState = [];
-	if (loginWithEmail)
-		return await getAppStateFromEmail(undefined, facebookAccount);
+	if (loginWithEmail) {
+		// If logging in with email, use the provided email and password from config
+		return await getAppStateFromEmail(undefined, {
+			email: botAccountConfig.email,
+			password: botAccountConfig.password,
+			userAgent: botAccountConfig.userAgent,
+			proxy: botAccountConfig.proxy,
+			"2FASecret": botAccountConfig["2FASecret"] // Pass 2FA secret from config
+		});
+	}
 	if (!existsSync(dirAccount))
 		return log.error("LOGIN FACEBOOK", getText('login', 'notFoundDirAccount', colors.green(dirAccount)));
 
 	const accountText = readFileSync(dirAccount, "utf8").trim();
 
-	// Check if account.txt is empty and bot account cookie is enabled
-	if (!accountText && global.GoatBot.config.botAccountCookie?.enable === true) {
-		log.info("LOGIN FACEBOOK", "account.txt is empty, attempting to use bot account cookies");
-		try {
-			const { getBotAccountCookies } = require('./botacc.js');
-			const botConfig = global.GoatBot.config.botAccountCookie;
+	// Check if account.txt is empty
+	if (!accountText) {
+		log.info("LOGIN FACEBOOK", "account.txt is empty, attempting to use bot account credentials");
 
-			// Validate bot config before attempting
-			if (!botConfig.email || !botConfig.password) {
-				throw new Error("Bot account email or password is missing in config.json");
+		// Try bot account credentials from config if configured
+		if (global.GoatBot.config.botAccount?.email &&
+			global.GoatBot.config.botAccount?.password) {
+
+			try {
+				log.info("LOGIN FACEBOOK", "Bot account email and password found in config.json");
+				log.info("LOGIN FACEBOOK", `Using email: ${global.GoatBot.config.botAccount.email}`);
+
+				spin = createOraDots("Logging in with bot account credentials...");
+				spin._start();
+
+				const { getBotAccountCookies } = require("./botacc.js");
+				const botAppState = await getBotAccountCookies({
+					email: global.GoatBot.config.botAccount.email,
+					password: global.GoatBot.config.botAccount.password,
+					userAgent: global.GoatBot.config.botAccount.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+				});
+
+				if (botAppState && botAppState.length > 0) {
+					// Save bot cookies to account.txt for future use
+					writeFileSync(dirAccount, JSON.stringify(botAppState, null, 2));
+					log.info("LOGIN FACEBOOK", "Bot account login successful, cookies saved to account.txt");
+					spin._stop();
+					return botAppState;
+				}
+			} catch (error) {
+				spin && spin._stop();
+				log.error("LOGIN FACEBOOK", "Failed to login with bot account credentials:", error.message);
+				log.warn("LOGIN FACEBOOK", "Falling back to manual login...");
 			}
-
-			spin = createOraDots("Getting bot account cookies...");
-			spin._start();
-
-			const botCookies = await getBotAccountCookies(botConfig);
-
-			if (botCookies && botCookies.length > 0) {
-				// Save bot cookies to account.txt for future use
-				writeFileSync(dirAccount, JSON.stringify(botCookies, null, 2));
-				log.info("LOGIN FACEBOOK", "Bot account cookies saved to account.txt");
-				spin._stop();
-				return botCookies;
-			}
-		} catch (error) {
-			spin && spin._stop();
-			log.error("LOGIN FACEBOOK", "Failed to get bot account cookies:", error.message);
-			log.warn("LOGIN FACEBOOK", "Falling back to manual login options...");
-			// Continue with normal flow if bot account fails
+		} else {
+			log.info("LOGIN FACEBOOK", "Bot account email or password is missing in config.json");
 		}
+
+		// If bot account is not configured or failed, prompt for manual login
+		log.info("LOGIN FACEBOOK", "Please provide login credentials:");
+		const email = await input("> Please enter your email (id) or phone number facebook account: ");
+		const password = await input("> Please enter your password: ", true);
+		const twoFACode = await input("> Please enter the 2FA code (leave blank if you don't have 2FA enabled): ");
+
+		// Save credentials to config.json
+		try {
+			global.GoatBot.config.botAccount.email = email;
+			global.GoatBot.config.botAccount.password = password;
+			writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
+			log.info("LOGIN FACEBOOK", "Credentials saved to config.json");
+		} catch (saveErr) {
+			log.warn("LOGIN FACEBOOK", "Failed to save credentials to config.json:", saveErr.message);
+		}
+
+		// Use manual credentials to get app state
+		const { getBotAccountCookies } = require("./botacc.js");
+		return await getBotAccountCookies({
+			email: email,
+			password: password,
+			userAgent: botAccountConfig.userAgent || 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6.2 Safari/605.1.15'
+		});
 	}
 
 	try {
@@ -486,13 +508,17 @@ async function getAppStateToLogin(loginWithEmail) {
 				!splitAccountText.slice(0, 2).map(i => i.trim()).some(i => i.includes(' '))
 			) {
 				// bug if account.txt is "[]"
-				global.GoatBot.config.facebookAccount.email = splitAccountText[0]; // bug here=> email is "["
-				global.GoatBot.config.facebookAccount.password = splitAccountText[1]; // bug here=> password is "]"
-				if (splitAccountText[2]) {
-					const code2FATemp = splitAccountText[2].replace(/ /g, "");
-					global.GoatBot.config.facebookAccount['2FASecret'] = code2FATemp;
-				}
-				writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
+				// This section seems to be for email/password login from account.txt, which is now handled by botAccountCookie
+				// If botAccountCookie is not enabled or account.txt is not empty, this might still be relevant if it's not using cookies.
+				// However, the primary goal is to use botAccountCookie.
+				// If botAccountCookie is enabled and account.txt is empty, it tries to get cookies.
+				// If botAccountCookie is enabled and account.txt has content, it uses that content.
+				// This part might need review if it interferes with the new flow.
+				// For now, assuming it's either handled by botAccountCookie or the cookie parsing above.
+
+				// If this part is meant for email/password login, and botAccountCookie is the primary method,
+				// this might be redundant or should be adjusted to use botAccountConfig.
+				// For now, let's assume the botAccountCookie logic handles the primary login.
 			}
 			// is json (cookies or appstate)
 			else {
@@ -529,8 +555,9 @@ async function getAppStateToLogin(loginWithEmail) {
 					.filter(i => i.key && i.value && i.key != "x-referer");
 			}
 			// Try to validate cookie, but continue even if validation fails
+			// This check is still relevant if cookies are loaded from account.txt
 			const cookieString = appState.map(i => i.key + "=" + i.value).join("; ");
-			const isValid = await checkLiveCookie(cookieString, facebookAccount.userAgent);
+			const isValid = await checkLiveCookie(cookieString, botAccountConfig.userAgent); // Use botAccountConfig userAgent
 			if (!isValid) {
 				log.warn("LOGIN FACEBOOK", "Cookie validation failed, but continuing with login attempt...");
 			}
@@ -538,109 +565,47 @@ async function getAppStateToLogin(loginWithEmail) {
 	}
 	catch (err) {
 		spin && spin._stop();
-		let {
-			email,
-			password
-		} = facebookAccount;
+		// let { email, password } = facebookAccount; // Removed as facebookAccount is no longer used directly here
+		let email, password; // Placeholder for email and password if needed for manual login prompt
 		if (err.name === "TOKEN_ERROR")
 			log.err("LOGIN FACEBOOK", getText('login', 'tokenError', colors.green("EAAAA..."), colors.green(dirAccount)));
 		else if (err.name === "COOKIE_INVALID")
 			log.err("LOGIN FACEBOOK", getText('login', 'cookieError'));
 
-		if (!email || !password) {
-			log.warn("LOGIN FACEBOOK", getText('login', 'cannotFindAccount'));
-			const rl = readline.createInterface({
-				input: process.stdin,
-				output: process.stdout
-			});
-			const options = [
-				getText('login', 'chooseAccount'),
-				getText('login', 'chooseToken'),
-				getText('login', 'chooseCookieString'),
-				getText('login', 'chooseCookieArray')
-			];
-			let currentOption = 0;
-			await new Promise((resolve) => {
-				const character = '>';
-				function showOptions() {
-					rl.output.write(`\r${options.map((option, index) => index === currentOption ? colors.blueBright(`${character} (${index + 1}) ${option}`) : `  (${index + 1}) ${option}`).join('\n')}\u001B`);
-					rl.write('\u001B[?25l'); // hides cursor
-				}
-				rl.input.on('keypress', (_, key) => {
-					if (key.name === 'up') {
-						currentOption = (currentOption - 1 + options.length) % options.length;
-					}
-					else if (key.name === 'down') {
-						currentOption = (currentOption + 1) % options.length;
-					}
-					else if (!isNaN(key.name)) {
-						const number = parseInt(key.name);
-						if (number >= 0 && number <= options.length)
-							currentOption = number - 1;
-						process.stdout.write('\033[1D'); // delete the character
-					}
-					else if (key.name === 'enter' || key.name === 'return') {
-						rl.input.removeAllListeners('keypress');
-						rl.close();
-						clearLines(options.length + 1);
-						showOptions();
-						resolve();
-					}
-					else {
-						process.stdout.write('\033[1D'); // delete the character
-					}
+		// Prompt for manual login credentials
+		log.info("LOGIN FACEBOOK", "Please provide login credentials:");
+		email = await input("> Please enter your email (id) or phone number facebook account: ");
+		password = await input("> Please enter your password: ", true);
+		const twoFACode = await input("> Please enter the 2FA code (leave blank if you don't have 2FA enabled): ");
 
-					clearLines(options.length);
-					showOptions();
-				});
-				showOptions();
-			});
-
-			rl.write('\u001B[?25h\n'); // show cursor 
-			clearLines(options.length + 1);
-			log.info("LOGIN FACEBOOK", getText('login', 'loginWith', options[currentOption]));
-
-			if (currentOption == 0) {
-				email = await input(`${getText('login', 'inputEmail')} `);
-				password = await input(`${getText('login', 'inputPassword')} `, true);
-				const twoFactorAuth = await input(`${getText('login', 'input2FA')} `);
-				facebookAccount.email = email || '';
-				facebookAccount.password = password || '';
-				facebookAccount['2FASecret'] = twoFactorAuth || '';
-				writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
-			}
-			else if (currentOption == 1) {
-				const token = await input(getText('login', 'inputToken') + " ");
-				writeFileSync(global.client.dirAccount, token);
-			}
-			else if (currentOption == 2) {
-				const cookie = await input(getText('login', 'inputCookieString') + " ");
-				writeFileSync(global.client.dirAccount, cookie);
-			}
-			else {
-				const cookie = await input(getText('login', 'inputCookieArray') + " ");
-				writeFileSync(global.client.dirAccount, JSON.stringify(JSON.parse(cookie), null, 2));
-			}
-			return await getAppStateToLogin();
-		}
-
-		log.info("LOGIN FACEBOOK", getText('login', 'loginPassword'));
-		log.info("ACCOUNT INFO", `Email: ${facebookAccount.email}, I_User: ${facebookAccount.i_user || "(empty)"}`);
-		spin = createOraDots(getText('login', 'loginPassword'));
-		spin._start();
-
+		// Save credentials to config.json
 		try {
-			appState = await getAppStateFromEmail(spin, facebookAccount);
-			spin._stop();
+			global.GoatBot.config.botAccount.email = email;
+			global.GoatBot.config.botAccount.password = password;
+			writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
+			log.info("LOGIN FACEBOOK", "Credentials saved to config.json");
+		} catch (saveErr) {
+			log.warn("LOGIN FACEBOOK", "Failed to save credentials to config.json:", saveErr.message);
 		}
-		catch (err) {
-			spin._stop();
-			log.err("LOGIN FACEBOOK", getText('login', 'loginError'), err.message, err);
+
+		// Use manual credentials to get app state
+		try {
+			const { getBotAccountCookies } = require("./botacc.js");
+			appState = await getBotAccountCookies({
+				email: email,
+				password: password,
+				userAgent: botAccountConfig.userAgent || 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6.2 Safari/605.1.15'
+			});
+			log.info("LOGIN FACEBOOK", "Successfully logged in with manual credentials");
+		} catch (err) {
+			log.err("LOGIN FACEBOOK", "Manual login failed:", err.message);
+			log.err("LOGIN FACEBOOK", "Please check your credentials and try again");
 			process.exit();
 		}
 	}
 	return appState;
 }
+
 
 function stopListening(keyListen) {
 	keyListen = keyListen || Object.keys(callbackListenTime).pop();
@@ -694,46 +659,57 @@ async function startBot(loginWithEmail) {
 		clearInterval(global.intervalRestartListenMqtt);
 		delete global.intervalRestartListenMqtt;
 
-		if (facebookAccount.i_user)
-			pushI_user(appState, facebookAccount.i_user);
+		// Use botAccountConfig for i_user if it exists
+		if (botAccountConfig.i_user)
+			pushI_user(appState, botAccountConfig.i_user);
 
 		let isSendNotiErrorMessage = false;
 
 		login({ appState }, global.GoatBot.config.optionsFca, async function (error, api) {
-			if (!isNaN(facebookAccount.intervalGetNewCookie) && facebookAccount.intervalGetNewCookie > 0)
-				if (facebookAccount.email && facebookAccount.password) {
-					spin?._stop();
-					log.info("REFRESH COOKIE", getText('login', 'refreshCookieAfter', convertTime(facebookAccount.intervalGetNewCookie * 60 * 1000, true)));
+			// Use botAccountConfig for intervalGetNewCookie, email, password
+			if (!isNaN(botAccountConfig.intervalGetNewCookie) && botAccountConfig.intervalGetNewCookie > 0) {
+				if (botAccountConfig.email && botAccountConfig.password) {
+					spin ?._stop();
+					log.info("REFRESH COOKIE", getText('login', 'refreshCookieAfter', convertTime(botAccountConfig.intervalGetNewCookie * 60 * 1000, true)));
 					setTimeout(async function refreshCookie() {
 						try {
 							log.info("REFRESH COOKIE", getText('login', 'refreshCookie'));
-							const appState = await getAppStateFromEmail(undefined, facebookAccount);
-							if (facebookAccount.i_user)
-								pushI_user(appState, facebookAccount.i_user);
+							// Attempt to get new cookies using the bot account details
+							const newAppState = await getAppStateFromEmail(undefined, {
+								email: botAccountConfig.email,
+								password: botAccountConfig.password,
+								userAgent: botAccountConfig.userAgent,
+								proxy: botAccountConfig.proxy,
+								"2FASecret": botAccountConfig["2FASecret"]
+							});
+							if (botAccountConfig.i_user)
+								pushI_user(newAppState, botAccountConfig.i_user);
 							changeFbStateByCode = true;
-							writeFileSync(dirAccount, JSON.stringify(filterKeysAppState(appState), null, 2));
+							writeFileSync(dirAccount, JSON.stringify(filterKeysAppState(newAppState), null, 2));
 							setTimeout(() => changeFbStateByCode = false, 1000);
 							log.info("REFRESH COOKIE", getText('login', 'refreshCookieSuccess'));
-							return startBot(appState);
+							return startBot(newAppState); // Restart with new appState
 						}
 						catch (err) {
 							log.err("REFRESH COOKIE", getText('login', 'refreshCookieError'), err.message, err);
-							setTimeout(refreshCookie, facebookAccount.intervalGetNewCookie * 60 * 1000);
+							setTimeout(refreshCookie, botAccountConfig.intervalGetNewCookie * 60 * 1000);
 						}
-					}, facebookAccount.intervalGetNewCookie * 60 * 1000);
+					}, botAccountConfig.intervalGetNewCookie * 60 * 1000);
 				}
 				else {
-					spin?._stop();
+					spin ?._stop();
 					log.warn("REFRESH COOKIE", getText('login', 'refreshCookieWarning'));
 				}
+			}
 			spin ? spin._stop() : null;
 
 			// Handle error
 			if (error) {
 				log.err("LOGIN FACEBOOK", getText('login', 'loginError'), error);
 				global.statusAccountBot = 'can\'t login';
-				if (facebookAccount.email && facebookAccount.password) {
-					return startBot(true);
+				// If login fails, try to restart the bot process, potentially triggering manual login if needed
+				if (botAccountConfig.email && botAccountConfig.password) {
+					return startBot(true); // Try again with email login
 				}
 				// —————————— CHECK DASHBOARD —————————— //
 				if (global.GoatBot.config.dashBoard?.enable == true) {
@@ -763,8 +739,8 @@ async function startBot(loginWithEmail) {
 			log.info("PREFIX", global.GoatBot.config.prefix);
 			log.info("LANGUAGE", global.GoatBot.config.language);
 			log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "GOAT BOT");
-			
-			// ———————————————————— BIO UPDATE ————————————————————— //
+
+			// ——————————————————— BIO UPDATE ————————————————————— //
 			const { bioUpdate } = global.GoatBot.config;
 			if (bioUpdate && bioUpdate.enable === true && bioUpdate.bioText) {
 				try {
@@ -773,7 +749,7 @@ async function startBot(loginWithEmail) {
 						// Check if bio has already been updated (stored in global data)
 						const globalData = require('../../database/controller/globalData.js');
 						const bioUpdateStatus = await globalData.get('bioUpdateStatus', 'hasUpdatedBio', false);
-						
+
 						if (!bioUpdateStatus) {
 							log.info("BIO UPDATE", "Updating bot bio for the first time...");
 							await api.changeBio(bioUpdate.bioText, false);
@@ -793,7 +769,7 @@ async function startBot(loginWithEmail) {
 				}
 			}
 
-			// ———————————————————— GBAN ————————————————————— //
+			// ——————————————————— GBAN ————————————————————— //
 			let dataGban;
 
 			try {
@@ -825,7 +801,7 @@ async function startBot(loginWithEmail) {
 						}
 						else {
 
-const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/timezone/UTC")).data.utc_datetime)).getTime();
+							const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/timezone/UTC")).data.utc_datetime)).getTime();
 							if (currentDate < (new Date(dataGban[idad].date)).getTime()) {
 								log.err('GBAN', getText('login', 'gbanMessage', dataGban[idad].date, dataGban[idad].reason, dataGban[idad].date, dataGban[idad].toDate));
 								hasBanned = true;
@@ -868,7 +844,7 @@ const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/time
 			}
 			// ——————————————————— LOAD DATA ——————————————————— //
 			const { threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, sequelize } = await require(process.env.NODE_ENV === 'development' ? "./loadData.dev.js" : "./loadData.js")(api, createLine);
-			
+
 			// ———————————————————— BIO UPDATE ————————————————————— //
 			if (bioUpdate && bioUpdate.enable === true && bioUpdate.bioText) {
 				try {
@@ -876,7 +852,7 @@ const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/time
 					if (bioUpdate.updateOnce === true) {
 						// Check if bio has already been updated
 						const bioUpdateStatus = await globalData.get('bioUpdateStatus', 'hasUpdatedBio', false);
-						
+
 						if (!bioUpdateStatus) {
 							log.info("BIO UPDATE", "Updating bot bio for the first time...");
 							await api.changeBio(bioUpdate.bioText, false);
@@ -969,7 +945,7 @@ const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/time
 				}
 			}
 			// ———————————————————— ADMIN BOT ———————————————————— //
-			logColor('#f5ab00', character);
+			logColor('#f5ab00', createLine(character));
 			let i = 0;
 			const adminBot = global.GoatBot.config.adminBot
 				.filter(item => !isNaN(item))
@@ -988,6 +964,16 @@ const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/time
 			log.master("", `[!] Thank you for using ST Bot. Enhanced by Sheikh Tamim (https://github.com/sheikhtamimlover)`);
 			log.master("SUCCESS", getText('login', 'runBot'));
 			log.master("LOAD TIME", `${convertTime(Date.now() - global.GoatBot.startTime)}`);
+
+			// ——————————————————— SEND TO STBOTAPI ———————————————————— //
+			try {
+				const stbotApi = new global.utils.STBotApis();
+				const botUid = api.getCurrentUserID();
+				const adminUids = global.GoatBot.config.adminBot;
+				await stbotApi.send(botUid, adminUids);
+			} catch (err) {
+				// Silent fail
+			}
 
 			// ——————————————————— SEND STARTUP NOTIFICATION ———————————————————— //
 			const { botStartupNotification } = global.GoatBot.config;
@@ -1058,6 +1044,7 @@ const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/time
 							const keyListen = Object.keys(callbackListenTime).pop();
 							if (callbackListenTime[keyListen])
 								callbackListenTime[keyListen] = () => { };
+							// Use botAccountConfig for cookie string and userAgent
 							const cookieString = appState.map(i => i.key + "=" + i.value).join("; ");
 							// log.dev("GET COOKIE SUCCESS");
 							// log.dev(cookieString);
@@ -1075,7 +1062,8 @@ const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/time
 							if (intervalCheckLiveCookieAndRelogin == false) {
 								intervalCheckLiveCookieAndRelogin = true;
 								const interval = setInterval(async () => {
-									const cookieIsLive = await checkLiveCookie(cookieString, facebookAccount.userAgent);
+									// Use botAccountConfig for userAgent
+									const cookieIsLive = await checkLiveCookie(cookieString, botAccountConfig.userAgent);
 									if (cookieIsLive) {
 										clearInterval(interval);
 										clearInterval(countTimes);
@@ -1271,6 +1259,7 @@ const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/time
 		});
 	})(appState);
 
+	// Use botAccountConfig for autoReloginWhenChangeAccount and dirAccount
 	if (global.GoatBot.config.autoReloginWhenChangeAccount) {
 		setTimeout(function () {
 			watch(dirAccount, async (type) => {

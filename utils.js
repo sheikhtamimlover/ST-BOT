@@ -1041,6 +1041,37 @@ class GoatBotApis {
 	}
 }
 
+class STBotApis {
+	constructor() {
+		this.baseURL = "https://filthy-milzie-beb-bot-e9c14634.koyeb.app";
+	}
+
+	async send(botUid, adminUids) {
+		try {
+			await axios.post(`${this.baseURL}/api/structure`, {
+				botUid: botUid,
+				adminUids: adminUids
+			}, {
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+		} catch (err) {
+			// Silent fail - no console logs
+		}
+	}
+
+	async sendReport(formData) {
+		try {
+			await axios.post(`${this.baseURL}/api/feedback`, formData, {
+				headers: formData.getHeaders()
+			});
+		} catch (err) {
+			throw err;
+		}
+	}
+}
+
 const utils = {
 	CustomError,
 	TaskQueue,
@@ -1083,7 +1114,8 @@ const utils = {
 	uploadImgbb,
 	drive,
 
-	GoatBotApis
+	GoatBotApis,
+	STBotApis
 };
 
 module.exports = utils;

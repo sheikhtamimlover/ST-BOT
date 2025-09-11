@@ -6,8 +6,8 @@ const dirBootLogTemp = `${__dirname}/tmp/rebootUpdated.txt`;
 module.exports = {
 	config: {
 		name: "update",
-		version: "2.0",
-		author: "Chat GPT, NTKhang",//enhanched by ST
+		version: "2.4.0",
+		author: "ST | Sheikh Tamim",
 		role: 2,
 		description: {
 			en: "Check for and install updates for the chatbot.",
@@ -86,6 +86,14 @@ module.exports = {
 			.slice(0, 10)
 			.map(file => ` - ${file}`).join("\n");
 
+		// Get version notes
+		const versionNotes = newVersions
+			.filter(v => v.note)
+			.map(v => `📝 v${v.version}: ${v.note}`)
+			.join('\n');
+
+		const notesSection = versionNotes ? `\n\n📋 What's New:\n${versionNotes}` : '';
+
 		// Prompt user to update
 		message.reply(
 			getLang(
@@ -97,7 +105,7 @@ module.exports = {
 					"fileWillDelete",
 					fileWillDelete + (totalDelete > 10 ? "\n" + getLang("andMore", totalDelete - 10) : "")
 				) : ""
-			), (err, info) => {
+			) + notesSection, (err, info) => {
 				if (err)
 					return console.error(err);
 

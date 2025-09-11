@@ -145,6 +145,17 @@ fs.copyFileSync = function (src, dest) {
 	fs.writeFileSync(`${process.cwd()}/versions.json`, JSON.stringify(versions, null, 2));
 	log.info("UPDATE", getText("updater", "newVersions", chalk.yellow(versionsNeedToUpdate.length)));
 
+	// Show version notes if available
+	const versionNotes = versionsNeedToUpdate
+		.filter(v => v.note)
+		.map(v => `${chalk.cyan(`v${v.version}`)}: ${v.note}`)
+		.join('\n   ');
+	
+	if (versionNotes) {
+		console.log(chalk.bold.green('\n📋 What\'s New in Updates:'));
+		console.log(`   ${versionNotes}\n`);
+	}
+
 	const createUpdate = {
 		version: "",
 		files: {},

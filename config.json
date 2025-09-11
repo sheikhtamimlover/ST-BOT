@@ -1,21 +1,10 @@
 {
-  "facebookAccount": {
+  "botAccount": {
     "email": "",
     "password": "",
-    "2FASecret": "",
-    "i_user": "",
-    "proxy": null,
-    "userAgent": "Mozilla/5.0 (Linux; Android 12; M2102J20SG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.0.0 Mobile Safari/537.36",
-    "intervalGetNewCookie": 1440,
-    "notes": "time the system automatically retrieves new cookies from email/password, unit is minute, if you set null, the system will not automatically retrieve new cookies, it saves you from having to manually change your cookie every time it expires. recommended set to 1440 (1day) or 4320 (3day).TO BE ABLE TO USE THIS FEATURE YOU NEED TO ENTER THE ACCOUNT PASSWORD ABOVE"
-  },
-  "botAccountCookie": {
-    "enable": false,
-    "email": "",
-    "password": "",
-    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6.2 Safari/605.1.15",
     "autoUseWhenEmpty": true,
-    "notes": "Bot account cookie configuration. When enabled and account.txt is empty, bot will automatically fetch cookies from this account. Make sure the account is not locked/checkpointed. Don't change the userAgent and 2FA is not supported. If this fails, you'll need to login manually."
+    "notes": "Bot account configuration. When account.txt is empty, bot will automatically attempt to fetch cookies from this account. Note: 2FA is not supported - if your account has 2FA enabled, you'll need to login manually and save cookies to account.txt instead."
   },
   "bioUpdate": {
     "enable": false,
