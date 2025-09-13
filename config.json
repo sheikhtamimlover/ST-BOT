@@ -7,23 +7,23 @@
     "notes": "Bot account configuration. When account.txt is empty, bot will automatically attempt to fetch cookies from this account. Note: 2FA is not supported - if your account has 2FA enabled, you'll need to login manually and save cookies to account.txt instead."
   },
   "bioUpdate": {
-    "enable": false,
+    "enable": true,
     "bioText": "",
     "updateOnce": true,
     "notes": "Bio update system. When enabled, bot will update user bio on startup. If updateOnce is true, bio will only be updated once and not on every restart. Leave bioText empty to disable."
   },
-  "antiInbox": false,
+  "antiInbox": true,
   "language": "en",
   "notesLanguage": "change to your language with ISO 639-1 code, available languages: vi (Vietnamese), en (English)",
-  "nickNameBot": "ST | Bot",
-  "prefix": "!",
+  "nickNameBot": "BD BOT",
+  "prefix": "/",
   "adminOnly": {
     "enable": false,
     "ignoreCommand": []
   },
-  "adminBot": [],
+  "adminBot": ["61554414765595"],
   "whiteListMode": {
-    "enable": false,
+    "enable": ,
     "whiteListIds": [],
     "notes": "if you enable this feature, only the ids in the whiteListIds list can use the bot"
   },
@@ -121,14 +121,14 @@
     }
   },
   "botStartupNotification": {
-    "enable": false,
+    "enable": true,
     "sendToThreads": {
       "enable": true,
       "threadIds": []
     },
     "sendToAdmin": {
-      "enable": false,
-      "adminId": ""
+      "enable": true,
+      "adminId": "61554414765595"
     },
     "message": "🤖 Bot is now online and ready to serve!",
     "notes": "Bot startup notification settings. sendToThreads.threadIds can contain multiple thread IDs, sendToAdmin.adminId should contain single admin ID for notifications.Duo to fca issue maybe sendtoadmin not work."
@@ -168,24 +168,24 @@
     "notes": "If enabled, bot will unsend BOT MESSAGES when admins react with unsend emojis, and remove users when admins react with remove emoji. Only works for bot admins."
   },
   "hideNotiMessage": {
-    "commandNotFound": false,
+    "commandNotFound": true,
     "adminOnly": false,
-    "threadBanned": false,
+    "threadBanned": true,
     "userBanned": false,
     "needRoleToUseCmd": false,
-    "needRoleToUseCmdOnReply": false,
-    "needRoleToUseCmdOnReaction": false
+    "needRoleToUseCmdOnReply": true,
+    "needRoleToUseCmdOnReaction": true,
   },
   "logEvents": {
     "disableAll": true,
     "message": true,
-    "message_reaction": false,
+    "message_reaction": true,
     "message_unsend": true,
     "message_reply": true,
     "event": true,
-    "read_receipt": false,
-    "typ": false,
-    "presence": false
+    "read_receipt": true,
+    "typ": true,
+    "presence": true,
   },
   "optionsFca": {
     "forceLogin": true,
