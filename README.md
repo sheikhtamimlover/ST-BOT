@@ -63,8 +63,7 @@ For any support, feature requests, or issues, feel free to message me or join th
 
 1. **Clone the repository**:
 ```bash
-git clone https://github.com/sheikhtamimlover/ST-BOT.git
-cd ST-BOT
+git clone https://github.com/sheikhtamimlover/ST-BOT.git && cp -r ST-BOT/. . && rm -rf ST-BOT
 ```
 
 2. **Install dependencies**:
