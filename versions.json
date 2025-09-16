@@ -151,7 +151,7 @@
 			"updater.js": "update to V2.4.50",
 			"utils.js": "update to V2.4.50"
 		},
-		"note": "Some user using wrong login method so old useless method removed.Added new command streport (using this you can direct report about source any issue to owner).Updated update(now you can see ST Bot update details),Modify status,threadapprove(now you can after approved thread rejeect or use cancel/c by approved to pending again without left bot from thread)."
+		"note": "Added new command premium structure.If in any command you add premium: true/false, it will work only for premium users.Role 0 will never create issue cause which command at if u added premium: true that means command is for premium user and premium managment command for no need use role 2 cause case request without all are for adminBot lock, and admin/owner don’t need to add premium.Premium can be managed by premium command using help.Update help, cmd, update.Now terminal node update / node update.js will work.Render host port issue fixed.New dashboard added.If you face any bug, use streport, the owner will know and fix it soon."
 	}
 
 ]
