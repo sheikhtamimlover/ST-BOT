@@ -1,33 +1,55 @@
+
+<div align="center">
+
 # 🐐 ST-BOT - By Sheikh Tamim
 
-A customized and powerful multi-purpose chatbot framework for Facebook Messenger, based on the original **GoatBot V2** by NTKhang. This version is tailored and improved by **Sheikh Tamim** with additional integrations, command structure enhancements, and admin tools.
+<img src="./dashboard/images/st.png" alt="ST-Bot Logo" width="200" height="200" style="border-radius: 50%;">
 
-> ⚠️ This is a modified version. See License section below for usage rights.
+*A customized and powerful multi-purpose chatbot framework for Facebook Messenger*
+
+![GitHub stars](https://img.shields.io/github/stars/sheikhtamimlover/ST-BOT?style=for-the-badge)
+![GitHub forks](https://img.shields.io/github/forks/sheikhtamimlover/ST-BOT?style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues/sheikhtamimlover/ST-BOT?style=for-the-badge)
+![GitHub license](https://img.shields.io/github/license/sheikhtamimlover/ST-BOT?style=for-the-badge)
+![Node.js Version](https://img.shields.io/badge/Node.js-v18+-green?style=for-the-badge&logo=node.js)
+![Package Version](https://img.shields.io/github/package-json/v/sheikhtamimlover/ST-BOT?style=for-the-badge)
+![Repository Size](https://img.shields.io/github/repo-size/sheikhtamimlover/ST-BOT?style=for-the-badge)
+![Last Commit](https://img.shields.io/github/last-commit/sheikhtamimlover/ST-BOT?style=for-the-badge)
+[![Deploy on Replit](https://img.shields.io/badge/Deploy%20on-Replit-667881?style=for-the-badge&logo=replit&logoColor=white)](https://replit.com/github/sheikhtamimlover/ST-BOT)
+[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=sheikhtamimlover.ST-BOT)](https://github.com/sheikhtamimlover/ST-BOT)
+
+**Enhanced version of GoatBot V2** - Modified and maintained by **Sheikh Tamim**
+
+[![Instagram](https://img.shields.io/badge/Instagram-@sheikh.tamim__lover-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/sheikh.tamim_lover/)
+[![GitHub](https://img.shields.io/badge/GitHub-sheikhtamimlover-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sheikhtamimlover)
 
 ---
+
+</div>
 
 ## 🚀 Features
 
 - **Modular Command System** - Easy to add/remove commands
+- **Premium System** - Advanced premium user management
 - **Fast and Scalable** - Optimized bot core for high performance
 - **Auto-restart and Watchdog** - Self-healing capabilities
 - **MongoDB/SQLite Support** - Flexible database options
 - **Dynamic Command Loader** - Hot-reload commands without restart
-- **Scheduling & Updates** - Built-in task scheduling
-- **Admin Control Panel** - Web dashboard for bot management
+- **Thread Approval System** - Control bot access to groups
+- **Anti-React System** - Advanced message management
 - **Real-time Dashboard** - Live monitoring with WebSocket
-- **Ready to Deploy** - One-click deployment on Replit
+- **Easy Deployment** - One-click deployment on Replit & Render
 
 ---
 
 ## 👨‍💻 About the Developer
 
-**Sheikh Tamim** is actively maintaining and regularly updating this project. This bot framework is reliable, easy to use, and deployed without hesitation on Replit with no deployment issues.
+**Sheikh Tamim** is actively maintaining and regularly updating this project. This bot framework is reliable, easy to use, and can be deployed without hesitation on Render with no deployment issues.
 
 ### 📞 Contact & Support
 
+- **Instagram**: [![Instagram](https://img.shields.io/badge/@sheikh.tamim__lover-E4405F?style=flat&logo=instagram&logoColor=white)](https://www.instagram.com/sheikh.tamim_lover/)
 - **Messenger Group**: [Join Support Group](https://m.me/j/AbYvFRTzENblDU94/)
-- **Instagram**: [@sheikh.tamim_lover](https://www.instagram.com/sheikhtamim_lover/)
 - **Facebook**: [m.me/tormairedusi](https://m.me/tormairedusi)
 - **GitHub**: [sheikhtamimlover](https://github.com/sheikhtamimlover)
 
@@ -37,11 +59,12 @@ For any support, feature requests, or issues, feel free to message me or join th
 
 ## 🔧 Installation & Setup
 
-### 🖥 Local/Replit Setup
+### 🖥 Method 1: Local Setup
 
 1. **Clone the repository**:
 ```bash
-git clone https://github.com/sheikhtamimlover/ST-BOT.git && cp -r ST-BOT/. . && rm -rf ST-BOT
+git clone https://github.com/sheikhtamimlover/ST-BOT.git
+cd ST-BOT
 ```
 
 2. **Install dependencies**:
@@ -59,7 +82,104 @@ npm install
 npm start
 ```
 
-### 📋 Essential Configuration
+### 🌐 Method 2: Deploy on Render (Recommended)
+
+[![Deploy on Render]((https://img.shields.io/badge/Deploy%20on-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://replit.com/github/sheikhtamimlover/ST-BOT)
+
+1. **One-Click Deployment**:
+   - Click the "Deploy on Render" button above
+   - Or fork/import this repository to Render
+   - Simply click the **Run** button - Render handles everything automatically
+
+2. **Configuration**:
+   - Add your Admin UID in `config.json`
+   - Add Facebook cookies in `account.txt`
+   - Dashboard will be available at your Replit URL
+
+3. **24/7 Operation**:
+   - Use Render's "Always On" feature for continuous operation
+   - Built-in SSL and global CDN included
+
+
+
+1. **Quick Deploy**:
+   - Connect your GitHub account to Render
+   - Select this repository
+   - Choose "Web Service"
+   
+2. **Configuration**:
+   ```yaml
+   Build Command: npm install
+   Start Command: npm start
+   Environment: Node
+   ```
+
+3. **Environment Variables** (Optional):
+   - Set any sensitive configuration as environment variables
+   - Dashboard will be accessible via your Render URL
+
+---
+
+## 💎 Premium System
+
+The bot includes a comprehensive premium user management system that allows you to offer exclusive features to premium users.
+
+### 🎯 How Premium System Works
+
+**For Users:**
+- Use `.premium request [message]` to request premium access
+- Premium users get access to exclusive commands
+- Status is saved permanently in the database
+
+**For Admins:**
+- Manage premium requests through `.premium` commands
+- Add/remove premium users instantly
+- View all premium users and pending requests
+
+### 📋 Premium Commands
+
+| Command | Description | Access |
+|---------|-------------|---------|
+| `.premium request [message]` | Request premium access | All Users |
+| `.premium add <uid/@mention>` | Add user to premium | Admins Only |
+| `.premium remove <uid/@mention>` | Remove user from premium | Admins Only |
+| `.premium list [page]` | View premium users list | Admins Only |
+| `.premium pending` | View pending requests | Admins Only |
+
+### 🛠 Creating Premium Commands
+
+To make a command premium-only, add `premium: true` to the command config:
+
+```javascript
+module.exports = {
+    config: {
+        name: "premiumcommand",
+        premium: true, // This makes the command premium-only
+        version: "1.0.0",
+        author: "Your Name",
+        role: 0,
+        description: "Premium exclusive command",
+        category: "premium"
+    },
+
+    onStart: async function({ message, getLang }) {
+        // Your premium command logic here
+        message.reply("🌟 This is a premium feature!");
+    }
+};
+```
+
+### 💡 Premium Features
+
+- **Automatic Validation**: Bot automatically checks premium status
+- **Database Integration**: Premium status synced across all platforms
+- **Request Management**: Organized system for handling premium requests
+- **Flexible Access**: Admins can grant/revoke access instantly
+- **Error Handling**: Graceful handling of premium restrictions
+
+---
+
+## 📋 Essential Configuration
 
 Before starting, make sure to configure:
 
@@ -79,7 +199,7 @@ Before starting, make sure to configure:
 ## ⭐ Special Features
 
 ### 🔐 Thread Approval System
-Control which groups the bot can respond in with the thread approval system:
+Control which groups the bot can respond in:
 
 ```json
 "threadApproval": {
@@ -88,12 +208,6 @@ Control which groups the bot can respond in with the thread approval system:
   "autoApproveExisting": true
 }
 ```
-
-- **enable**: Turn on/off thread approval requirement
-- **adminNotificationThreads**: Array of thread IDs where admins receive approval notifications
-- **autoApproveExisting**: Automatically approve all existing threads when first enabled
-- **Usage**: Use `.thread` command to manage pending, approve, or reject threads
-- **Workflow**: Bot added to new group → Admin notification → Use `.thread` to approve/reject
 
 ### 🚀 Bot Startup Notifications
 Get notified when your bot comes online:
@@ -105,35 +219,9 @@ Get notified when your bot comes online:
     "enable": true,
     "threadIds": ["thread_id_1", "thread_id_2"]
   },
-  "sendToAdmin": {
-    "enable": false,
-    "adminId": "admin_user_id"
-  },
   "message": "🤖 Bot is now online and ready to serve!"
 }
 ```
-
-- **sendToThreads**: Send startup message to specific group chats
-- **sendToAdmin**: Send private message to bot admin
-- **Custom Message**: Customize the startup notification message
-
-### 🌐 Webview Dashboard Protection
-Secure your dashboard with password protection:
-
-```json
-"dashBoard": {
-  "enable": true,
-  "port": 3001,
-  "password": {
-    "enable": true,
-    "password": "your_secure_password"
-  }
-}
-```
-
-- **Dashboard Access**: Protected by password when enabled
-- **Secure Login**: Enter password to access bot management interface
-- **Real-time Monitoring**: Live statistics and bot control
 
 ### ⚡ AntiReact System
 Advanced message management through reactions:
@@ -153,40 +241,19 @@ Advanced message management through reactions:
 }
 ```
 
-- **reactByUnsend**: React with specified emojis to unsend bot messages
-- **reactByRemove**: React to remove users from group
-- **Admin Only**: Only bot admins can use reaction controls
-
-### 🆔 Bot Account Cookie System
-Automatic cookie management for bot account:
+### 🌐 Web Dashboard
+Protected dashboard with password authentication:
 
 ```json
-"botAccountCookie": {
-  "enable": false,
-  "email": "bot_account_email",
-  "password": "bot_account_password",
-  "autoUseWhenEmpty": true
+"dashBoard": {
+  "enable": true,
+  "port": 3021,
+  "passwordProtection": {
+    "enable": true,
+    "password": "your_secure_password"
+  }
 }
 ```
-
-- **Auto Login**: Automatically fetch cookies when account.txt is empty
-- **Backup System**: Falls back to manual login if auto-login fails
-- **No 2FA Support**: Use accounts without two-factor authentication
-
-### 📝 Bio Update System
-Automatically update bot's profile bio:
-
-```json
-"bioUpdate": {
-  "enable": false,
-  "bioText": "Your custom bio text",
-  "updateOnce": true
-}
-```
-
-- **Custom Bio**: Set personalized bio text
-- **One-time Update**: Option to update only once or on every restart
-- **Auto Management**: Handles bio updates seamlessly
 
 ---
 
@@ -205,6 +272,7 @@ module.exports = {
         author: "Your Name",          // Your name
         countDown: 5,                 // Cooldown in seconds
         role: 0,                      // 0: Everyone, 1: Group Admin, 2: Bot Admin
+        premium: false,               // true: Premium only, false: Everyone
         description: "Command description",
         category: "category name",
         guide: "{pn} <usage guide>"   // Usage instructions
@@ -212,7 +280,6 @@ module.exports = {
 
     langs: {
         en: {
-            // English text responses
             success: "Command executed successfully!",
             error: "An error occurred!"
         }
@@ -226,49 +293,29 @@ module.exports = {
         } catch (error) {
             message.reply(getLang("error"));
         }
-    },
-
-    onChat: async function({ message, event, api }) {
-        // Optional: Respond to specific chat messages
-        // This runs on every message if implemented
-    },
-
-    onReaction: async function({ message, event, api, Reaction }) {
-        // Optional: Handle reactions to bot messages
     }
 };
 ```
 
-### Command Functions Available
-
-- **message.reply()** - Reply to user
-- **message.send()** - Send new message  
-- **api.sendMessage()** - Send message to specific thread
-- **api.getUserInfo()** - Get user information
-- **api.getThreadInfo()** - Get group information
-- **getLang()** - Get localized text
-- **global.db.get()** - Database operations
-- **utils.** - Utility functions
-
-### Example Command
+### Example Premium Command
 
 ```javascript
 module.exports = {
     config: {
-        name: "hello",
-        aliases: ["hi", "greet"],
+        name: "premiumfeature",
+        aliases: ["pf"],
         version: "1.0.0",
         author: "Sheikh Tamim",
         countDown: 3,
         role: 0,
-        description: "Greet users with a friendly message",
-        category: "fun",
-        guide: "{pn} [name] - Greet someone or everyone"
+        premium: true, // Premium only command
+        description: "Exclusive premium feature",
+        category: "premium",
+        guide: "{pn} - Access premium features"
     },
 
     onStart: async function({ message, args }) {
-        const name = args.join(" ") || "everyone";
-        message.reply(`Hello ${name}! 👋 Welcome to ST-Bot!`);
+        message.reply("🌟 Welcome to premium features! You have exclusive access.");
     }
 };
 ```
@@ -277,46 +324,21 @@ module.exports = {
 
 ## 🌐 Web Dashboard
 
-The bot includes a real-time web dashboard accessible at `http://localhost:3001`. Features include:
+The bot includes a real-time web dashboard accessible via your deployment URL. Features include:
 
 - **Live Statistics** - Real-time bot metrics
 - **User Management** - View and manage users
-- **Group Management** - Monitor group activities  
+- **Premium Management** - Handle premium requests
+- **Group Management** - Monitor group activities
 - **Command Analytics** - Track command usage
 - **System Monitoring** - Server status and performance
-
----
-
-## 🚀 Deployment on Replit
-
-This bot is perfectly optimized for Replit deployment with zero configuration needed:
-
-### 🎯 One-Click Deployment
-1. **Fork/Import** this repository to Replit
-2. **Run** - Simply click the Run button, Replit handles everything automatically
-3. **Dashboard Access** - Your dashboard will be available at your Replit URL on port 3001
-4. **Always On** - Use Replit's Always On feature for 24/7 bot operation
-
-### 🔧 Replit-Optimized Features
-- **Auto-Installation** - Dependencies install automatically on first run
-- **Port Forwarding** - Dashboard automatically accessible via Replit's built-in port forwarding  
-- **Environment Variables** - Use Replit's Secrets for sensitive configuration
-- **File Persistence** - Database and configuration files persist across restarts
-- **Live Reload** - Code changes trigger automatic restarts
-
-### 🌐 Production Ready
-- **Built-in SSL** - HTTPS automatically provided by Replit
-- **Global CDN** - Fast worldwide access to your bot dashboard
-- **Monitoring** - Built-in performance monitoring and logging
-- **Scaling** - Automatic resource scaling based on usage
-
-Replit provides the most reliable and easiest deployment experience for ST-Bot with no complex configuration required.
 
 ---
 
 ## 📚 Command Categories
 
 - **Admin** - Bot administration commands
+- **Premium** - Exclusive premium features
 - **Fun** - Entertainment and games
 - **Utility** - Useful tools and information
 - **Economy** - Virtual currency system
@@ -330,11 +352,24 @@ Replit provides the most reliable and easiest deployment experience for ST-Bot w
 
 This project receives regular updates with:
 - **New Features** - Enhanced functionality
-- **Bug Fixes** - Stability improvements  
+- **Bug Fixes** - Stability improvements
 - **Security Patches** - Keep your bot safe
 - **Performance Optimizations** - Faster response times
+- **Premium Features** - Exclusive new commands
 
 Stay updated by watching this repository or joining our support group!
+
+---
+
+## 📊 Project Statistics
+
+<div align="center">
+
+![GitHub Stats](https://github-readme-stats.vercel.app/api?username=sheikhtamimlover&repo=ST-BOT&show_icons=true&theme=radical)
+
+![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=sheikhtamimlover&layout=compact&theme=radical)
+
+</div>
 
 ---
 
@@ -354,5 +389,12 @@ If you find this project helpful:
 - 🍴 Fork and contribute
 - 📢 Share with others
 - 💬 Join our community
+- 🔗 Follow on Instagram: [@sheikh.tamim_lover](https://www.instagram.com/sheikh.tamim_lover/)
+
+<div align="center">
 
 **Happy Botting! 🤖✨**
+
+*Made with ❤️ by Sheikh Tamim*
+
+</div>

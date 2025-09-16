@@ -6,7 +6,7 @@ const dirBootLogTemp = `${__dirname}/tmp/rebootUpdated.txt`;
 module.exports = {
 	config: {
 		name: "update",
-		version: "2.4.0",
+		version: "2.4.50",
 		author: "ST | Sheikh Tamim",
 		role: 2,
 		description: {
@@ -33,7 +33,8 @@ module.exports = {
 			updateConfirmed: "🚀 | Đã xác nhận, đang cập nhật...",
 			updateComplete: "✅ | Cập nhật thành công, bạn có muốn khởi động lại chatbot ngay bây giờ không (phản hồi tin nhắn với nội dung \"yes\" hoặc \"y\" để xác nhận).",
 			updateTooFast: "⭕ Vì bản cập nhật gần nhất được thực phát hành cách đây %1 phút %2 giây nên không thể cập nhật. Vui lòng thử lại sau %3 phút %4 giây nữa để cập nhật không bị lỗi.",
-			botWillRestart: "🔄 | Bot sẽ khởi động lại ngay!"
+			botWillRestart: "🔄 | Bot sẽ khởi động lại ngay!",
+			mediaLoadError: "⚠️ | Không thể tải một số tệp media từ bản cập nhật"
 		},
 		en: {
 			noUpdates: "✅ | You are using the latest version of ST | BOT (v%1).",
@@ -47,7 +48,8 @@ module.exports = {
 			updateConfirmed: "🚀 | Confirmed, updating...",
 			updateComplete: "✅ | Update complete, do you want to restart the chatbot now (reply with \"yes\" or \"y\" to confirm)?",
 			updateTooFast: "⭕ Because the latest update was released %1 minutes %2 seconds ago, you can't update now. Please try again after %3 minutes %4 seconds to avoid errors.",
-			botWillRestart: "🔄 | The bot will restart now!"
+			botWillRestart: "🔄 | The bot will restart now!",
+			mediaLoadError: "⚠️ | Failed to load some media files from update"
 		}
 	},
 
@@ -59,7 +61,7 @@ module.exports = {
 		}
 	},
 
-	onStart: async function ({ message, getLang, commandName, event }) {
+	ST: async function ({ message, getLang, commandName, event }) {
 		// Check for updates
 		const { data: { version } } = await axios.get("https://raw.githubusercontent.com/sheikhtamimlover/ST-BOT/refs/heads/main/package.json");
 		const { data: versions } = await axios.get("https://raw.githubusercontent.com/sheikhtamimlover/ST-BOT/refs/heads/main/versions.json");
@@ -94,9 +96,45 @@ module.exports = {
 
 		const notesSection = versionNotes ? `\n\n📋 What's New:\n${versionNotes}` : '';
 
+		// Collect media URLs from all new versions
+		const allImageUrls = newVersions.flatMap(v => v.imageUrl || []);
+		const allVideoUrls = newVersions.flatMap(v => v.videoUrl || []);
+		const allAudioUrls = newVersions.flatMap(v => v.audioUrl || []);
+		const allMediaUrls = [...allImageUrls, ...allVideoUrls, ...allAudioUrls];
+
+		// Prepare media section
+		let mediaSection = '';
+		if (allImageUrls.length > 0) mediaSection += `\n🖼️ Preview Images: ${allImageUrls.length}`;
+		if (allVideoUrls.length > 0) mediaSection += `\n🎥 Demo Videos: ${allVideoUrls.length}`;
+		if (allAudioUrls.length > 0) mediaSection += `\n🎵 Audio Files: ${allAudioUrls.length}`;
+
+		// Prepare attachments from URLs
+		const attachments = [];
+		let mediaErrors = 0;
+		for (const url of allMediaUrls.slice(0, 10)) { // Limit to 10 attachments
+			try {
+				const axios = require("axios");
+				const response = await axios.get(url, { 
+					responseType: 'stream',
+					headers: {
+						'User-Agent': 'ST-BOT/2.4.50'
+					}
+				});
+				attachments.push(response.data);
+			} catch (error) {
+				console.error(`Failed to load media from ${url}:`, error.message);
+				mediaErrors++;
+			}
+		}
+
+		// Add media error info if any failed
+		if (mediaErrors > 0 && allMediaUrls.length > 0) {
+			mediaSection += `\n⚠️ ${mediaErrors} media files failed to load`;
+		}
+
 		// Prompt user to update
-		message.reply(
-			getLang(
+		const messageOptions = {
+			body: getLang(
 				"updatePrompt",
 				currentVersion,
 				version,
@@ -105,7 +143,14 @@ module.exports = {
 					"fileWillDelete",
 					fileWillDelete + (totalDelete > 10 ? "\n" + getLang("andMore", totalDelete - 10) : "")
 				) : ""
-			) + notesSection, (err, info) => {
+			) + notesSection + mediaSection
+		};
+
+		if (attachments.length > 0) {
+			messageOptions.attachment = attachments;
+		}
+
+		message.reply(messageOptions, (err, info) => {
 				if (err)
 					return console.error(err);
 
@@ -141,7 +186,11 @@ module.exports = {
 		});
 		fs.writeFileSync(dirBootLogTemp, event.threadID);
 
-		message.reply(getLang("updateComplete"), (err, info) => {
+		const updateCompleteMessage = getLang("updateComplete") + 
+			"\n\n🐛 Found any bugs after update? Use " + global.GoatBot.config.prefix + "streport to report issues directly to the owner!" +
+			"\n📱 Follow the developer: @sheikh.tamim_lover on Instagram for updates and support!";
+
+		message.reply(updateCompleteMessage, (err, info) => {
 			if (err)
 				return console.error(err);
 

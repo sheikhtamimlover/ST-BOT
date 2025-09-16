@@ -27,7 +27,7 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 		if (threadApproval && threadApproval.enable) {
 			try {
 				const threadData = await threadsData.get(threadID);
-				const isAdminBot = config.adminBot.includes(userID.toString()) || config.adminBot.includes(userID);
+				const isAdminBot = global.utils.isAdmin(userID);
 				
 				// Block anti-react in unapproved threads for non-admins
 				if (threadData.approved !== true && !isAdminBot) {
@@ -38,8 +38,8 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 			}
 		}
 
-		// Check if user is bot admin - convert to string for comparison
-		const isAdminBot = antiReact.onlyAdminBot ? (config.adminBot.includes(userID.toString()) || config.adminBot.includes(userID)) : true;
+		// Check if user is bot admin - use proper admin checking function
+		const isAdminBot = antiReact.onlyAdminBot ? global.utils.isAdmin(userID) : true;
 		
 		try {
 			// Handle remove user reaction

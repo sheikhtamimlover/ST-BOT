@@ -4,16 +4,17 @@ const path = require('path');
 module.exports = {
 	config: {
 		name: "help",
-		version: "2.0",
+		version: "2.4.50",
 		role: 0,
-		countdown: 0,
+		countDown: 0,
 		author: "ST | Sheikh Tamim",
 		description: "Displays all available commands and their categories.",
 		category: "help",
+		premium: true
 	},
 
-	onStart: async ({ api, event, args }) => {
-		const cmdsFolderPath = path.join(__dirname, '.'); 
+	ST: async ({ api, event, args }) => {
+		const cmdsFolderPath = path.join(__dirname, '.');
 		const files = fs.readdirSync(cmdsFolderPath).filter(file => file.endsWith('.js'));
 
 		const sendMessage = async (message, threadID) => {
@@ -30,7 +31,7 @@ module.exports = {
 				const command = require(path.join(cmdsFolderPath, file));
 				const { category } = command.config;
 
-				
+
 				const categoryName = category || 'uncategorized';
 				if (!categories[categoryName]) categories[categoryName] = [];
 				categories[categoryName].push(command.config.name);
@@ -40,16 +41,16 @@ module.exports = {
 
 		try {
 			if (args.length > 1 && args.includes('|')) {
-				
+
 				const pipeIndex = args.indexOf('|');
 				const categoryName = args.slice(pipeIndex + 1).join(' ').toLowerCase(); // Get the category name after '|'
 				const categories = getCategories();
 
-				
+
 				const category = Object.keys(categories).find(cat => cat.toLowerCase() === categoryName);
 
 				if (category) {
-					
+
 					const commandCount = categories[category].length;
 					let categoryHelpMessage = `╭──『 ${category} 』\n`;
 					categoryHelpMessage += `✧${categories[category].join(' ✧ ')}\n`;
@@ -58,11 +59,11 @@ module.exports = {
 
 					await sendMessage(categoryHelpMessage, event.threadID);
 				} else {
-					
+
 					await sendMessage(`Category not found: ${categoryName}`, event.threadID);
 				}
 			} else {
-				
+
 				if (args[0]) {
 					const commandName = args[0].toLowerCase();
 					const command = files.map(file => require(path.join(cmdsFolderPath, file)))
@@ -78,7 +79,8 @@ module.exports = {
 						commandDetails += `│ 👤 Author: ${command.config.author || 'Unknown'}\n`;
 						commandDetails += `│ 🔐 Role: ${command.config.role !== undefined ? command.config.role : 'N/A'}\n`;
 						commandDetails += `│ 📂 Category: ${command.config.category || 'uncategorized'}\n`;
-						
+						commandDetails += `│ 💎 Premium: ${command.config.premium == true ? '✅ Required' : '❌ Not Required'}\n`;
+
 						if (command.config.aliases && command.config.aliases.length > 0) {
 							commandDetails += `│ 🔄 Aliases: ${command.config.aliases.join(', ')}\n`;
 						}
@@ -88,14 +90,14 @@ module.exports = {
 						}
 
 						commandDetails += `├─────────────────────◊\n`;
-						
+
 						// Description
 						if (command.config.description) {
 							const desc = typeof command.config.description === 'string' ? command.config.description : command.config.description.en || 'No description available';
 							commandDetails += `│ 📋 Description:\n│ ${desc}\n├─────────────────────◊\n`;
 						}
 
-						// Short Description  
+						// Short Description
 						if (command.config.shortDescription) {
 							const shortDesc = typeof command.config.shortDescription === 'string' ? command.config.shortDescription : command.config.shortDescription.en || '';
 							if (shortDesc) {
@@ -114,7 +116,7 @@ module.exports = {
 						// Guide/Usage
 						const guideText = command.config.guide ? (typeof command.config.guide === 'string' ? command.config.guide : command.config.guide.en || 'No guide available') : 'No guide available';
 						commandDetails += `│ 📚 Usage Guide:\n│ ${guideText.replace(/{pn}/g, `/${command.config.name}`)}\n`;
-						
+
 						commandDetails += `╰─────────────────────◊\n`;
 						commandDetails += `     💫 ST_BOT Command Info`;
 

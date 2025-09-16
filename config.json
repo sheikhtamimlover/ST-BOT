@@ -15,7 +15,7 @@
   "antiInbox": false,
   "language": "en",
   "notesLanguage": "change to your language with ISO 639-1 code, available languages: vi (Vietnamese), en (English)",
-  "nickNameBot": "ST | Bot",
+  "nickNameBot": "ST | BOT",
   "prefix": "!",
   "adminOnly": {
     "enable": false,
@@ -59,18 +59,18 @@
   "dashBoard": {
     "enable": true,
     "expireVerifyCode": 300000,
-    "port": 3001,
-    "password": {
+    "port": 3021,
+    "passwordProtection": {
       "enable": false,
       "password": "",
-      "notes": "Dashboard password protection. When enabled, users need to enter the password to access the dashboard. Leave password empty to disable protection."
+      "notes": "Enable password protection for dashboard access"
     }
   },
   "serverUptime": {
     "enable": false,
     "port": 3001,
     "socket": {
-      "enable": true,
+      "enable": false,
       "channelName": "uptime",
       "verifyToken": ""
     }

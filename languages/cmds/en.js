@@ -439,8 +439,6 @@ module.exports = {
 			notInGroup: "Current group chat is not in notification group %1",
 			deleted: "Deleted current group chat from notification group: %1",
 			failed: "Failed to send notification to %1 group chats: \n%2",
-			missingGroupNameToRemove: "Please enter groupNoti name you want to remove",
-			removed: "Removed notification group: %1",
 			missingGroupNameToSend: "Please enter groupNoti name you want to send message",
 			groupIsEmpty: "Notification group \"%1\" is empty",
 			sending: "Sending notification to %1 group chats",
@@ -684,7 +682,7 @@ module.exports = {
 		text: {
 			syntaxError: "Please enter a location",
 			notFound: "Location not found: %1",
-			error: "An error has occurred: %1",
+			error: "An error occurred: %1",
 			today: "Today's weather:\n%1\n🌡 Low - high temperature %2°C - %3°C\n🌡 Feels like %4°C - %5°C\n🌅 Sunrise %6\n🌄 Sunset %7\n🌃 Moonrise %8\n🏙️ Moonset %9\n🌞 Day: %10\n🌙 Night: %11"
 		}
 	},

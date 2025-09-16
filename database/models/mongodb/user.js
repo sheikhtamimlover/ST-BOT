@@ -28,6 +28,14 @@ const userModel = new Schema({
 	data: {
 		type: Object,
 		default: {}
+	},
+	premium: {
+		type: Boolean,
+		default: false
+	},
+	premiumRequests: {
+		type: Array,
+		default: []
 	}
 }, {
 	timestamps: true,

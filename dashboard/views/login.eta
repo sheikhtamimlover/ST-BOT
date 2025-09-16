@@ -4,133 +4,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Login - ST Bot</title>
-    <link href="/css/phoenix.css" rel="stylesheet">
-    <link href="/css/custom.css" rel="stylesheet">
+    <title>Dashboard Login - <%= it.config.nickNameBot %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        .login-container {
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         .login-card {
-            background: white;
-            border-radius: 15px;
-            padding: 3rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
             max-width: 400px;
+            width: 100%;
         }
-        .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .login-title {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-        .login-subtitle {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        .form-label {
+        .bot-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
             display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #333;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
-        .form-input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
+        .login-form {
+            margin-top: 1.5rem;
         }
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
+        .password-input {
+            position: relative;
         }
-        .login-btn {
-            width: 100%;
-            padding: 0.75rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            color: #6c757d;
             cursor: pointer;
-            transition: transform 0.2s ease;
         }
-        .login-btn:hover {
+        .btn-login {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
         }
         .error-message {
-            background: #fee;
-            color: #c33;
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #dc3545;
             padding: 0.75rem;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-bottom: 1rem;
-            text-align: center;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="login-title">🤖 ST Bot</div>
-                <div class="login-subtitle">Dashboard Access</div>
+    <div class="login-card">
+        <div class="text-center">
+            <img src="/images/beb-logo.png" alt="Bot Logo" class="bot-logo">
+            <h3 class="fw-bold mb-1"><%= it.config.nickNameBot %></h3>
+            <p class="text-muted mb-0">Dashboard Access</p>
+        </div>
+
+        <div id="errorMessage" class="error-message">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span id="errorText">Invalid password. Please try again.</span>
+        </div>
+
+        <form class="login-form" onsubmit="login(event)">
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    <i class="fas fa-lock me-2"></i>Password
+                </label>
+                <div class="password-input">
+                    <input type="password" class="form-control" id="password" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                        <i class="fas fa-eye" id="passwordIcon"></i>
+                    </button>
+                </div>
             </div>
             
-            <% if (it.error) { %>
-                <div class="error-message">
-                    <%= it.error %>
-                </div>
-            <% } %>
-            
-            <form method="POST" action="/login">
-                <div class="form-group">
-                    <label for="password" class="form-label">Dashboard Password</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        class="form-input" 
-                        placeholder="Enter dashboard password"
-                        required
-                        autocomplete="current-password"
-                    >
-                </div>
-                
-                <button type="submit" class="login-btn">
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt me-2"></i>
                     Access Dashboard
                 </button>
-            </form>
+            </div>
+        </form>
+
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                <i class="fas fa-shield-alt me-1"></i>
+                Secure dashboard access
+            </small>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Focus on password input when page loads
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.getElementById('passwordIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.className = 'fas fa-eye';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            hideError();
+            
+            const password = document.getElementById('password').value;
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = '/dashboard';
+                } else {
+                    showError(result.message || 'Invalid password. Please try again.');
+                }
+            } catch (error) {
+                showError('Connection error. Please try again.');
+            } finally {
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Access Dashboard';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Focus password input on load
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('password').focus();
-        });
-        
-        // Handle form submission
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const password = document.getElementById('password').value.trim();
-            if (!password) {
-                e.preventDefault();
-                alert('Please enter the dashboard password');
-            }
         });
     </script>
 </body>

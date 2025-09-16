@@ -3,866 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ST Bot Dashboard - Live</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .header h1 {
-            color: #667eea;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            background: #10b981;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .status-indicator.disconnected {
-            background: #ef4444;
-        }
-
-        .status-indicator.reconnecting {
-            background: #f59e0b;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
-            margin-right: 8px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .live-time {
-            font-size: 1.5rem;
-            color: #667eea;
-            font-weight: 600;
-            margin: 15px 0;
-            font-family: 'Courier New', monospace;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .stat-card.updating::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #667eea, transparent);
-            animation: slide 1s infinite;
-        }
-
-        @keyframes slide {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 1rem;
-            font-weight: 500;
-        }
-
-        .controls {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-        }
-
-        .controls h3 {
-            color: #667eea;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .info-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .info-card h3 {
-            color: #667eea;
-            font-size: 1.4rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .info-table {
-            width: 100%;
-        }
-
-        .info-table tr {
-            border-bottom: 1px solid #eee;
-        }
-
-        .info-table td {
-            padding: 12px 0;
-            vertical-align: top;
-        }
-
-        .info-table td:first-child {
-            font-weight: 600;
-            color: #555;
-            width: 40%;
-        }
-
-        .info-table td:last-child {
-            color: #333;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.error {
-            background: #ef4444;
-        }
-
-        .modal {
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 15px;
-            width: 80%;
-            max-width: 800px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: modalSlideIn 0.3s ease;
-        }
-
-        @keyframes modalSlideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 15px 15px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h3 {
-            margin: 0;
-            color: white;
-        }
-
-        .close {
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: opacity 0.3s ease;
-        }
-
-        .close:hover {
-            opacity: 0.7;
-        }
-
-        .modal-body {
-            padding: 30px;
-        }
-
-        .modal-body textarea {
-            width: 100%;
-            min-height: 200px;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            resize: vertical;
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-
-        .modal-body textarea:focus {
-            border-color: #667eea;
-        }
-
-        .modal-actions {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .modal-actions .btn {
-            margin: 0 10px;
-        }
-
-        @media (max-width: 768px) {
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .stat-value {
-                font-size: 2rem;
-            }
-
-            .btn {
-                margin: 5px;
-                padding: 10px 20px;
-            }
-
-            .modal-content {
-                width: 95%;
-                margin: 10% auto;
-            }
-
-            .modal-body {
-                padding: 20px;
-            }
-        }
-    </style>
+    <title><%= it.config.nickNameBot %> Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🤖 ST Bot Dashboard</h1>
-            <p>Live Real-time Bot Management</p>
-            <div class="status-indicator" id="connectionStatus">
-                <div class="status-dot"></div>
-                <span id="statusText">Connecting...</span>
-            </div>
-            <div class="live-time" id="liveTime"></div>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card" id="usersCard">
-                <div class="stat-value">
-                    <span>👥</span>
-                    <span id="totalUsers"><%= it.botInfo.totalUsers %></span>
-                </div>
-                <div class="stat-label">Total Users</div>
-            </div>
-            <div class="stat-card" id="threadsCard">
-                <div class="stat-value">
-                    <span>💬</span>
-                    <span id="totalThreads"><%= it.botInfo.totalThreads %></span>
-                </div>
-                <div class="stat-label">Total Threads</div>
-            </div>
-            <div class="stat-card" id="uptimeCard">
-                <div class="stat-value">
-                    <span>⏱️</span>
-                    <span id="uptime"><%= it.systemInfo.uptime %></span>
-                </div>
-                <div class="stat-label">Uptime</div>
-            </div>
-            <div class="stat-card" id="memoryCard">
-                <div class="stat-value">
-                    <span>🧠</span>
-                    <span id="memoryUsage"><%= it.systemInfo.memoryUsed %></span>
-                </div>
-                <div class="stat-label">Memory Usage</div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="/images/beb-logo.png" alt="Bot Logo" width="40" height="40" class="me-2">
+                <%= it.config.nickNameBot %> Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <span class="live-indicator"></span>
+                    <i class="fas fa-circle text-success"></i> Live
+                </span>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
             </div>
         </div>
+    </nav>
 
-        <div class="controls">
-            <h3>⚡ Quick Actions</h3>
-            <button class="btn btn-danger" onclick="restartBot()" id="restartBtn">🔄 Restart Bot</button>
-            <button class="btn" onclick="updateBot()" id="updateBtn">📥 Update Bot</button>
-            <button class="btn" onclick="showCookieModal()" id="cookieBtn">🍪 Manage Cookies</button>
-            <button class="btn" onclick="showConfigModal()" id="configBtn">⚙️ Bot Config</button>
-        </div>
-
-        <!-- Cookie Management Modal -->
-        <div id="cookieModal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>🍪 Facebook Cookie Management</h3>
-                    <span class="close" onclick="hideCookieModal()">&times;</span>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Stats Cards -->
+            <div class="col-md-3 mb-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Threads</h6>
+                                <h3 id="totalThreads"><%= it.totalThreads %></h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-comments fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <textarea id="cookieData" placeholder="Paste your Facebook cookies here (JSON format)..." rows="10"></textarea>
-                    <div class="modal-actions">
-                        <button class="btn" onclick="loadCookies()">📥 Load Current</button>
-                        <button class="btn btn-danger" onclick="saveCookies()">💾 Save Changes</button>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Users</h6>
+                                <h3 id="totalUsers"><%= it.totalUsers %></h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Bot Prefix</h6>
+                                <h3><%= it.config.prefix %></h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-hashtag fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">
+                                    <span class="live-indicator"></span>Uptime
+                                    <i class="fas fa-wifi text-success ms-1" title="Real-time connection"></i>
+                                </h6>
+                                <h3 id="uptime" class="counter">Loading...</h3>
+                                <div id="uptimeDetails" class="text-white-50">
+                                    <small>
+                                        <i class="fas fa-sync fa-spin me-1"></i>
+                                        Connecting...
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Config Management Modal -->
-        <div id="configModal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>⚙️ Bot Configuration</h3>
-                    <span class="close" onclick="hideConfigModal()">&times;</span>
+        <!-- Main Content -->
+        <div class="row">
+            <!-- File Manager -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-file-code"></i> File Manager</h5>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadFile('config.json')">
+                                Config.json
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadFile('account.txt')">
+                                Account.txt
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- File Type Selection -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="fileType" class="form-label">File Type</label>
+                                <select class="form-select" id="fileType" onchange="loadFileType()">
+                                    <option value="">Choose type...</option>
+                                    <option value="config">Config Files</option>
+                                    <option value="cmds">Commands (scripts/cmds)</option>
+                                    <option value="events">Events (scripts/events)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="fileSelect" class="form-label">Select File</label>
+                                <select class="form-select" id="fileSelect" onchange="loadSelectedFile()" disabled>
+                                    <option value="">Choose a file...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-primary w-100" onclick="showCreateFileModal()" id="createFileBtn" disabled>
+                                    <i class="fas fa-plus me-2"></i>New File
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- File Content Editor -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label for="fileContent" class="form-label mb-0">File Content</label>
+                                <div id="fileInfo" class="text-muted small"></div>
+                            </div>
+                            <textarea class="form-control" id="fileContent" rows="20" placeholder="Select a file to view its content" style="font-family: 'Courier New', monospace; font-size: 14px;"></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-success" onclick="saveFile()" disabled id="saveBtn">
+                                <i class="fas fa-save me-2"></i>Save File
+                            </button>
+                            <button type="button" class="btn btn-warning" onclick="reloadFile()" disabled id="reloadBtn">
+                                <i class="fas fa-sync-alt me-2"></i>Reload Command
+                            </button>
+                            <button type="button" class="btn btn-info" onclick="formatJSON()" title="Format JSON (Ctrl+Shift+F)">
+                                <i class="fas fa-code me-2"></i>Format JSON
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="copyContent()" title="Copy Content (Ctrl+Shift+C)">
+                                <i class="fas fa-copy me-2"></i>Copy
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="deleteFile()" disabled id="deleteBtn">
+                                <i class="fas fa-trash me-2"></i>Delete File
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <textarea id="configData" placeholder="Bot configuration (JSON format)..." rows="15"></textarea>
-                    <div class="modal-actions">
-                        <button class="btn" onclick="loadConfig()">📥 Load Current</button>
-                        <button class="btn btn-danger" onclick="saveConfig()">💾 Save Changes</button>
+            </div>
+
+            <!-- Bot Controls -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-robot"></i> Bot Controls</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6>Bot Information</h6>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <strong>Bot Name:</strong><br>
+                                    <span class="text-muted"><%= it.config.nickNameBot %></span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Prefix:</strong><br>
+                                    <span class="text-muted"><%= it.config.prefix %></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6>
+                                <i class="fas fa-server me-1"></i>System Status
+                                <span class="live-indicator ms-2"></span>
+                            </h6>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2 status-indicator" title="Bot is online and responding">
+                                            <i class="fas fa-robot me-1"></i>Online
+                                        </span>
+                                        <span>Bot Status</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-info me-2" id="memoryUsage" title="Real-time memory usage">
+                                            <i class="fas fa-memory me-1"></i>Loading...
+                                        </span>
+                                        <span>Memory Usage</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 mt-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-primary me-2" title="Database connection status">
+                                            <i class="fas fa-database me-1"></i>Connected
+                                        </span>
+                                        <span>Database</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 mt-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-success me-2" title="Dashboard server status">
+                                            <i class="fas fa-tachometer-alt me-1"></i>Active
+                                        </span>
+                                        <span>Dashboard</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6>Quick Actions</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-warning" onclick="restartBot()">
+                                    <i class="fas fa-redo"></i> Restart Bot
+                                </button>
+                                <button class="btn btn-info" onclick="refreshStats()">
+                                    <i class="fas fa-sync"></i> Refresh Stats
+                                </button>
+                                <button class="btn btn-secondary" onclick="viewLogs()">
+                                    <i class="fas fa-file-alt"></i> View Logs
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h6>Database Stats</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border rounded p-2">
+                                        <div class="h4 mb-0 text-primary" id="dbThreads"><%= it.totalThreads %></div>
+                                        <small class="text-muted">Threads</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border rounded p-2">
+                                        <div class="h4 mb-0 text-success" id="dbUsers"><%= it.totalUsers %></div>
+                                        <small class="text-muted">Users</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="info-grid">
-            <div class="info-card">
-                <h3>🤖 Bot Information</h3>
-                <table class="info-table">
-                    <tr>
-                        <td>Bot ID:</td>
-                        <td><%= it.botInfo.botID %></td>
-                    </tr>
-                    <tr>
-                        <td>Prefix:</td>
-                        <td><code><%= it.botInfo.prefix %></code></td>
-                    </tr>
-                    <tr>
-                        <td>Language:</td>
-                        <td><%= it.botInfo.language %></td>
-                    </tr>
-                    <tr>
-                        <td>Nickname:</td>
-                        <td><%= it.botInfo.nickname %></td>
-                    </tr>
-                    <tr>
-                        <td>Version:</td>
-                        <td><%= it.botInfo.version %></td>
-                    </tr>
-                </table>
-            </div>
-
-            <div class="info-card">
-                <h3>💻 System Information</h3>
-                <table class="info-table">
-                    <tr>
-                        <td>Platform:</td>
-                        <td><%= it.systemInfo.platform %></td>
-                    </tr>
-                    <tr>
-                        <td>Architecture:</td>
-                        <td><%= it.systemInfo.arch %></td>
-                    </tr>
-                    <tr>
-                        <td>Node Version:</td>
-                        <td><%= it.systemInfo.nodeVersion %></td>
-                    </tr>
-                    <tr>
-                        <td>CPU Cores:</td>
-                        <td><%= it.systemInfo.cpus %></td>
-                    </tr>
-                    <tr>
-                        <td>Total Memory:</td>
-                        <td><%= it.systemInfo.totalMemory %></td>
-                    </tr>
-                    <tr>
-                        <td>Free Memory:</td>
-                        <td><%= it.systemInfo.freeMemory %></td>
-                    </tr>
-                </table>
+        <!-- Logs Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-terminal"></i> System Logs</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="logsContainer" class="bg-dark text-light p-3 rounded" style="height: 300px; overflow-y: auto; font-family: monospace;">
+                            <div class="log-entry">
+                                <span class="text-success">[INFO]</span> Dashboard loaded successfully
+                            </div>
+                            <div class="log-entry">
+                                <span class="text-info">[SYSTEM]</span> Bot is running normally
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="notification" id="notification"></div>
+    <!-- Create File Modal -->
+    <div class="modal fade" id="createFileModal" tabindex="-1" aria-labelledby="createFileModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createFileModalLabel">Create New File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newFileName" class="form-label">File Name</label>
+                        <input type="text" class="form-control" id="newFileName" placeholder="e.g., mycommand.js">
+                        <div class="form-text">Enter filename with .js extension</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newFileContent" class="form-label">Initial Content (Optional)</label>
+                        <textarea class="form-control" id="newFileContent" rows="8" placeholder="Leave empty to use default template"></textarea>
+                        <div class="form-text">Leave empty to auto-generate template</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createNewFile()">Create File</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        let ws = null;
-        let reconnectAttempts = 0;
-        const maxReconnectAttempts = 5;
+    <!-- Toast notification -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body" id="toastBody">
+                Notification message here
+            </div>
+        </div>
+    </div>
 
-        // Elements
-        const connectionStatus = document.getElementById('connectionStatus');
-        const statusText = document.getElementById('statusText');
-        const liveTime = document.getElementById('liveTime');
-        const notification = document.getElementById('notification');
-
-        // Update live time every second
-        function updateLiveTime() {
-            const now = new Date();
-            const timeString = now.toLocaleString('en-US', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
-            if (liveTime) {
-                liveTime.textContent = timeString;
-            }
-        }
-
-        // Show notification
-        function showNotification(message, isError = false) {
-            notification.textContent = message;
-            notification.className = `notification ${isError ? 'error' : ''} show`;
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Update stat with animation
-        function updateStat(elementId, newValue) {
-            const element = document.getElementById(elementId);
-            if (!element) return;
-            
-            const card = element.closest('.stat-card');
-            const currentValue = element.textContent;
-
-            if (currentValue !== newValue.toString()) {
-                if (card) card.classList.add('updating');
-                element.style.transform = 'scale(1.1)';
-                element.style.transition = 'transform 0.2s ease';
-                element.textContent = newValue;
-
-                setTimeout(() => {
-                    element.style.transform = 'scale(1)';
-                    if (card) card.classList.remove('updating');
-                }, 300);
-            }
-        }
-
-        // Cookie management functions
-        function showCookieModal() {
-            document.getElementById('cookieModal').style.display = 'block';
-            loadCookies();
-        }
-
-        function hideCookieModal() {
-            document.getElementById('cookieModal').style.display = 'none';
-        }
-
-        async function loadCookies() {
-            try {
-                const response = await fetch('/api/cookies');
-                const data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('cookieData').value = data.cookies;
-                    showNotification('Cookies loaded successfully');
-                } else {
-                    showNotification('Failed to load cookies: ' + data.message, true);
-                }
-            } catch (error) {
-                showNotification('Error loading cookies: ' + error.message, true);
-            }
-        }
-
-        async function saveCookies() {
-            const cookies = document.getElementById('cookieData').value;
-
-            if (!cookies.trim()) {
-                showNotification('Please enter cookie data', true);
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/cookies', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cookies })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification('Cookies saved successfully');
-                    hideCookieModal();
-                } else {
-                    showNotification('Failed to save cookies: ' + data.message, true);
-                }
-            } catch (error) {
-                showNotification('Error saving cookies: ' + error.message, true);
-            }
-        }
-
-        // Config management functions
-        function showConfigModal() {
-            document.getElementById('configModal').style.display = 'block';
-            loadConfig();
-        }
-
-        function hideConfigModal() {
-            document.getElementById('configModal').style.display = 'none';
-        }
-
-        async function loadConfig() {
-            try {
-                const response = await fetch('/api/config');
-                const data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('configData').value = JSON.stringify(data.config, null, 2);
-                    showNotification('Configuration loaded successfully');
-                } else {
-                    showNotification('Failed to load config: ' + data.message, true);
-                }
-            } catch (error) {
-                showNotification('Error loading config: ' + error.message, true);
-            }
-        }
-
-        async function saveConfig() {
-            const configText = document.getElementById('configData').value;
-
-            if (!configText.trim()) {
-                showNotification('Please enter configuration data', true);
-                return;
-            }
-
-            try {
-                const config = JSON.parse(configText);
-
-                const response = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ config })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification('Configuration saved successfully');
-                    hideConfigModal();
-                } else {
-                    showNotification('Failed to save config: ' + data.message, true);
-                }
-            } catch (error) {
-                showNotification('Error saving config: ' + error.message, true);
-            }
-        }
-
-        // Update bot function
-        async function updateBot() {
-            if (!confirm('This will update the bot from GitHub. Continue?')) {
-                return;
-            }
-
-            const updateBtn = document.getElementById('updateBtn');
-            updateBtn.disabled = true;
-            updateBtn.textContent = '📥 Updating...';
-
-            try {
-                const response = await fetch('/api/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification('Bot update initiated. Restarting...');
-                } else {
-                    showNotification('Failed to update bot: ' + data.message, true);
-                }
-            } catch (error) {
-                showNotification('Error updating bot: ' + error.message, true);
-            } finally {
-                setTimeout(() => {
-                    updateBtn.disabled = false;
-                    updateBtn.textContent = '📥 Update Bot';
-                }, 5000);
-            }
-        }
-
-        // WebSocket connection
-        function connectWebSocket() {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-            try {
-                ws = new WebSocket(wsUrl);
-
-                ws.onopen = function() {
-                    console.log('WebSocket connected');
-                    connectionStatus.classList.remove('disconnected');
-                    statusText.textContent = 'Live & Connected';
-                    reconnectAttempts = 0;
-                    showNotification('Connected to live data stream');
-                };
-
-                ws.onmessage = function(event) {
-                    try {
-                        const data = JSON.parse(event.data);
-
-                        if (data.type === 'stats') {
-                            updateStat('totalUsers', data.totalUsers || 0);
-                            updateStat('totalThreads', data.totalThreads || 0);
-                            updateStat('uptime', data.uptime || 'Unknown');
-                            updateStat('memoryUsage', data.memoryUsage || 'Unknown');
-                        }
-                    } catch (error) {
-                        console.error('Error parsing WebSocket message:', error);
-                    }
-                };
-
-                ws.onclose = function(event) {
-                    console.log('WebSocket disconnected:', event.code, event.reason);
-                    connectionStatus.classList.add('disconnected');
-                    statusText.textContent = 'Reconnecting...';
-
-                    if (reconnectAttempts < maxReconnectAttempts) {
-                        reconnectAttempts++;
-                        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
-                        setTimeout(() => {
-                            console.log(`Reconnecting... (${reconnectAttempts}/${maxReconnectAttempts})`);
-                            connectWebSocket();
-                        }, delay);
-                    } else {
-                        statusText.textContent = 'Connection Failed';
-                        showNotification('Connection lost. Please refresh the page.', true);
-                    }
-                };
-
-                ws.onerror = function(error) {
-                    console.error('WebSocket error:', error);
-                    showNotification('Connection error occurred', true);
-                };
-
-            } catch (error) {
-                console.error('Failed to create WebSocket:', error);
-                // Fallback to regular API calls
-                setInterval(fetchStats, 2000);
-            }
-        }
-
-        // Fallback API fetch with improved stats
-        async function fetchStats() {
-            try {
-                const response = await fetch('/api/system');
-                const data = await response.json();
-
-                if (data.success) {
-                    updateStat('totalUsers', data.totalUsers || 0);
-                    updateStat('totalThreads', data.totalThreads || 0);
-                    updateStat('uptime', data.uptime || 'Unknown');
-                    updateStat('memoryUsage', data.memoryUsed || 'Unknown');
-                }
-            } catch (error) {
-                console.error('Error fetching stats:', error);
-            }
-        }
-
-        // Restart bot function
-        async function restartBot() {
-            if (!confirm('Are you sure you want to restart the bot?')) {
-                return;
-            }
-
-            const restartBtn = document.getElementById('restartBtn');
-            restartBtn.disabled = true;
-            restartBtn.textContent = '🔄 Restarting...';
-
-            try {
-                const response = await fetch('/api/restart', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showNotification('Bot is restarting...');
-                } else {
-                    showNotification('Failed to restart bot: ' + data.message, true);
-                }
-            } catch (error) {
-                showNotification('Error restarting bot: ' + error.message, true);
-            } finally {
-                setTimeout(() => {
-                    restartBtn.disabled = false;
-                    restartBtn.textContent = '🔄 Restart Bot';
-                }, 5000);
-            }
-        }
-
-        // Initialize dashboard
-        function init() {
-            // Start live time updates immediately
-            updateLiveTime();
-            const timeInterval = setInterval(updateLiveTime, 1000);
-
-            // Connect WebSocket for real-time data
-            connectWebSocket();
-
-            // Fallback: Also poll API every 5 seconds as backup
-            const fallbackInterval = setInterval(() => {
-                if (!ws || ws.readyState !== WebSocket.OPEN) {
-                    fetchStats();
-                }
-            }, 5000);
-
-            console.log('Live dashboard initialized with WebSocket connection');
-
-            // Cleanup function
-            window.dashboardCleanup = () => {
-                clearInterval(timeInterval);
-                clearInterval(fallbackInterval);
-                if (ws) {
-                    ws.close();
-                }
-            };
-        }
-
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (ws) {
-                ws.close();
-            }
-        });
-
-        // Start when page loads
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/dashboard.js"></script>
 </body>
 </html>

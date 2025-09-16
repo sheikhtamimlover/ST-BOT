@@ -125,10 +125,12 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 					throw new Error(`category of ${text} undefined`);
 				if (!commandName)
 					throw new Error(`name of ${text} undefined`);
-				if (!command.onStart)
-					throw new Error(`onStart of ${text} undefined`);
-				if (typeof command.onStart !== "function")
+				if (!command.onStart && !command.ST)
+					throw new Error(`onStart or ST function of ${text} is required`);
+				if (command.onStart && typeof command.onStart !== "function")
 					throw new Error(`onStart of ${text} must be a function`);
+				if (command.ST && typeof command.ST !== "function")
+					throw new Error(`ST of ${text} must be a function`);
 				if (GoatBot[setMap].has(commandName))
 					throw new Error(`${text} "${commandName}" already exists with file "${removeHomeDir(GoatBot[setMap].get(commandName).location || "")}"`);
 				const { onFirstChat, onChat, onLoad, onEvent, onAnyEvent } = command;
@@ -186,6 +188,13 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 						throw new Error("The value of \"onLoad\" must be function");
 					await onLoad({ api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData });
 				}
+				// ——————————————— CHECK ST FUNCTION ————————————————— //
+				if (command.ST) {
+					if (typeof command.ST != "function")
+						throw new Error("The value of \"ST\" must be function");
+					// ST function is same as onStart, so we treat it the same way as onStart
+					// Don't call ST during loading, it will be called when the command is executed
+				}
 				// ——————————————— CHECK RUN ANYTIME ——————————————— //
 				if (onChat)
 					GoatBot.onChat.push(commandName);
@@ -201,7 +210,7 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 				// —————————————— IMPORT TO GLOBALGOAT —————————————— //
 				GoatBot[setMap].set(commandName.toLowerCase(), command);
 				commandLoadSuccess++;
-				// ————————————————— COMPARE COMMAND (removed in open source) ————————————————— //
+				// —————————————————COMPARE COMMAND (removed in open source) ————————————————— //
 
 				global.GoatBot[folderModules == "cmds" ? "commandFilesPath" : "eventCommandsFilesPath"].push({
 					// filePath: pathCommand,

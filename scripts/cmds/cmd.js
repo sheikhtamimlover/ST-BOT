@@ -27,7 +27,7 @@ function isURL(str) {
 module.exports = {
 	config: {
 		name: "cmd",
-		version: "2.3.5",
+		version: "2.4.50",
 		author: "ST",
 		countDown: 5,
 		role: 2,
@@ -105,7 +105,7 @@ module.exports = {
 		}
 	},
 
-	onStart: async ({ args, message, api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, event, commandName, getLang }) => {
+	ST: async ({ args, message, api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, event, commandName, getLang }) => {
 		const { unloadScripts, loadScripts } = global.utils;
 		if (
 			args[0] == "load"
@@ -557,10 +557,12 @@ function loadScripts(folder, fileName, log, configCommands, api, threadModel, us
 			command.onLoad({ api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData });
 
 		const { envGlobal, envConfig } = configCommand;
-		if (!command.onStart)
-			throw new Error('Function onStart is missing!');
-		if (typeof command.onStart != "function")
-			throw new Error('Function onStart must be a function!');
+		if (!command.onStart && !command.ST)
+			throw new Error(`onStart or ST function of ${commandType} "${scriptName}" is required`);
+		if (command.onStart && typeof command.onStart !== "function")
+			throw new Error(`onStart of ${commandType} "${scriptName}" must be a function`);
+		if (command.ST && typeof command.ST !== "function")
+			throw new Error(`ST of ${commandType} "${scriptName}" must be a function`);
 		if (!scriptName)
 			throw new Error('Name of command is missing!');
 		// ————————————————— CHECK ALIASES ————————————————— //

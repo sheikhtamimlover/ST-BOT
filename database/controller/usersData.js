@@ -171,7 +171,7 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 
 	function getNameInDB(userID) {
 		const userData = global.db.allUserData.find(u => u.userID == userID);
-		if (userData)
+		if (userData && userData.name)
 			return userData.name;
 		else
 			return null;
@@ -185,15 +185,20 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 			});
 		}
 
-		if (checkData)
-			return getNameInDB(userID);
+		if (checkData) {
+			const name = getNameInDB(userID);
+			return name || `User ${userID}`;
+		}
 
 		try {
 			const user = await axios.post(`https://www.facebook.com/api/graphql/?q=${`node(${userID}){name}`}`);
-			return user.data[userID].name;
+			if (user.data && user.data[userID] && user.data[userID].name) {
+				return user.data[userID].name;
+			}
+			return getNameInDB(userID) || `User ${userID}`;
 		}
 		catch (error) {
-			return getNameInDB(userID);
+			return getNameInDB(userID) || `User ${userID}`;
 		}
 	}
 
@@ -247,7 +252,9 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 					money: 0,
 					banned: {},
 					settings: {},
-					data: {}
+					data: {},
+					premium: false,
+					premiumRequests: []
 				};
 				userData = await save(userID, userData, "create");
 				resolve_(_.cloneDeep(userData));

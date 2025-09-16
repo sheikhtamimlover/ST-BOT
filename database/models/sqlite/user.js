@@ -28,6 +28,14 @@ module.exports = function (sequelize) {
 		data: {
 			type: DataTypes.JSON,
 			defaultValue: {}
+		},
+		premium: {
+			type: DataTypes.BOOLEAN,
+			defaultValue: false
+		},
+		premiumRequests: {
+			type: DataTypes.JSON,
+			defaultValue: []
 		}
 	}, {
 		sequelize,

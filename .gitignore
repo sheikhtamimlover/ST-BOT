@@ -25,3 +25,4 @@ scripts/events/tmp/*
 scripts/events/data/leaveAttachment
 scripts/events/data/welcomeAttachment
 !scripts/events/tmp/.gitkeep
+.git.backup.*

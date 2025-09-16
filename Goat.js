@@ -1,4 +1,3 @@
-
 process.on('unhandledRejection', error => console.log(error));
 process.on('uncaughtException', error => console.log(error));
 
@@ -68,7 +67,7 @@ global.GoatBot = {
 	reLoginBot: function () { }, // function relogin bot, will be set in bot/login/login.js
 	Listening: null, // store current listening handle
 	oldListening: [], // store old listening handle
-	callbackListenTime: {}, // store callback listen 
+	callbackListenTime: {}, // store callback listen
 	storage5Message: [], // store 5 message to check listening loop
 	fcaApi: null, // store fca api
 	botID: null // store bot id
@@ -110,7 +109,8 @@ global.client = {
 		creatingDashBoardData: [],
 		creatingGlobalData: []
 	},
-	commandBanned: configCommands.commandBanned
+	commandBanned: configCommands.commandBanned,
+	premiumRequests: []
 };
 
 const utils = require("./utils.js");

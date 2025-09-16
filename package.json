@@ -1,6 +1,6 @@
 {
   "name": "st-bot",
-  "version": "2.4.0",
+  "version": "2.4.50",
   "description": "A simple Bot chat messenger using personal account. Made by ST | Sheikh Tamim",
   "main": "index.js",
   "engines": {

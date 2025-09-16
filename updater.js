@@ -156,11 +156,27 @@ fs.copyFileSync = function (src, dest) {
 		console.log(`   ${versionNotes}\n`);
 	}
 
+	// Show media information if available
+	const allImageUrls = versionsNeedToUpdate.flatMap(v => v.imageUrl || []);
+	const allVideoUrls = versionsNeedToUpdate.flatMap(v => v.videoUrl || []);
+	const allAudioUrls = versionsNeedToUpdate.flatMap(v => v.audioUrl || []);
+	
+	if (allImageUrls.length > 0 || allVideoUrls.length > 0 || allAudioUrls.length > 0) {
+		console.log(chalk.bold.blue('\n📎 Media Content in Updates:'));
+		if (allImageUrls.length > 0) console.log(`   🖼️  Images: ${chalk.yellow(allImageUrls.length)} files`);
+		if (allVideoUrls.length > 0) console.log(`   🎥 Videos: ${chalk.yellow(allVideoUrls.length)} files`);
+		if (allAudioUrls.length > 0) console.log(`   🎵 Audio: ${chalk.yellow(allAudioUrls.length)} files`);
+		console.log('');
+	}
+
 	const createUpdate = {
 		version: "",
 		files: {},
 		deleteFiles: {},
-		reinstallDependencies: false
+		reinstallDependencies: false,
+		imageUrl: [],
+		videoUrl: [],
+		audioUrl: []
 	};
 
 	for (const version of versionsNeedToUpdate) {
@@ -186,6 +202,11 @@ fs.copyFileSync = function (src, dest) {
 			for (const filePath in version.deleteFiles)
 				createUpdate.deleteFiles[filePath] = version.deleteFiles[filePath];
 
+			// Merge media URLs
+			if (version.imageUrl) createUpdate.imageUrl.push(...version.imageUrl);
+			if (version.videoUrl) createUpdate.videoUrl.push(...version.videoUrl);
+			if (version.audioUrl) createUpdate.audioUrl.push(...version.audioUrl);
+
 			createUpdate.version = version.version;
 		}
 	}
@@ -202,7 +223,12 @@ fs.copyFileSync = function (src, dest) {
 		fs.moveSync(folder, `${backupsPath}/${folder}`);
 
 	log.info("UPDATE", `Update to version ${chalk.yellow(createUpdate.version)}`);
-	const { files, deleteFiles, reinstallDependencies } = createUpdate;
+	const { files, deleteFiles, reinstallDependencies, imageUrl, videoUrl, audioUrl } = createUpdate;
+
+	// Log media content summary
+	if (imageUrl.length > 0 || videoUrl.length > 0 || audioUrl.length > 0) {
+		log.info("UPDATE", `📎 Media content: ${chalk.cyan(imageUrl.length)} images, ${chalk.cyan(videoUrl.length)} videos, ${chalk.cyan(audioUrl.length)} audio files`);
+	}
 
 	for (const filePath in files) {
 		const description = files[filePath];
@@ -303,4 +329,9 @@ fs.copyFileSync = function (src, dest) {
 	}
 
 	log.info("UPDATE", getText("updater", "backupSuccess", chalk.yellow(folderBackup)));
-})();
+	log.info("UPDATE", "✅ Update completed successfully!");
+	log.info("UPDATE", "You can now restart the bot to use the updated version.");
+})().catch(error => {
+	log.error("UPDATE", "Update process failed:", error.message);
+	process.exit(1);
+});
