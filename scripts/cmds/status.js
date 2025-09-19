@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "status",
     aliases: ["health", "ping"],
-    version: "2.4.0",
+    version: "2.4.60",
     author: "ST | Sheikh Tamim",
     role: 0,
     shortDescription: { en: "Bot health info and ping" },
@@ -16,10 +16,9 @@ module.exports = {
     }
   },
 
-  onStart: async function ({ api, event, threadsData, usersData, message }) {
+  ST: async function ({ api, event, threadsData, usersData, message }) {
     const { threadID, messageID } = event;
     
-
     const loadingStages = [
       "🔄 Initializing system diagnostics...",
       "📡 Measuring network latency...", 
@@ -33,13 +32,22 @@ module.exports = {
     
     const loadingMessage = await api.sendMessage(loadingStages[0], threadID);
     
+    // Create progress bar function
+    const createProgressBar = (progress) => {
+      const totalBars = 10;
+      const filledBars = Math.floor((progress / 100) * totalBars);
+      const emptyBars = totalBars - filledBars;
+      
+      const progressBar = '▰'.repeat(filledBars) + '▱'.repeat(emptyBars);
+      return `[${progressBar}] ${Math.floor(progress)}%`;
+    };
     
     let editCount = 0;
-    const maxEdits = 3;
+    const maxEdits = 4; // Show progress 4 times
     
     const loadingInterval = setInterval(async () => {
       editCount++;
-      loadingProgress += Math.random() * 15 + 25;
+      loadingProgress += Math.random() * 15 + 20;
       
       if (editCount >= maxEdits || loadingProgress >= 100) {
         loadingProgress = 100;
@@ -49,8 +57,8 @@ module.exports = {
         return;
       }
       
-      const progressBar = this.createProgressBar(loadingProgress);
-      const stageIndex = Math.min(Math.floor(loadingProgress / 35), loadingStages.length - 2);
+      const progressBar = createProgressBar(loadingProgress);
+      const stageIndex = Math.min(Math.floor(loadingProgress / 25), loadingStages.length - 2);
       const stageText = loadingStages[stageIndex];
       
       try {
@@ -59,19 +67,17 @@ module.exports = {
           loadingMessage.messageID
         );
       } catch (err) {
-        
+        // Silent error handling
       }
     }, 800);
     
     const generateFinalStatus = async () => {
       try {
-
+        // Generate random ping values
         const apiPing = Math.floor(Math.random() * 35) + 15;
-
-
         const botPing = Math.floor(Math.random() * 200) + 100;
         
-
+        // Calculate uptime
         const uptimeSec = process.uptime();
         const uptimeH = Math.floor(uptimeSec / 3600);
         const uptimeM = Math.floor((uptimeSec % 3600) / 60);
@@ -95,11 +101,10 @@ module.exports = {
         const platform = os.platform();
         const arch = os.arch();
 
-       
+        // Get database stats
         const totalThreads = global.db?.allThreadData?.length || 0;
         const totalUsers = global.db?.allUserData?.length || 0;
         
-
         const getStatusIndicator = (ping) => {
           if (ping < 100) return "🟢 Excellent";
           if (ping < 300) return "🟡 Good";
@@ -147,7 +152,6 @@ module.exports = {
 │     Powered by ST | Sheikh Tamim     │
 ╰─────────────────────────────────╯`;
 
-        
         await api.editMessage(response, loadingMessage.messageID);
       } catch (error) {
         console.error('Status command error:', error);
@@ -157,19 +161,9 @@ module.exports = {
             loadingMessage.messageID
           );
         } catch (err) {
-          
           return message.reply("❌ Error generating status report. Please try again later.");
         }
       }
     };
-  },
-
-  createProgressBar: function(progress) {
-    const totalBars = 25;
-    const filledBars = Math.floor((progress / 100) * totalBars);
-    const emptyBars = totalBars - filledBars;
-    
-    const progressBar = '█'.repeat(filledBars) + '░'.repeat(emptyBars);
-    return `[${progressBar}] ${Math.floor(progress)}%`;
   }
 };

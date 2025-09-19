@@ -292,13 +292,78 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 		let isUserCallCommand = false;
 		async function onStart() {
 			// —————————————— CHECK USE BOT —————————————— //
-			if (!body || !body.startsWith(prefix))
+			if (!body)
 				return;
+
 			const dateNow = Date.now();
-			const args = body.slice(prefix.length).trim().split(/ +/);
-			// ————————————  CHECK HAS COMMAND ——————————— //
-			let commandName = args.shift().toLowerCase();
-			let command = GoatBot.commands.get(commandName) || GoatBot.commands.get(GoatBot.aliases.get(commandName));
+			const { usePrefix } = config;
+			const isAdminBot = isAdmin(senderID);
+			const isSpecificUid = usePrefix.adminUsePrefix.specificUids.includes(senderID);
+			
+			let args = [];
+			let commandName = "";
+			let command = null;
+			let usedPrefix = false;
+
+			// Check if message starts with prefix
+			if (body.startsWith(prefix)) {
+				usedPrefix = true;
+				args = body.slice(prefix.length).trim().split(/ +/);
+				commandName = args.shift().toLowerCase();
+			} else {
+				// Check if we should process without prefix
+				args = body.trim().split(/ +/);
+				commandName = args.shift().toLowerCase();
+			}
+
+			// Find the command
+			command = GoatBot.commands.get(commandName) || GoatBot.commands.get(GoatBot.aliases.get(commandName));
+
+			// If command not found, return early
+			if (!command) {
+				// Only show "command not found" if prefix was used
+				if (usedPrefix) {
+					if (!hideNotiMessage.commandNotFound)
+						return await message.reply(
+							commandName ?
+								utils.getText({ lang: langCode, head: "handlerEvents" }, "commandNotFound", commandName, prefix) :
+								utils.getText({ lang: langCode, head: "handlerEvents" }, "commandNotFound2", prefix)
+						);
+				}
+				return;
+			}
+
+			// Determine if prefix is required for this command
+			let prefixRequired = true;
+			
+			// Check global usePrefix setting
+			if (!usePrefix.enable) {
+				prefixRequired = false;
+			}
+			
+			// Check admin usePrefix settings
+			if (isAdminBot && !usePrefix.adminUsePrefix.enable) {
+				prefixRequired = false;
+			}
+			
+			// Check specific UIDs
+			if (isSpecificUid && !usePrefix.adminUsePrefix.enable) {
+				prefixRequired = false;
+			}
+			
+			// Check command-specific usePrefix setting
+			if (command.config.usePrefix !== undefined) {
+				// If global usePrefix is enabled, respect command-level setting
+				if (usePrefix.enable) {
+					prefixRequired = command.config.usePrefix;
+				}
+				// If global usePrefix is disabled, command-level setting has no effect
+			}
+
+			// Validate prefix usage
+			if (prefixRequired && !usedPrefix) {
+				return; // Prefix required but not used
+			}
 			// ———————— CHECK ALIASES SET BY GROUP ———————— //
 			const aliasesData = threadData.data.aliases || {};
 			for (const cmdName in aliasesData) {
@@ -307,9 +372,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 					break;
 				}
 			}
+			
 			// ————————————— SET COMMAND NAME ————————————— //
 			if (command)
 				commandName = command.config.name;
+
 			// ——————— FUNCTION REMOVE COMMAND NAME ———————— //
 			function removeCommandNameFromBody(body_, prefix_, commandName_) {
 				if (arguments.length) {
@@ -320,27 +387,27 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 					if (typeof commandName_ != "string")
 						throw new Error(`The third argument (commandName) must be a string, but got "${getType(commandName_)}"`);
 
-					return body_.replace(new RegExp(`^${prefix_}(\\s+|)${commandName_}`, "i"), "").trim();
+					if (usedPrefix) {
+						return body_.replace(new RegExp(`^${prefix_}(\\s+|)${commandName_}`, "i"), "").trim();
+					} else {
+						return body_.replace(new RegExp(`^(\\s+|)${commandName_}`, "i"), "").trim();
+					}
 				}
 				else {
-					return body.replace(new RegExp(`^${prefix}(\\s+|)${commandName}`, "i"), "").trim();
+					if (usedPrefix) {
+						return body.replace(new RegExp(`^${prefix}(\\s+|)${commandName}`, "i"), "").trim();
+					} else {
+						return body.replace(new RegExp(`^(\\s+|)${commandName}`, "i"), "").trim();
+					}
 				}
 			}
+			
 			// —————  CHECK BANNED OR ONLY ADMIN BOX  ————— //
 			if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, langCode))
 				return;
 			// ————————————— CHECK PREMIUM ————————————— //
 			if (isPremiumRequired(userData, senderID, commandName, message, langCode, command))
 				return;
-			if (!command)
-				if (!hideNotiMessage.commandNotFound)
-					return await message.reply(
-						commandName ?
-							utils.getText({ lang: langCode, head: "handlerEvents" }, "commandNotFound", commandName, prefix) :
-							utils.getText({ lang: langCode, head: "handlerEvents" }, "commandNotFound2", prefix)
-					);
-				else
-					return true;
 			// ————————————— CHECK PERMISSION ———————————— //
 			const roleConfig = getRoleConfig(utils, command, isGroup, threadData, commandName);
 			const needRole = roleConfig.onStart;

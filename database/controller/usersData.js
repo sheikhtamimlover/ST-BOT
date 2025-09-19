@@ -243,11 +243,17 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 					});
 				}
 				userInfo = userInfo || (await api.getUserInfo(userID))[userID];
+				if (!userInfo) {
+					throw new CustomError({
+						name: "USER_INFO_NOT_FOUND",
+						message: `Cannot get user info for userID: ${userID}`
+					});
+				}
 				let userData = {
 					userID,
-					name: userInfo.name,
-					gender: userInfo.gender,
-					vanity: userInfo.vanity,
+					name: userInfo.name || `User ${userID}`,
+					gender: userInfo.gender || 0,
+					vanity: userInfo.vanity || null,
 					exp: 0,
 					money: 0,
 					banned: {},
