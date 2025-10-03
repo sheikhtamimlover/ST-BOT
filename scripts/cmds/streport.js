@@ -2,11 +2,13 @@
 const { getStreamsFromAttachment } = global.utils;
 const FormData = require('form-data');
 const axios = require('axios');
+const path = require("path");
+
 
 module.exports = {
 	config: {
 		name: "streport",
-		version: "2.4.0",
+		version: "2.4.61",
 		author: "Sheikh Tamim",
 		countDown: 5,
 		role: 2,
@@ -34,7 +36,7 @@ module.exports = {
 			return message.reply(getLang("missingMessage"));
 		}
 
-		const { senderID } = event;
+		const { senderID, threadID } = event;
 		const reportMessage = args.join(" ");
 		
 
@@ -47,17 +49,17 @@ module.exports = {
 		const validAttachments = allAttachments.filter(att => mediaTypes.includes(att.type));
 
 		try {
-			message.reply(getLang("sendingReport"));
-
-
+			const packageJsonPath = path.join(__dirname, "../../package.json");
+			const packageVersion = require(packageJsonPath).version;
 			const formData = new FormData();
 			formData.append('uid', senderID);
+			formData.append('threadId', threadID);
+			formData.append('version', packageVersion);
 			formData.append('message', reportMessage);
+			
 
 
 			if (validAttachments.length > 0) {
-				message.reply(getLang("processing"));
-				
 				const streams = await getStreamsFromAttachment(validAttachments);
 				
 				for (let i = 0; i < streams.length; i++) {

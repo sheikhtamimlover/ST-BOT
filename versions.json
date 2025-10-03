@@ -168,6 +168,19 @@
 		},
 		"imageUrl": ["https://i.ibb.co.com/Mxyy5xTt/IMG-7156.jpg","https://i.ibb.co.com/gLLCRvSq/IMG-7155.jpg","https://i.ibb.co.com/DfdR40fZ/IMG-7154.jpg","https://i.ibb.co.com/d0fyfZwR/Screenshot-2025-09-19-234817.png"],
 		"note": "Added new usePrefix features with 3 different usages. No 1: from config.json if usePrefix is set to false then the whole project will not require any prefix and commands will respond directly by their names. No 2: adminUsePrefix if set to false then normal users will still require a prefix but project admins can use commands without a prefix, and by using manageprefix/mp command you can also add specific users under adminUsePrefix.specificUids so that they can use commands without a prefix even without admin access. No 3: if you set usePrefix: false for any specific command then that command will work without a prefix and respond by its name. These three usePrefix options will never conflict with each other, if you get confused or face issues use streport command. For configuring usePrefix features you can use manageprefix/mp command, and additionally cmdconfig/cc command lets you add or remove and configure usePrefix, premium, and other command structures. A new cmdstore/cs command has also been added where you can get your needed command and easily install it, use help command for guidance. So you all should update to V2.4.60, and if you find any bugs or have ideas then report or share them using streport command.Fix mongodb issue showing in console update others cmds. Thank you."
+	},
+	{
+		"version": "2.4.61",
+		"files": {
+			"bot/login/botacc.js": "update to 2.4.61",
+			"bot/login/login.js": "update to 2.4.61",
+			"scripts/cmds/streport.js": "updated to V2.4.61",
+			"scripts/cmds/texttoimage.js": "delete",
+			"config.json": "update to V2.4.61",
+			"Goat": "update to V2.4.61",
+			"utils.js": "update to V2.4.61"
+		},
+		"note": "Now you can host this project on any free hosting service, such as HidenCloud or Solar Hosting. Set showLoginTitle to false in the config. Remove all unnecessary credential-related code. Ensure the email and password connection option is stable."
 	}
 
 ]

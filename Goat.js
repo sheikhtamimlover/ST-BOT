@@ -3,8 +3,6 @@ process.on('uncaughtException', error => console.log(error));
 
 const axios = require("axios");
 const fs = require("fs-extra");
-const google = require("googleapis").google;
-const nodemailer = require("nodemailer");
 const { execSync } = require('child_process');
 const log = require('./logger/log.js');
 const path = require("path");
@@ -27,7 +25,7 @@ function validJSON(pathDir) {
 	}
 }
 
-const { NODE_ENV } = process.env;
+
 const dirConfig = path.normalize(`${__dirname}/config.json`);
 const dirConfigCommands = path.normalize(`${__dirname}/configCommands.json`);
 const dirAccount = path.normalize(`${__dirname}/account.txt`);
@@ -199,70 +197,9 @@ if (config.autoRestart) {
 }
 
 (async () => {
-	// ———————————————— SETUP MAIL ———————————————— //
-	let transporter = null;
-	let sendMail = null;
-
-	if (config.credentials && config.credentials.gmailAccount && config.credentials.gmailAccount.email && config.credentials.gmailAccount.clientId && config.credentials.gmailAccount.clientSecret) {
-		try {
-			const { gmailAccount } = config.credentials;
-			const { email, clientId, clientSecret, refreshToken } = gmailAccount;
-			const OAuth2 = google.auth.OAuth2;
-			const OAuth2_client = new OAuth2(clientId, clientSecret);
-			OAuth2_client.setCredentials({ refresh_token: refreshToken });
-			let accessToken;
-
-			accessToken = await OAuth2_client.getAccessToken();
-			transporter = nodemailer.createTransport({
-				host: 'smtp.gmail.com',
-				service: 'Gmail',
-				auth: {
-					type: 'OAuth2',
-					user: email,
-					clientId,
-					clientSecret,
-					refreshToken,
-					accessToken
-				}
-			});
-
-			sendMail = async function({ to, subject, text, html, attachments }) {
-				const transporter = nodemailer.createTransport({
-					host: 'smtp.gmail.com',
-					service: 'Gmail',
-					auth: {
-						type: 'OAuth2',
-						user: email,
-						clientId,
-						clientSecret,
-						refreshToken,
-						accessToken
-					}
-				});
-				const mailOptions = {
-					from: email,
-					to,
-					subject,
-					text,
-					html,
-					attachments
-				};
-				const info = await transporter.sendMail(mailOptions);
-				return info;
-			};
-
-			utils.log.info("MAIL", "Gmail credentials configured successfully");
-		}
-		catch (err) {
-			utils.log.warn("MAIL", "Gmail credentials invalid or expired, mail functionality disabled");
-			sendMail = () => Promise.reject(new Error("Gmail not configured"));
-		}
-	} else {
-		sendMail = () => Promise.reject(new Error("Gmail not configured"));
-	}
-
-	global.utils.sendMail = sendMail;
-	global.utils.transporter = transporter;
+	// Gmail functionality removed
+	global.utils.sendMail = () => Promise.reject(new Error("Gmail not configured"));
+	global.utils.transporter = null;
 
 	// ———————————————— CHECK VERSION ———————————————— //
 	const { data: { version } } = await axios.get("https://raw.githubusercontent.com/sheikhtamimlover/ST-BOT/main/package.json");
@@ -275,13 +212,7 @@ if (config.autoRestart) {
 			colors.hex("#eb6a07", version),
 			colors.hex("#eb6a07", "node update")
 		));
-	// —————————— CHECK FOLDER GOOGLE DRIVE —————————— //
-	try {
-		const parentIdGoogleDrive = await utils.drive.checkAndCreateParentFolder("GoatBot");
-		utils.drive.parentID = parentIdGoogleDrive;
-	} catch (err) {
-		utils.drive.parentID = "default";
-	}
+
 	// ———————————————————— LOGIN ———————————————————— //
 	require(`./bot/login/login.js`);
 })();

