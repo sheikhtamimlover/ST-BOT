@@ -193,7 +193,7 @@
 			"Goat.js": "update to V2.4.62",
 			"updater.js": "update to V2.4.62"
 		},
-		"note": "Now you can host this project on any free hosting service, such as HidenCloud or Solar Hosting. Set showLoginTitle to false in the config. Remove all unnecessary credential-related code. Ensure the email and password connection option is stable."
+		"note": "Fixed console error messages caused by unhandled reactions. Improved the update function to ensure home directory files update correctly"
 	}
 
 
