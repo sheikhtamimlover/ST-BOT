@@ -36,6 +36,11 @@ module.exports = async function (usersData, threadsData, event) {
 
 	// ————————————— CHECK USER DATA ————————————— //
 	if (senderID) {
+		// Skip userID 0 (unreact events from Facebook API)
+		if (senderID === 0 || senderID === '0') {
+			return;
+		}
+		
 		try {
 			const findInCreatingUserData = creatingUserData.find(u => u.userID == senderID);
 			if (!findInCreatingUserData) {

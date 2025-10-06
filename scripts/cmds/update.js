@@ -6,7 +6,7 @@ const dirBootLogTemp = `${__dirname}/tmp/rebootUpdated.txt`;
 module.exports = {
 	config: {
 		name: "update",
-		version: "2.4.50",
+		version: "2.4.62",
 		author: "ST | Sheikh Tamim",
 		role: 2,
 		description: {
@@ -15,8 +15,8 @@ module.exports = {
 		},
 		category: "owner",
 		guide: {
-			en: "   {pn}",
-			vi: "   {pn}"
+			en: "   {pn}\n   {pn} refuse - Temporarily refuse update and allow bot to work normally for 2 hours",
+			vi: "   {pn}\n   {pn} refuse - Từ chối cập nhật tạm thời và cho phép bot hoạt động bình thường trong 2 giờ"
 		}
 	},
 
@@ -38,6 +38,8 @@ module.exports = {
 		},
 		en: {
 			noUpdates: "✅ | You are using the latest version of ST | BOT (v%1).",
+			refuseSuccess: "✅ | Update requirement temporarily disabled for 2 hours. Bot will work normally.",
+			noUpdateToRefuse: "⚠️ | No pending update to refuse.",
 			updatePrompt: "💫 | You are using version %1. There is a new version %2. Do you want to update the chatbot to the latest version?"
 				+ "\n\n⬆️ | The following files will be updated:"
 				+ "\n%3%4"
@@ -61,7 +63,35 @@ module.exports = {
 		}
 	},
 
-	ST: async function ({ message, getLang, commandName, event }) {
+	ST: async function ({ message, getLang, commandName, event, args }) {
+		// Handle refuse command
+		if (args[0] && (args[0].toLowerCase() === 'refuse' || args[0].toLowerCase() === 'r')) {
+			if (global.updateAvailable && global.updateAvailable.hasUpdate) {
+				// Set refuse timestamp (refuse for 2 hours)
+				global.updateRefuseUntil = Date.now() + (2 * 60 * 60 * 1000);
+				global.GoatBot.updateRefuseUntil = global.updateRefuseUntil;
+				
+				// Temporarily disable update requirement
+				global.updateAvailable.hasUpdate = false;
+				global.GoatBot.updateAvailable.hasUpdate = false;
+				
+				// Reset notification tracking to allow fresh notifications after 2 hours
+				global.updateNotificationSent = {
+					users: new Set(),
+					admins: new Set()
+				};
+				
+				const refuseMessage = `✅ Update Requirement Temporarily Disabled\n\n` +
+					`⏰ The project will work normally for the next 2 hours.\n` +
+					`After that, update will be required again.\n\n` +
+					`💡 Use ${global.GoatBot.config.prefix}update anytime to update immediately.`;
+				
+				return message.reply(refuseMessage);
+			} else {
+				return message.reply("⚠️ No pending update to refuse.");
+			}
+		}
+		
 		// Check for updates
 		const { data: { version } } = await axios.get("https://raw.githubusercontent.com/sheikhtamimlover/ST-BOT/refs/heads/main/package.json");
 		const { data: versions } = await axios.get("https://raw.githubusercontent.com/sheikhtamimlover/ST-BOT/refs/heads/main/versions.json");
@@ -205,6 +235,8 @@ module.exports = {
 
 	onReply: async function ({ message, getLang, event }) {
 		if (['yes', 'y'].includes(event.body?.toLowerCase())) {
+			// Set flag to indicate update completed successfully
+			global.updateJustCompleted = true;
 			await message.reply(getLang("botWillRestart"));
 			process.exit(2);
 		}

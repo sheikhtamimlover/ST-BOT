@@ -241,6 +241,7 @@ fs.copyFileSync = function (src, dest) {
 			getFile = response.data;
 		}
 		catch (e) {
+			log.warn("UPDATE", `Failed to download ${filePath}: ${e.message}`);
 			continue;
 		}
 
@@ -272,8 +273,15 @@ fs.copyFileSync = function (src, dest) {
 			const fileExists = fs.existsSync(fullPath);
 
 			// if file exists, backup it
-			if (fileExists)
-				fs.copyFileSync(fullPath, `${folderBackup}/${filePath}`);
+			if (fileExists) {
+				// Ensure backup folder structure exists
+				const backupFilePath = `${folderBackup}/${filePath}`;
+				const backupFileDir = path.dirname(backupFilePath);
+				if (!fs.existsSync(backupFileDir)) {
+					fs.mkdirSync(backupFileDir, { recursive: true });
+				}
+				fs.copyFileSync(fullPath, backupFilePath);
+			}
 
 			// check first line of file, if it contains any contentsSkip, skip update this file
 			const firstLine = fileExists ? fs.readFileSync(fullPath, "utf-8").trim().split(/\r?\n|\r/)[0] : "";

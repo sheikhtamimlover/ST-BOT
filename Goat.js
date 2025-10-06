@@ -71,6 +71,12 @@ global.GoatBot = {
 	botID: null // store bot id
 };
 
+// Initialize update tracking before async operations
+global.GoatBot.updateAvailable = { hasUpdate: false, newVersion: null };
+global.GoatBot.updateRefuseUntil = null;
+global.updateAvailable = global.GoatBot.updateAvailable;
+global.updateRefuseUntil = global.GoatBot.updateRefuseUntil;
+
 global.db = {
 	// all data
 	allThreadData: [],
@@ -177,24 +183,43 @@ global.GoatBot.envEvents = global.GoatBot.configCommands.envEvents;
 const getText = global.utils.getText;
 
 // ———————————————— AUTO RESTART ———————————————— //
-if (config.autoRestart) {
-	const time = config.autoRestart.time;
-	if (!isNaN(time) && time > 0) {
-		utils.log.info("AUTO RESTART", getText("Goat", "autoRestart1", utils.convertTime(time, true)));
-		setTimeout(() => {
-			utils.log.info("AUTO RESTART", "Restarting...");
-			process.exit(2);
-		}, time);
+	if (config.autoRestart) {
+		const time = config.autoRestart.time;
+		if (!isNaN(time) && time > 0) {
+			utils.log.info("AUTO RESTART", getText("Goat", "autoRestart1", utils.convertTime(time, true)));
+			setTimeout(() => {
+				utils.log.info("AUTO RESTART", "Restarting...");
+				process.exit(2);
+			}, time);
+		}
+		else if (typeof time == "string" && time.match(/^((((\d+,)+\d+|(\d+(\/|-|#)\d+)|\d+L?|\*(\/\d+)?|L(-\d+)?|\?|[A-Z]{3}(-[A-Z]{3})?) ?){5,7})$/gmi)) {
+			utils.log.info("AUTO RESTART", getText("Goat", "autoRestart2", time));
+			const cron = require("node-cron");
+			cron.schedule(time, () => {
+				utils.log.info("AUTO RESTART", "Restarting...");
+				process.exit(2);
+			});
+		}
 	}
-	else if (typeof time == "string" && time.match(/^((((\d+,)+\d+|(\d+(\/|-|#)\d+)|\d+L?|\*(\/\d+)?|L(-\d+)?|\?|[A-Z]{3}(-[A-Z]{3})?) ?){5,7})$/gmi)) {
-		utils.log.info("AUTO RESTART", getText("Goat", "autoRestart2", time));
-		const cron = require("node-cron");
-		cron.schedule(time, () => {
-			utils.log.info("AUTO RESTART", "Restarting...");
-			process.exit(2);
-		});
-	}
-}
+
+	// ———————————————— CHECK UPDATE REFUSE EXPIRY ———————————————— //
+	setInterval(() => {
+		if (global.updateRefuseUntil && Date.now() > global.updateRefuseUntil) {
+			// Refuse period expired, re-enable update requirement
+			if (global.updateAvailable && global.updateAvailable.newVersion) {
+				global.updateAvailable.hasUpdate = true;
+				global.GoatBot.updateAvailable.hasUpdate = true;
+				global.updateRefuseUntil = null;
+				global.GoatBot.updateRefuseUntil = null;
+				// Reset notification tracking to allow new notifications
+				global.updateNotificationSent = {
+					users: new Set(),
+					admins: new Set()
+				};
+				utils.log.warn("UPDATE", "Update refuse period expired. Update requirement re-enabled.");
+			}
+		}
+	}, 60000); // Check every minute
 
 (async () => {
 	// Gmail functionality removed
@@ -204,7 +229,14 @@ if (config.autoRestart) {
 	// ———————————————— CHECK VERSION ———————————————— //
 	const { data: { version } } = await axios.get("https://raw.githubusercontent.com/sheikhtamimlover/ST-BOT/main/package.json");
 	const currentVersion = require("./package.json").version;
-	if (compareVersion(version, currentVersion) === 1)
+	if (compareVersion(version, currentVersion) === 1) {
+		global.updateAvailable.hasUpdate = true;
+		global.updateAvailable.newVersion = version;
+		// Reset notification tracking when new update detected
+		global.updateNotificationSent = {
+			users: new Set(),
+			admins: new Set()
+		};
 		utils.log.master("NEW VERSION", getText(
 			"Goat",
 			"newVersionDetected",
@@ -212,6 +244,7 @@ if (config.autoRestart) {
 			colors.hex("#eb6a07", version),
 			colors.hex("#eb6a07", "node update")
 		));
+	}
 
 	// ———————————————————— LOGIN ———————————————————— //
 	require(`./bot/login/login.js`);

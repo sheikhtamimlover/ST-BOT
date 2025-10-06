@@ -224,6 +224,14 @@ module.exports = async function (databaseType, userModel, api, fakeGraphql) {
 	}
 
 	async function create_(userID, userInfo) {
+		// Skip userID 0 (unreact events from Facebook API)
+		if (!userID || userID === 0 || userID === '0') {
+			return Promise.reject(new CustomError({
+				name: "INVALID_USER_ID",
+				message: `Cannot create user data for userID: ${userID}`
+			}));
+		}
+
 		const findInCreatingData = creatingUserData.find(u => u.userID == userID);
 		if (findInCreatingData)
 			return findInCreatingData.promise;

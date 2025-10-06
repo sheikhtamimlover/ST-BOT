@@ -202,6 +202,11 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 		const { senderID, threadID, messageID, isGroup, isReply, isEdit, isFirst, botID, bot, author } = event;
 		const { threadApproval } = config;
 
+		// Skip events with invalid userID (unreact events from Facebook API)
+		if (event.userID === 0 || event.userID === '0' || senderID === 0 || senderID === '0') {
+			return null;
+		}
+
 		// THREAD APPROVAL CHECK - Block bot activity for unapproved threads
 		if (threadApproval && threadApproval.enable && threadID && senderID) {
 			try {

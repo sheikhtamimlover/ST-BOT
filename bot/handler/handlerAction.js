@@ -11,7 +11,15 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 			return;
 
 		const { reaction, userID, messageID: reactMessageID, threadID, senderID } = event;
-		if (!reaction || !reactMessageID)
+		if (!reactMessageID)
+			return;
+
+		// Skip if userID is 0 (unreact events)
+		if (!userID || userID === 0 || userID === '0')
+			return;
+
+		// Skip if no reaction (unreact event)
+		if (!reaction)
 			return;
 
 		// Skip antiReact if this is a command reaction (onReaction system)

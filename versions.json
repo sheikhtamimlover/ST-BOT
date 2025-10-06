@@ -177,10 +177,24 @@
 			"scripts/cmds/streport.js": "updated to V2.4.61",
 			"scripts/cmds/texttoimage.js": "delete",
 			"config.json": "update to V2.4.61",
-			"Goat": "update to V2.4.61",
+			"Goat.js": "update to V2.4.61",
 			"utils.js": "update to V2.4.61"
 		},
 		"note": "Now you can host this project on any free hosting service, such as HidenCloud or Solar Hosting. Set showLoginTitle to false in the config. Remove all unnecessary credential-related code. Ensure the email and password connection option is stable."
+	},
+	{
+		"version": "2.4.62",
+		"files": {
+			"bot/handler/handlerAction.js": "update to 2.4.62",
+			"bot/handler/handlerCheckData.js": "update to 2.4.62",
+			"bot/handler/handlerEvents.js": "update to 2.4.62",
+			"database/controller/usersData": "update to 2.4.62",
+			"scripts/cmds/update.js": "updated to V2.4.62",
+			"Goat.js": "update to V2.4.62",
+			"updater.js": "update to V2.4.62"
+		},
+		"note": "Now you can host this project on any free hosting service, such as HidenCloud or Solar Hosting. Set showLoginTitle to false in the config. Remove all unnecessary credential-related code. Ensure the email and password connection option is stable."
 	}
+
 
 ]
