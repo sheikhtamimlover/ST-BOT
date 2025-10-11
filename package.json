@@ -1,6 +1,6 @@
 {
   "name": "st-bot",
-  "version": "2.4.62",
+  "version": "2.4.63",
   "description": "A simple Bot chat messenger using personal account. Made by ST | Sheikh Tamim",
   "main": "index.js",
   "engines": {
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.13.3",
+    "@dongdev/fca-unofficial": "^2.0.24",
     "axios": "^1.4.0",
     "bcrypt": "^5.0.1",
     "bluebird": "^3.7.2",
@@ -51,7 +52,8 @@
     "tinyurl": "^1.1.7",
     "totp-generator": "^0.0.13",
     "websocket-stream": "^5.5.2",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "yt-search": "^2.13.1"
   },
   "scripts": {
     "start": "node index.js"
