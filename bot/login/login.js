@@ -15,7 +15,7 @@ const path = defaultRequire("path");
 const readline = defaultRequire("readline");
 const fs = defaultRequire("fs-extra");
 const toptp = defaultRequire("totp-generator");
-const login = require("@dongdev/fca-unofficial");
+const login = defaultRequire("stfca")
 const qr = new (defaultRequire("qrcode-reader"));
 const Canvas = defaultRequire("canvas");
 const https = defaultRequire("https");
@@ -633,6 +633,19 @@ function stopListening(keyListen) {
 
 async function startBot(loginWithEmail) {
 	console.log(colors.hex("#f5ab00")(createLine("START LOGGING IN", true)));
+	
+	// Check for ST-FCA updates
+	try {
+		const { checkForFCAUpdate } = require(`stfca/checkUpdate.js`);
+		const fcaUpdated = await checkForFCAUpdate();
+		if (fcaUpdated) {
+			console.log('\x1b[33m%s\x1b[0m', '🔄 Restarting to apply ST-FCA updates...');
+			process.exit(2); // Exit code 2 triggers restart
+		}
+	} catch (error) {
+		// Silently continue if update check fails
+	}
+	
 	const currentVersion = require("../../package.json").version;
 	const tooOldVersion = (await axios.get("https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2-Storage/main/tooOldVersions.txt")).data || "0.0.0";
 	// nếu version cũ hơn

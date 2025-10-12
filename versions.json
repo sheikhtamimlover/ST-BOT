@@ -208,6 +208,14 @@
 		},
 		"imageUrl": ["https://i.ibb.co/fd5XNkK7/554539984-4149951255244605-1174908613018936331-n-2.jpg","https://i.ibb.co/JwSjJB71/553963314-2571683476522678-8514315576468358684-n.jpg","https://i.ibb.co/ZRtSKtb8/554737167-1126532805805839-2369858251064739627-n.jpg","https://i.ibb.co/0V8SkGx1/558047285-2324139108032042-1100096110577527654-n.jpg"],
 		"note": "New STAI command added! Now, using this STAI command, any ST Bot user can fix existing commands or events, or even create their own commands/events by providing a prompt. Removed fb-chat-api and replaced it with the @dongdev/fca-unofficial FCA package. Added improved ST handlers, similar to the commands store, specifically for ST Bot users. Also added autodl and sing commands."
+	},
+	{
+		"version": "2.4.64",
+		"files": {
+			"bot/login/login.js": "update to 2.4.64",
+			"Goat.js": "update to V2.4.64"
+		},
+		"note": "Replaced unstable @dongdev/fca-unofficial with STFCA to fix major runtime issues and prevent potential account suspensions"
 	}
 
 ]
