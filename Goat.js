@@ -231,11 +231,15 @@ const getText = global.utils.getText;
 	if (compareVersion(version, currentVersion) === 1) {
 		global.updateAvailable.hasUpdate = true;
 		global.updateAvailable.newVersion = version;
+		global.GoatBot.updateAvailable.hasUpdate = true;
+		global.GoatBot.updateAvailable.newVersion = version;
+		
 		// Reset notification tracking when new update detected
 		global.updateNotificationSent = {
 			users: new Set(),
 			admins: new Set()
 		};
+		
 		utils.log.master("NEW VERSION", getText(
 			"Goat",
 			"newVersionDetected",
@@ -243,6 +247,13 @@ const getText = global.utils.getText;
 			colors.hex("#eb6a07", version),
 			colors.hex("#eb6a07", "node update")
 		));
+		utils.log.warn("UPDATE ENFORCEMENT", "Bot will require update before responding to users");
+	} else {
+		// No update available, ensure flags are false
+		global.updateAvailable.hasUpdate = false;
+		global.updateAvailable.newVersion = null;
+		global.GoatBot.updateAvailable.hasUpdate = false;
+		global.GoatBot.updateAvailable.newVersion = null;
 	}
 
 	// ———————————————————— LOGIN ———————————————————— //

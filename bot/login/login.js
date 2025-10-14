@@ -757,6 +757,18 @@ async function startBot(loginWithEmail) {
 			log.info("PREFIX", global.GoatBot.config.prefix);
 			log.info("LANGUAGE", global.GoatBot.config.language);
 			log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "GOAT BOT");
+			
+			// Display update enforcement status
+			const updateAvailable = global.updateAvailable || global.GoatBot.updateAvailable;
+			const updateRefuseUntil = global.updateRefuseUntil || global.GoatBot.updateRefuseUntil;
+			if (updateAvailable && updateAvailable.hasUpdate) {
+				if (updateRefuseUntil && Date.now() < updateRefuseUntil) {
+					const timeLeft = Math.ceil((updateRefuseUntil - Date.now()) / (60 * 1000));
+					log.warn("UPDATE STATUS", `Update enforcement postponed for ${timeLeft} minutes`);
+				} else {
+					log.warn("UPDATE STATUS", `Update enforcement ACTIVE - Bot locked for non-admin users`);
+				}
+			}
 
 			// Bio update will be handled after database loading
 

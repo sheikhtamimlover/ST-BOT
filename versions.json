@@ -216,6 +216,17 @@
 			"Goat.js": "update to V2.4.64"
 		},
 		"note": "Replaced unstable @dongdev/fca-unofficial with STFCA to fix major runtime issues and prevent potential account suspensions"
+	},
+	{
+		"version": "2.4.65",
+		"files": {
+			"bot/login/login.js": "update to 2.4.65",
+			"bot/handler/handlerEvents.js": "update to 2.4.65",
+			"scripts/cmds/update.js": "updated to V2.4.65",
+			"Goat.js": "update to V2.4.65",
+			"updater.js": "update to V2.4.65"
+		},
+		"note": "This update ensures that if a new project update is released, you’ll automatically be notified when ST-BOT receives an update."
 	}
 
 ]

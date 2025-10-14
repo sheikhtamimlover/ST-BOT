@@ -6,7 +6,7 @@ const dirBootLogTemp = `${__dirname}/tmp/rebootUpdated.txt`;
 module.exports = {
 	config: {
 		name: "update",
-		version: "2.4.62",
+		version: "2.4.65",
 		author: "ST | Sheikh Tamim",
 		role: 2,
 		description: {
@@ -66,14 +66,10 @@ module.exports = {
 	ST: async function ({ message, getLang, commandName, event, args }) {
 		// Handle refuse command
 		if (args[0] && (args[0].toLowerCase() === 'refuse' || args[0].toLowerCase() === 'r')) {
-			if (global.updateAvailable && global.updateAvailable.hasUpdate) {
+			if (global.updateAvailable && global.updateAvailable.newVersion) {
 				// Set refuse timestamp (refuse for 2 hours)
 				global.updateRefuseUntil = Date.now() + (2 * 60 * 60 * 1000);
 				global.GoatBot.updateRefuseUntil = global.updateRefuseUntil;
-				
-				// Temporarily disable update requirement
-				global.updateAvailable.hasUpdate = false;
-				global.GoatBot.updateAvailable.hasUpdate = false;
 				
 				// Reset notification tracking to allow fresh notifications after 2 hours
 				global.updateNotificationSent = {
@@ -81,9 +77,10 @@ module.exports = {
 					admins: new Set()
 				};
 				
+				const refuseTime = new Date(global.updateRefuseUntil).toLocaleString();
 				const refuseMessage = `✅ Update Requirement Temporarily Disabled\n\n` +
-					`⏰ The project will work normally for the next 2 hours.\n` +
-					`After that, update will be required again.\n\n` +
+					`⏰ Bot will work normally for the next 2 hours.\n` +
+					`📅 Enforcement resumes at: ${refuseTime}\n\n` +
 					`💡 Use ${global.GoatBot.config.prefix}update anytime to update immediately.`;
 				
 				return message.reply(refuseMessage);
@@ -235,6 +232,20 @@ module.exports = {
 
 	onReply: async function ({ message, getLang, event }) {
 		if (['yes', 'y'].includes(event.body?.toLowerCase())) {
+			// Clear update enforcement flags
+			global.updateAvailable.hasUpdate = false;
+			global.updateAvailable.newVersion = null;
+			global.GoatBot.updateAvailable.hasUpdate = false;
+			global.GoatBot.updateAvailable.newVersion = null;
+			global.updateRefuseUntil = null;
+			global.GoatBot.updateRefuseUntil = null;
+			
+			// Reset notification tracking
+			global.updateNotificationSent = {
+				users: new Set(),
+				admins: new Set()
+			};
+			
 			// Set flag to indicate update completed successfully
 			global.updateJustCompleted = true;
 			await message.reply(getLang("botWillRestart"));

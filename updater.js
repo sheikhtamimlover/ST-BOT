@@ -339,6 +339,20 @@ fs.copyFileSync = function (src, dest) {
 	log.info("UPDATE", getText("updater", "backupSuccess", chalk.yellow(folderBackup)));
 	log.info("UPDATE", "✅ Update completed successfully!");
 	log.info("UPDATE", "You can now restart the bot to use the updated version.");
+	
+	// Clear update enforcement flags after successful update
+	if (global.updateAvailable) {
+		global.updateAvailable.hasUpdate = false;
+		global.updateAvailable.newVersion = null;
+	}
+	if (global.GoatBot && global.GoatBot.updateAvailable) {
+		global.GoatBot.updateAvailable.hasUpdate = false;
+		global.GoatBot.updateAvailable.newVersion = null;
+	}
+	global.updateRefuseUntil = null;
+	if (global.GoatBot) {
+		global.GoatBot.updateRefuseUntil = null;
+	}
 })().catch(error => {
 	log.error("UPDATE", "Update process failed:", error.message);
 	process.exit(1);

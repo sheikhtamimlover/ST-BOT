@@ -202,6 +202,76 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 		const { senderID, threadID, messageID, isGroup, isReply, isEdit, isFirst, botID, bot, author } = event;
 		const { threadApproval } = config;
 
+		// ———————————————— CHECK UPDATE ENFORCEMENT ———————————————— //
+		const updateAvailable = global.updateAvailable || global.GoatBot.updateAvailable;
+		const updateRefuseUntil = global.updateRefuseUntil || global.GoatBot.updateRefuseUntil;
+		
+		// Check if refuse period is still active
+		const isRefusePeriodActive = updateRefuseUntil && Date.now() < updateRefuseUntil;
+		
+		// If update is available and not in refuse period, enforce update
+		if (updateAvailable && updateAvailable.hasUpdate && !isRefusePeriodActive) {
+			// Initialize notification tracking if not exists
+			if (!global.updateNotificationSent) {
+				global.updateNotificationSent = {
+					users: new Set(),
+					admins: new Set()
+				};
+			}
+			
+			const isUserAdmin = isAdmin(senderID);
+			
+			// For non-admin users
+			if (!isUserAdmin) {
+				// Send one-time notification if not already sent to this user
+				if (!global.updateNotificationSent.users.has(senderID)) {
+					global.updateNotificationSent.users.add(senderID);
+					const updateMsg = `🔄 Bot Update Required\n\n` +
+						`⚠️ A new version (v${updateAvailable.newVersion}) is available.\n` +
+						`🔒 Bot is temporarily locked until the admin updates.\n` +
+						`⏳ Please wait while the admin performs the update.\n\n` +
+						`Thank you for your patience! 💙`;
+					
+					try {
+						await message.reply(updateMsg);
+					} catch (err) {
+						// Silently fail if message send fails
+					}
+				}
+				// Block all further interactions from non-admin users
+				return null;
+			}
+			
+			// For admin users - send notification once and allow only 'update' command
+			if (isUserAdmin && !global.updateNotificationSent.admins.has(senderID)) {
+				global.updateNotificationSent.admins.add(senderID);
+				const adminUpdateMsg = `🚨 Admin Update Alert\n\n` +
+					`📢 New version available: v${updateAvailable.newVersion}\n` +
+					`⚡ Please update the project immediately!\n\n` +
+					`💡 Use: ${getPrefix(threadID)}update\n` +
+					`⏸️ Use: ${getPrefix(threadID)}update refuse - to postpone for 2 hours\n\n` +
+					`⚠️ Bot is currently locked for all users until update!`;
+				
+				try {
+					await message.reply(adminUpdateMsg);
+				} catch (err) {
+					// Silently fail if message send fails
+				}
+			}
+			
+			// Allow admin to use 'update' command only
+			if (isUserAdmin && body) {
+				const prefix = getPrefix(threadID);
+				const args = body.slice(prefix.length).trim().split(/ +/);
+				const commandName = args.shift().toLowerCase();
+				
+				// Only allow 'update' command during update enforcement
+				if (commandName !== 'update') {
+					return null;
+				}
+			}
+		}
+
 		// Skip events with invalid userID (unreact events from Facebook API)
 		if (event.userID === 0 || event.userID === '0' || senderID === 0 || senderID === '0') {
 			return null;
