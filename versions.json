@@ -170,63 +170,71 @@
 		"note": "Added new usePrefix features with 3 different usages. No 1: from config.json if usePrefix is set to false then the whole project will not require any prefix and commands will respond directly by their names. No 2: adminUsePrefix if set to false then normal users will still require a prefix but project admins can use commands without a prefix, and by using manageprefix/mp command you can also add specific users under adminUsePrefix.specificUids so that they can use commands without a prefix even without admin access. No 3: if you set usePrefix: false for any specific command then that command will work without a prefix and respond by its name. These three usePrefix options will never conflict with each other, if you get confused or face issues use streport command. For configuring usePrefix features you can use manageprefix/mp command, and additionally cmdconfig/cc command lets you add or remove and configure usePrefix, premium, and other command structures. A new cmdstore/cs command has also been added where you can get your needed command and easily install it, use help command for guidance. So you all should update to V2.4.60, and if you find any bugs or have ideas then report or share them using streport command.Fix mongodb issue showing in console update others cmds. Thank you."
 	},
 	{
-		"version": "2.4.61",
-		"files": {
-			"bot/login/botacc.js": "update to 2.4.61",
-			"bot/login/login.js": "update to 2.4.61",
-			"scripts/cmds/streport.js": "updated to V2.4.61",
-			"scripts/cmds/texttoimage.js": "delete",
-			"config.json": "update to V2.4.61",
-			"Goat.js": "update to V2.4.61",
-			"utils.js": "update to V2.4.61"
-		},
-		"note": "Now you can host this project on any free hosting service, such as HidenCloud or Solar Hosting. Set showLoginTitle to false in the config. Remove all unnecessary credential-related code. Ensure the email and password connection option is stable."
-	},
-	{
-		"version": "2.4.62",
-		"files": {
-			"bot/handler/handlerAction.js": "update to 2.4.62",
-			"bot/handler/handlerCheckData.js": "update to 2.4.62",
-			"bot/handler/handlerEvents.js": "update to 2.4.62",
-			"database/controller/usersData": "update to 2.4.62",
-			"scripts/cmds/update.js": "updated to V2.4.62",
-			"Goat.js": "update to V2.4.62",
-			"updater.js": "update to V2.4.62"
-		},
-		"note": "Fixed console error messages caused by unhandled reactions. Improved the update function to ensure home directory files update correctly"
-	},
-	{
-		"version": "2.4.63",
-		"files": {
-			"bot/login/login.js": "update to 2.4.63",
-			"fb-chat-api": "removed full code",
-			"scripts/cmds/autodl.js": "Added to V2.4.63",
-			"scripts/cmds/cs.js": "removed",
-			"scripts/cmds/sthandlers.js": "Better st handlers added",
-			"scripts/cmds/sing.js": "updated to V2.4.63",
-			"scripts/cmds/stai.js": "Added to V2.4.63"
-		},
-		"imageUrl": ["https://i.ibb.co/fd5XNkK7/554539984-4149951255244605-1174908613018936331-n-2.jpg","https://i.ibb.co/JwSjJB71/553963314-2571683476522678-8514315576468358684-n.jpg","https://i.ibb.co/ZRtSKtb8/554737167-1126532805805839-2369858251064739627-n.jpg","https://i.ibb.co/0V8SkGx1/558047285-2324139108032042-1100096110577527654-n.jpg"],
-		"note": "New STAI command added! Now, using this STAI command, any ST Bot user can fix existing commands or events, or even create their own commands/events by providing a prompt. Removed fb-chat-api and replaced it with the @dongdev/fca-unofficial FCA package. Added improved ST handlers, similar to the commands store, specifically for ST Bot users. Also added autodl and sing commands."
-	},
-	{
-		"version": "2.4.64",
-		"files": {
-			"bot/login/login.js": "update to 2.4.64",
-			"Goat.js": "update to V2.4.64"
-		},
-		"note": "Replaced unstable @dongdev/fca-unofficial with STFCA to fix major runtime issues and prevent potential account suspensions"
-	},
-	{
-		"version": "2.4.65",
-		"files": {
-			"bot/login/login.js": "update to 2.4.65",
-			"bot/handler/handlerEvents.js": "update to 2.4.65",
-			"scripts/cmds/update.js": "updated to V2.4.65",
-			"Goat.js": "update to V2.4.65",
-			"updater.js": "update to V2.4.65"
-		},
-		"note": "This update ensures that if a new project update is released, you’ll automatically be notified when ST-BOT receives an update."
-	}
-
+    "version": "2.4.61",
+    "files": {
+      "bot/login/botacc.js": "update to 2.4.61",
+      "bot/login/login.js": "update to 2.4.61",
+      "scripts/cmds/streport.js": "updated to V2.4.61",
+      "config.json": "update to V2.4.61",
+      "Goat.js": "update to V2.4.61",
+      "utils.js": "update to V2.4.61"
+    },
+    "deletedFiles": [
+      "scripts/cmds/texttoimage.js"
+    ],
+    "note": "Now you can host this project on any free hosting service, such as HidenCloud or Solar Hosting. Set showLoginTitle to false in the config. Removed all unnecessary credential-related code. Ensured email/password login is stable."
+  },
+  {
+    "version": "2.4.62",
+    "files": {
+      "bot/handler/handlerAction.js": "update to 2.4.62",
+      "bot/handler/handlerCheckData.js": "update to 2.4.62",
+      "bot/handler/handlerEvents.js": "update to 2.4.62",
+      "database/controller/usersData.js": "update to 2.4.62",
+      "scripts/cmds/update.js": "updated to V2.4.62",
+      "Goat.js": "update to V2.4.62",
+      "updater.js": "update to V2.4.62"
+    },
+    "note": "Fixed console error messages caused by unhandled reactions. Improved the update function to ensure home directory files update correctly."
+  },
+  {
+    "version": "2.4.63",
+    "files": {
+      "bot/login/login.js": "update to 2.4.63",
+      "scripts/cmds/autodl.js": "added to V2.4.63",
+      "scripts/cmds/sthandlers.js": "added improved ST handlers",
+      "scripts/cmds/sing.js": "updated to V2.4.63",
+      "scripts/cmds/stai.js": "added to V2.4.63"
+    },
+    "deletedFiles": [
+      "fb-chat-api",
+      "scripts/cmds/cs.js"
+    ],
+    "imageUrl": [
+      "https://i.ibb.co/fd5XNkK7/554539984-4149951255244605-1174908613018936331-n-2.jpg",
+      "https://i.ibb.co/JwSjJB71/553963314-2571683476522678-8514315576468358684-n.jpg",
+      "https://i.ibb.co/ZRtSKtb8/554737167-1126532805805839-2369858251064739627-n.jpg",
+      "https://i.ibb.co/0V8SkGx1/558047285-2324139108032042-1100096110577527654-n.jpg"
+    ],
+    "note": "New STAI command added! Users can now fix or create commands/events using prompts. Replaced fb-chat-api with STFCA. Added autodl and sing commands with improved handlers."
+  },
+  {
+    "version": "2.4.64",
+    "files": {
+      "bot/login/login.js": "update to 2.4.64",
+      "Goat.js": "update to V2.4.64"
+    },
+    "note": "Replaced unstable @dongdev/fca-unofficial with STFCA to fix runtime issues and prevent account suspension."
+  },
+  {
+    "version": "2.4.65",
+    "files": {
+      "bot/login/login.js": "update to 2.4.65",
+      "bot/handler/handlerEvents.js": "update to 2.4.65",
+      "scripts/cmds/update.js": "updated to V2.4.65",
+      "Goat.js": "update to V2.4.65",
+      "updater.js": "update to V2.4.65"
+    },
+    "note": "Now you’ll automatically receive notifications when new ST-BOT updates are released."
+  }
 ]
