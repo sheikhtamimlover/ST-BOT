@@ -1,124 +1,124 @@
 [
-	{
-		"version": "2.0.00"
-	},
-	{
-		"version": "2.0.01",
-		"files": {
-			"scripts/cmds/help.js": "new version",
-			".replit": "prb fix"
-		}
-	},
-	{
-		"version": "2.1.00",
-		"files": {
-			"bot/handler/handlerAction.js": "added the react by unsend function and user warning by remove",
-			"bot/handler/handlerEvents.js": "remove antireact wrong code",
-			"fb-chat-api/src/getMessage.js": "fix blob error and stable proper code",
-			"scripts/cmds/antiout.js": "added new command",
-			"scripts/cmds/calendar.js": "added new command",
-			"scripts/cmds/file.js": "added new command",
-			"scripts/cmds/flux.js": "added new command",
+  {
+    "version": "2.0.00"
+  },
+  {
+    "version": "2.0.01",
+    "files": {
+      "scripts/cmds/help.js": "new version",
+      ".replit": "prb fix"
+    }
+  },
+  {
+    "version": "2.1.00",
+    "files": {
+      "bot/handler/handlerAction.js": "added the react by unsend function and user warning by remove",
+      "bot/handler/handlerEvents.js": "remove antireact wrong code",
+      "fb-chat-api/src/getMessage.js": "fix blob error and stable proper code",
+      "scripts/cmds/antiout.js": "added new command",
+      "scripts/cmds/calendar.js": "added new command",
+      "scripts/cmds/file.js": "added new command",
+      "scripts/cmds/flux.js": "added new command",
             "scripts/cmds/fluxpro.js": "added new command",
-			"scripts/cmds/leave.js": "added new command",
-			"scripts/cmds/mix.js": "added new command",
-			"scripts/cmds/pending.js": "added new command",
-			"scripts/cmds/pfp.js": "added new command",
-			"scripts/cmds/prompt.js": "added new command",
-			"scripts/cmds/rate.js": "added new command",
-			"scripts/cmds/say.js": "added new command",
-			"scripts/cmds/sing.js": "added new command",
-			"scripts/cmds/spin.js": "added new command",
-			"scripts/cmds/status.js": "added new command",
-			"scripts/cmds/top.js": "added new command",
-			"scripts/cmds/ytb.js": "update to new version",
-			"config.json": "fix to antireact"
-		}
-	},
-	{
-		"version": "2.1.10",
-		"files": {
-			"scripts/cmds/help.js": "new version",
-			"scripts/cmds/shell.js": "added for owner"
-		}
-	},
-	{
-		"version": "2.2.00",
-		"files": {
-			"bot/login/botacc.js": "new fb login method",
-			"bot/login/login.js": "update and added features",
-			"scripts/cmds/startupnoti.js": "new added",
-			"config.json": "added new fb login and bot starting structure"
-		}
-	},
-	{
-		"version": "2.3.0",
-		"files": {
-			"bot/handler/handlerEvents.js": "update to V2.3",
-			"bot/login/botacc.js": "fix issue",
-			"bot/login/login.js": "update to V2.3",
-			"dashboard/views/login.eta": "added new files",
-			"dashboard/app.js": "update to V2.3",
-			"database/models/mongodb/thread.js": "update to V2.3",
-			"database/models/sqlite/thread.js": "update to V2.3",
-			"scripts/cmds/imgur.js": "new added",
-			"scripts/cmds/threadapprove.js": "new added",
-			"scripts/events/welcome.js": "update to V2.3",
-			"config.json": "update to V2.3, added bio , threadapprove features"
-		}
-	},
-	{
-		"version": "2.3.5",
-		"files": {
-			"bot/handler/handlerAction.js": "update to V2.3.5",
-			"bot/handler/handlerEvents.js": "update to V2.3.5",
-			"bot/login/botacc.js": "fix login issue",
-			"scripts/cmds/botlog.js": "added for owner",
-			"scripts/cmds/cmd.js": "fix cmd install and del functions",
-			"scripts/cmds/threadapprove.js": "modity newly remake it",
-			"scripts/events/autoUpdateInfoThread.js": "fix issues",
-			"scripts/events/logsbot.js": "fix logs notification",
-			"scripts/events/welcome.js": "fix and update to v2.3.5",
-			"config.json": "update to V2.3, added botlogs configure"
-		}
-	},
-	{
-		"version": "2.3.6",
-		"files": {
-			"bot/login/botacc.js": "fix login issue",
-			"scripts/events/welcome.js": "fix name show"
-		}
-	},
-	{
-		"version": "2.4.0",
-		"files": {
-			"bot/login/loginMbasic.js": "removed",
-			"bot/login/login.js": "updated to V2.4.0",
-			"scripts/cmds/status.js": "updated to V2.4.0",
-			"scripts/cmds/streport.js": "added new command",
-			"scripts/cmds/threadapprove.js": "updated to V2.4.0",
-			"scripts/cmds/update.js": "updated to V2.4.0",
-			"config.json": "update to V2.4.0",
-			"updater.js": "update to V2.4.0",
-			"utils.js": "update to V2.4.0"
-		},
-		"note": "Some user using wrong login method so old useless method removed.Added new command streport (using this you can direct report about source any issue to owner).Updated update(now you can see ST Bot update details),Modify status,threadapprove(now you can after approved thread rejeect or use cancel/c by approved to pending again without left bot from thread)."
-	},
-	{
-		"version": "2.4.50",
-		"files": {
-			"bot/handler/handlerAction.js": "update to 2.4.50",
-			"bot/handler/handlerEvents.js": "update to 2.4.50",
-			"bot/login/loadScripts.js": "updated to V2.4.50",
-			"bot/login/login.js": "updated to V2.4.50",
-			"dashboard/css/custom.css": "delete",
-			"dashboard/css/dashboard.css": "added",
-			"dashboard/css/dropzone.css": "delete",
-			"dashboard/css/jquery.highlight-within-textarea.css": "delete",
-			"dashboard/css/phoenix.css": "delete",
-			"dashboard/images/beb-logo.png": "changed",
-			"dashboard/images/st.png": "added",
-			"dashboard/js/bootstrap.bundle.min.js": "delete",
+      "scripts/cmds/leave.js": "added new command",
+      "scripts/cmds/mix.js": "added new command",
+      "scripts/cmds/pending.js": "added new command",
+      "scripts/cmds/pfp.js": "added new command",
+      "scripts/cmds/prompt.js": "added new command",
+      "scripts/cmds/rate.js": "added new command",
+      "scripts/cmds/say.js": "added new command",
+      "scripts/cmds/sing.js": "added new command",
+      "scripts/cmds/spin.js": "added new command",
+      "scripts/cmds/status.js": "added new command",
+      "scripts/cmds/top.js": "added new command",
+      "scripts/cmds/ytb.js": "update to new version",
+      "config.json": "fix to antireact"
+    }
+  },
+  {
+    "version": "2.1.10",
+    "files": {
+      "scripts/cmds/help.js": "new version",
+      "scripts/cmds/shell.js": "added for owner"
+    }
+  },
+  {
+    "version": "2.2.00",
+    "files": {
+      "bot/login/botacc.js": "new fb login method",
+      "bot/login/login.js": "update and added features",
+      "scripts/cmds/startupnoti.js": "new added",
+      "config.json": "added new fb login and bot starting structure"
+    }
+  },
+  {
+    "version": "2.3.0",
+    "files": {
+      "bot/handler/handlerEvents.js": "update to V2.3",
+      "bot/login/botacc.js": "fix issue",
+      "bot/login/login.js": "update to V2.3",
+      "dashboard/views/login.eta": "added new files",
+      "dashboard/app.js": "update to V2.3",
+      "database/models/mongodb/thread.js": "update to V2.3",
+      "database/models/sqlite/thread.js": "update to V2.3",
+      "scripts/cmds/imgur.js": "new added",
+      "scripts/cmds/threadapprove.js": "new added",
+      "scripts/events/welcome.js": "update to V2.3",
+      "config.json": "update to V2.3, added bio , threadapprove features"
+    }
+  },
+  {
+    "version": "2.3.5",
+    "files": {
+      "bot/handler/handlerAction.js": "update to V2.3.5",
+      "bot/handler/handlerEvents.js": "update to V2.3.5",
+      "bot/login/botacc.js": "fix login issue",
+      "scripts/cmds/botlog.js": "added for owner",
+      "scripts/cmds/cmd.js": "fix cmd install and del functions",
+      "scripts/cmds/threadapprove.js": "modity newly remake it",
+      "scripts/events/autoUpdateInfoThread.js": "fix issues",
+      "scripts/events/logsbot.js": "fix logs notification",
+      "scripts/events/welcome.js": "fix and update to v2.3.5",
+      "config.json": "update to V2.3, added botlogs configure"
+    }
+  },
+  {
+    "version": "2.3.6",
+    "files": {
+      "bot/login/botacc.js": "fix login issue",
+      "scripts/events/welcome.js": "fix name show"
+    }
+  },
+  {
+    "version": "2.4.0",
+    "files": {
+      "bot/login/loginMbasic.js": "removed",
+      "bot/login/login.js": "updated to V2.4.0",
+      "scripts/cmds/status.js": "updated to V2.4.0",
+      "scripts/cmds/streport.js": "added new command",
+      "scripts/cmds/threadapprove.js": "updated to V2.4.0",
+      "scripts/cmds/update.js": "updated to V2.4.0",
+      "config.json": "update to V2.4.0",
+      "updater.js": "update to V2.4.0",
+      "utils.js": "update to V2.4.0"
+    },
+    "note": "Some user using wrong login method so old useless method removed.Added new command streport (using this you can direct report about source any issue to owner).Updated update(now you can see ST Bot update details),Modify status,threadapprove(now you can after approved thread rejeect or use cancel/c by approved to pending again without left bot from thread)."
+  },
+  {
+    "version": "2.4.50",
+    "files": {
+      "bot/handler/handlerAction.js": "update to 2.4.50",
+      "bot/handler/handlerEvents.js": "update to 2.4.50",
+      "bot/login/loadScripts.js": "updated to V2.4.50",
+      "bot/login/login.js": "updated to V2.4.50",
+      "dashboard/css/custom.css": "delete",
+      "dashboard/css/dashboard.css": "added",
+      "dashboard/css/dropzone.css": "delete",
+      "dashboard/css/jquery.highlight-within-textarea.css": "delete",
+      "dashboard/css/phoenix.css": "delete",
+      "dashboard/images/beb-logo.png": "changed",
+      "dashboard/images/st.png": "added",
+      "dashboard/js/bootstrap.bundle.min.js": "delete",
             "dashboard/js/bootstrap.min.js": "delete",
             "dashboard/js/copyToClipboard.js": "delete",
             "dashboard/js/hwt.js": "delete",
@@ -128,48 +128,48 @@
             "dashboard/js/poper.js": "delete",
             "dashboard/js/preview-modal.js": "delete",
             "dashboard/js/toast.js": "delete",
-			"dashboard/js/dashboard.js": "added",
-			"dashboard/routes/api.js": "delete",
-			"dashboard/middleware/passwordAuth.js": "added",
-			"dashboard/views/dashboard-welcome copy.eta": "delete",
-			"dashboard/views/404.eta": "update to V2.4.50",
-			"dashboard/views/dashboard.eta": "update to V2.4.50",
-			"dashboard/views/login.eta": "update to V2.4.50",
-			"dashboard/app.js": "update to V2.4.50",
-			"dashboard/connectDB.js": "added",
-			"database/controller/usersData": "console user not found issue fix",
-			"database/models/mongodb/user.js": "added premium db",
-			"database/models/sqlite/user.js": "added premium db",
-			"languages/cmds/en.js": "updated to V2.4.50",
-			"scripts/cmds/cmd.js": "updated to V2.4.50",
-			"scripts/cmds/help.js": "updated to V2.4.50",
-			"scripts/cmds/premium.js": "added new command",
-			"scripts/cmds/update.js": "updated to V2.4.50",
-			"config.json": "update to V2.4.50",
-			"Goat": "updated to V2.4.50",
-			"update.js": "fix node update not working",
-			"updater.js": "update to V2.4.50",
-			"utils.js": "update to V2.4.50"
-		},
-		"note": "Added new command premium structure.If in any command you add premium: true/false, it will work only for premium users.Role 0 will never create issue cause which command at if u added premium: true that means command is for premium user and premium managment command for no need use role 2 cause case request without all are for adminBot lock, and admin/owner don’t need to add premium.Premium can be managed by premium command using help.Update help, cmd, update.Now terminal node update / node update.js will work.Render host port issue fixed.New dashboard added.If you face any bug, use streport, the owner will know and fix it soon."
-	},
-	{
-		"version": "2.4.60",
-		"files": {
-			"bot/handler/handlerEvents.js": "update to 2.4.60",
-			"database/connectDB/connectMongoDB.js": "Fix deprecation warning",
-			"database/controller/usersData": "console user not found issue fix V2.4.60",
-			"scripts/cmds/cmdconfig.js": "Added to V2.4.60",
-			"scripts/cmds/cs.js": "Added to V2.4.60",
-			"scripts/cmds/help.js": "updated to V2.4.60",
-			"scripts/cmds/manageprefix.js": "Added to V2.4.60",
-			"scripts/cmds/status.js": "updated to V2.4.60",
-			"config.json": "update to V2.4.0"
-		},
-		"imageUrl": ["https://i.ibb.co.com/Mxyy5xTt/IMG-7156.jpg","https://i.ibb.co.com/gLLCRvSq/IMG-7155.jpg","https://i.ibb.co.com/DfdR40fZ/IMG-7154.jpg","https://i.ibb.co.com/d0fyfZwR/Screenshot-2025-09-19-234817.png"],
-		"note": "Added new usePrefix features with 3 different usages. No 1: from config.json if usePrefix is set to false then the whole project will not require any prefix and commands will respond directly by their names. No 2: adminUsePrefix if set to false then normal users will still require a prefix but project admins can use commands without a prefix, and by using manageprefix/mp command you can also add specific users under adminUsePrefix.specificUids so that they can use commands without a prefix even without admin access. No 3: if you set usePrefix: false for any specific command then that command will work without a prefix and respond by its name. These three usePrefix options will never conflict with each other, if you get confused or face issues use streport command. For configuring usePrefix features you can use manageprefix/mp command, and additionally cmdconfig/cc command lets you add or remove and configure usePrefix, premium, and other command structures. A new cmdstore/cs command has also been added where you can get your needed command and easily install it, use help command for guidance. So you all should update to V2.4.60, and if you find any bugs or have ideas then report or share them using streport command.Fix mongodb issue showing in console update others cmds. Thank you."
-	},
-	{
+      "dashboard/js/dashboard.js": "added",
+      "dashboard/routes/api.js": "delete",
+      "dashboard/middleware/passwordAuth.js": "added",
+      "dashboard/views/dashboard-welcome copy.eta": "delete",
+      "dashboard/views/404.eta": "update to V2.4.50",
+      "dashboard/views/dashboard.eta": "update to V2.4.50",
+      "dashboard/views/login.eta": "update to V2.4.50",
+      "dashboard/app.js": "update to V2.4.50",
+      "dashboard/connectDB.js": "added",
+      "database/controller/usersData": "console user not found issue fix",
+      "database/models/mongodb/user.js": "added premium db",
+      "database/models/sqlite/user.js": "added premium db",
+      "languages/cmds/en.js": "updated to V2.4.50",
+      "scripts/cmds/cmd.js": "updated to V2.4.50",
+      "scripts/cmds/help.js": "updated to V2.4.50",
+      "scripts/cmds/premium.js": "added new command",
+      "scripts/cmds/update.js": "updated to V2.4.50",
+      "config.json": "update to V2.4.50",
+      "Goat": "updated to V2.4.50",
+      "update.js": "fix node update not working",
+      "updater.js": "update to V2.4.50",
+      "utils.js": "update to V2.4.50"
+    },
+    "note": "Added new command premium structure.If in any command you add premium: true/false, it will work only for premium users.Role 0 will never create issue cause which command at if u added premium: true that means command is for premium user and premium managment command for no need use role 2 cause case request without all are for adminBot lock, and admin/owner don’t need to add premium.Premium can be managed by premium command using help.Update help, cmd, update.Now terminal node update / node update.js will work.Render host port issue fixed.New dashboard added.If you face any bug, use streport, the owner will know and fix it soon."
+  },
+  {
+    "version": "2.4.60",
+    "files": {
+      "bot/handler/handlerEvents.js": "update to 2.4.60",
+      "database/connectDB/connectMongoDB.js": "Fix deprecation warning",
+      "database/controller/usersData": "console user not found issue fix V2.4.60",
+      "scripts/cmds/cmdconfig.js": "Added to V2.4.60",
+      "scripts/cmds/cs.js": "Added to V2.4.60",
+      "scripts/cmds/help.js": "updated to V2.4.60",
+      "scripts/cmds/manageprefix.js": "Added to V2.4.60",
+      "scripts/cmds/status.js": "updated to V2.4.60",
+      "config.json": "update to V2.4.0"
+    },
+    "imageUrl": ["https://i.ibb.co.com/Mxyy5xTt/IMG-7156.jpg","https://i.ibb.co.com/gLLCRvSq/IMG-7155.jpg","https://i.ibb.co.com/DfdR40fZ/IMG-7154.jpg","https://i.ibb.co.com/d0fyfZwR/Screenshot-2025-09-19-234817.png"],
+    "note": "Added new usePrefix features with 3 different usages. No 1: from config.json if usePrefix is set to false then the whole project will not require any prefix and commands will respond directly by their names. No 2: adminUsePrefix if set to false then normal users will still require a prefix but project admins can use commands without a prefix, and by using manageprefix/mp command you can also add specific users under adminUsePrefix.specificUids so that they can use commands without a prefix even without admin access. No 3: if you set usePrefix: false for any specific command then that command will work without a prefix and respond by its name. These three usePrefix options will never conflict with each other, if you get confused or face issues use streport command. For configuring usePrefix features you can use manageprefix/mp command, and additionally cmdconfig/cc command lets you add or remove and configure usePrefix, premium, and other command structures. A new cmdstore/cs command has also been added where you can get your needed command and easily install it, use help command for guidance. So you all should update to V2.4.60, and if you find any bugs or have ideas then report or share them using streport command.Fix mongodb issue showing in console update others cmds. Thank you."
+  },
+  {
     "version": "2.4.61",
     "files": {
       "bot/login/botacc.js": "update to 2.4.61",
@@ -238,37 +238,37 @@
     "note": "Now you’ll automatically receive notifications when new ST-BOT updates are released."
   },
   {
-  "version": "2.4.66",
-  "files": {
-    "bot/handler/handlerAction.js": "update to 2.4.66",
-    "bot/login/connectSocketIO.example.js": "update to 2.4.66",
-    "bot/login/loadScripts.js": "update to 2.4.66",
-    "bot/login/login.js": "update to 2.4.66",
-    "logger/log.js": "stable",
-    "scripts/cmds/autodl.js": "update to 2.4.66",
-    "scripts/cmds/cmd.js": "updated to V2.4.66",
-    "scripts/cmds/event.js": "added to V2.4.63",
-    "scripts/cmds/newcommand.eg.js": "updated to V2.4.66",
-    "scripts/cmds/sthandlers.js": "updated to V2.4.66",
-    "config.json": {
-      "serverUptime": {
-        "enable": true,
-        "port": 3001,
-        "socket": {
+    "version": "2.4.66",
+    "files": {
+      "bot/handler/handlerAction.js": "update to 2.4.66",
+      "bot/login/connectSocketIO.example.js": "update to 2.4.66",
+      "bot/login/loadScripts.js": "update to 2.4.66",
+      "bot/login/login.js": "update to 2.4.66",
+      "logger/log.js": "stable",
+      "scripts/cmds/autodl.js": "update to 2.4.66",
+      "scripts/cmds/cmd.js": "updated to V2.4.66",
+      "scripts/cmds/event.js": "added to V2.4.63",
+      "scripts/cmds/newcommand.eg.js": "updated to V2.4.66",
+      "scripts/cmds/sthandlers.js": "updated to V2.4.66",
+      "config.json": {
+        "serverUptime": {
           "enable": true,
-          "channelName": "uptime",
-          "verifyToken": "stbotkey"
+          "port": 3001,
+          "socket": {
+            "enable": true,
+            "channelName": "uptime",
+            "verifyToken": "stbotkey"
+          }
         }
-      }
+      },
+      "utils.js": "update to V2.4.66"
     },
-    "utils.js": "update to V2.4.66"
-  },
-  "deleteFiles": [
-    "scripts/cmds/emojimix.js",
-    "scripts/cmds/ytb.js"
-  ],
-  "note": "No third-party uptimers required anymore — the bot auto-keeps-alive and includes fixes for autodl, cmd/event handling, ST handlers, and other stability issues."
-}
+    "deleteFiles": [
+      "scripts/cmds/emojimix.js",
+      "scripts/cmds/ytb.js"
+    ],
+    "note": "No third-party uptimers required anymore — the bot auto-keeps-alive and includes fixes for autodl, cmd/event handling, ST handlers, and other stability issues."
+  }
 
-	
+
 ]
