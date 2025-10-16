@@ -250,12 +250,22 @@
       "scripts/cmds/event.js": "added to V2.4.63",
 	  "scripts/cmds/newcommand.eg.js": "updated to V2.4.66",
 	  "scripts/cmds/sthandlers.js": "updated to V2.4.66",
-	  "config.json": "properly set uptimer",
+	  "config.json": {
+      "serverUptime": {
+        "enable": true,
+        "port": 3001,
+        "socket": {
+          "enable": true,
+          "channelName": "uptime",
+          "verifyToken": "stbotkey"
+        }
+      }
+    },
 	  "utils.js": "update to V2.4.66"
     },
-    "deletedFiles": [
-      "scripts/cmds/emojimix.js",
-      "scripts/cmds/ytb.js"
+    "deleteFiles": [
+      "scripts/cmds/emojimix.js": "",
+      "scripts/cmds/ytb.js": ""
     ],
     "note": "No third-party uptimers required anymore — the bot auto-keeps-alive and includes fixes for autodl, cmd/event handling, ST handlers, and other stability issues."
   }
