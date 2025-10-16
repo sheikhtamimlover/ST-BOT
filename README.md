@@ -197,13 +197,13 @@ npm install
 npm start
 ```
 
-### 🌐 Method 2: Deploy on Replit (Recommended)
+### 🌐 Method 2: Deploy on Render (Recommended)
 
-[![Deploy on Replit](https://img.shields.io/badge/Deploy%20on-Replit-667881?style=for-the-badge&logo=replit&logoColor=white)](https://replit.com/github/sheikhtamimlover/ST-BOT)
+[![Deploy on Render](https://img.shields.io/badge/Deploy%20on-Render-667881?style=for-the-badge&logo=render&logoColor=white)](https://render.com)
 
-1. Click the "Deploy on Replit" button above
+1. Click the "Deploy on Render" button above
 2. Configure your bot in `config.json`
-3. Click the **Run** button - Replit handles everything automatically!
+3. Click the **Run** button - Render handles everything automatically!
 
 ---
 
