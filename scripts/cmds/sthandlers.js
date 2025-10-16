@@ -8,7 +8,7 @@ module.exports = {
   config: {
     name: "sthandlers",
     aliases: ["cs", "sth"],
-    version: "2.4.66",
+    version: "2.4.67",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -35,6 +35,234 @@ module.exports = {
     } catch (err) {
       // If user data fetch fails, use default name
       userName = "User";
+    }
+
+    // Handle search and install for commands
+    if (args[0] === "-c") {
+      if (!args[1]) {
+        return message.reply("❌ Please provide a filename to search and install");
+      }
+
+      const filename = args[1].replace('.js', '');
+
+      try {
+        const response = await axios.get(`${stbotApi.baseURL}/api/search`, {
+          params: {
+            query: filename,
+            type: 'command'
+          }
+        });
+
+        if (!response.data.success || response.data.results.length === 0) {
+          return message.reply(`❌ No command found with name: ${filename}`);
+        }
+
+        const file = response.data.results[0];
+        const finalFilename = file.filename.endsWith('.js') ? file.filename : file.filename + '.js';
+        const savePath = path.join(__dirname, finalFilename);
+
+        // Check if file already exists
+        if (fs.existsSync(savePath)) {
+          return message.reply(
+            `⚠️ Command already exists: ${finalFilename}\n\n` +
+            `Use !sthandlers ${file.filename} to see details`,
+            (err, info) => {
+              global.GoatBot.onReaction.set(info.messageID, {
+                commandName: module.exports.config.name,
+                messageID: info.messageID,
+                author: senderID,
+                type: "installReplace",
+                data: {
+                  file: file,
+                  savePath: savePath,
+                  finalFilename: finalFilename,
+                  folder: 'cmds'
+                }
+              });
+            }
+          );
+        }
+
+        // Download and install
+        const codeResponse = await axios.get(file.rawUrl);
+        const code = codeResponse.data;
+
+        fs.writeFileSync(savePath, code);
+
+        // Auto-load the command
+        const { loadScripts } = global.utils;
+        const { configCommands } = global.GoatBot;
+        const { log } = global.utils;
+
+        const infoLoad = loadScripts(
+          'cmds',
+          finalFilename.replace('.js', ''),
+          log,
+          configCommands,
+          api,
+          threadModel,
+          userModel,
+          dashBoardModel,
+          globalModel,
+          threadsData,
+          usersData,
+          dashBoardData,
+          globalData,
+          getLang
+        );
+
+        if (infoLoad.status === "success") {
+          return message.reply(
+            `✅ Successfully installed and loaded!\n\n` +
+            `📁 File: ${finalFilename}\n` +
+            `📂 Type: command\n` +
+            `📝 Name: ${infoLoad.name}\n` +
+            `👤 Author: ${file.author}\n` +
+            `📅 Added: ${file.uploadDate}\n\n` +
+            `The command is now active!`
+          );
+        } else {
+          return message.reply(
+            `✅ Installed but failed to load\n\n` +
+            `📁 File: ${finalFilename}\n` +
+            `❌ Error: ${infoLoad.error.name}: ${infoLoad.error.message}\n\n` +
+            `Use !cmd load ${finalFilename.replace('.js', '')} to try loading manually`
+          );
+        }
+      } catch (err) {
+        return message.reply(`❌ Search/Install failed: ${err.message}`);
+      }
+    }
+
+    // Handle search and install for events
+    if (args[0] === "-e") {
+      if (!args[1]) {
+        return message.reply("❌ Please provide a filename to search and install");
+      }
+
+      const filename = args[1].replace('.js', '');
+
+      try {
+        const response = await axios.get(`${stbotApi.baseURL}/api/search`, {
+          params: {
+            query: filename,
+            type: 'event'
+          }
+        });
+
+        if (!response.data.success || response.data.results.length === 0) {
+          return message.reply(`❌ No event found with name: ${filename}`);
+        }
+
+        const file = response.data.results[0];
+        const finalFilename = file.filename.endsWith('.js') ? file.filename : file.filename + '.js';
+        const savePath = path.join(__dirname, '../events', finalFilename);
+
+        // Check if file already exists
+        if (fs.existsSync(savePath)) {
+          return message.reply(
+            `⚠️ Event already exists: ${finalFilename}\n\n` +
+            `React to replace it`,
+            (err, info) => {
+              global.GoatBot.onReaction.set(info.messageID, {
+                commandName: module.exports.config.name,
+                messageID: info.messageID,
+                author: senderID,
+                type: "installReplace",
+                data: {
+                  file: file,
+                  savePath: savePath,
+                  finalFilename: finalFilename,
+                  folder: 'events'
+                }
+              });
+            }
+          );
+        }
+
+        // Download and install
+        const codeResponse = await axios.get(file.rawUrl);
+        const code = codeResponse.data;
+
+        fs.writeFileSync(savePath, code);
+
+        // Auto-load the event
+        const { loadScripts } = global.utils;
+        const { configCommands } = global.GoatBot;
+        const { log } = global.utils;
+
+        const infoLoad = loadScripts(
+          'events',
+          finalFilename.replace('.js', ''),
+          log,
+          configCommands,
+          api,
+          threadModel,
+          userModel,
+          dashBoardModel,
+          globalModel,
+          threadsData,
+          usersData,
+          dashBoardData,
+          globalData,
+          getLang
+        );
+
+        if (infoLoad.status === "success") {
+          return message.reply(
+            `✅ Successfully installed and loaded!\n\n` +
+            `📁 File: ${finalFilename}\n` +
+            `📂 Type: event\n` +
+            `📝 Name: ${infoLoad.name}\n` +
+            `👤 Author: ${file.author}\n` +
+            `📅 Added: ${file.uploadDate}\n\n` +
+            `The event is now active!`
+          );
+        } else {
+          return message.reply(
+            `✅ Installed but failed to load\n\n` +
+            `📁 File: ${finalFilename}\n` +
+            `❌ Error: ${infoLoad.error.name}: ${infoLoad.error.message}\n\n` +
+            `Use !event load ${finalFilename.replace('.js', '')} to try loading manually`
+          );
+        }
+      } catch (err) {
+        return message.reply(`❌ Search/Install failed: ${err.message}`);
+      }
+    }
+
+    // Handle send raw file URL
+    if (args[0] === "-s") {
+      if (!args[1]) {
+        return message.reply("❌ Please provide a filename to search");
+      }
+
+      const filename = args[1].replace('.js', '');
+
+      try {
+        const response = await axios.get(`${stbotApi.baseURL}/api/search`, {
+          params: {
+            query: filename,
+            type: 'all'
+          }
+        });
+
+        if (!response.data.success || response.data.results.length === 0) {
+          return message.reply(`❌ No file found with name: ${filename}`);
+        }
+
+        const file = response.data.results[0];
+        
+        return message.reply(
+          `📁 File: ${file.filename}\n` +
+          `📂 Type: ${file.type}\n` +
+          `👤 Author: ${file.author}\n` +
+          `📅 Upload Date: ${file.uploadDate}\n\n` +
+          `🔗 Raw URL:\n${file.rawUrl}`
+        );
+      } catch (err) {
+        return message.reply(`❌ Search failed: ${err.message}`);
+      }
     }
 
     // Handle upload from path

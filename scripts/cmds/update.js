@@ -6,7 +6,7 @@ const dirBootLogTemp = `${__dirname}/tmp/rebootUpdated.txt`;
 module.exports = {
 	config: {
 		name: "update",
-		version: "2.4.65",
+		version: "2.4.67",
 		author: "ST | Sheikh Tamim",
 		role: 2,
 		description: {
@@ -64,12 +64,27 @@ module.exports = {
 	},
 
 	ST: async function ({ message, getLang, commandName, event, args }) {
-		// Handle refuse command
+		// Clear notification tracking for admin when they use update command
+		if (global.updateNotificationSent && global.updateNotificationSent.admins) {
+			global.updateNotificationSent.admins.delete(event.senderID);
+		}
+		
+		// Handle refuse command - check first argument
 		if (args[0] && (args[0].toLowerCase() === 'refuse' || args[0].toLowerCase() === 'r')) {
-			if (global.updateAvailable && global.updateAvailable.newVersion) {
+			// Check if update is available
+			if ((global.updateAvailable && global.updateAvailable.hasUpdate) || (global.GoatBot.updateAvailable && global.GoatBot.updateAvailable.hasUpdate)) {
 				// Set refuse timestamp (refuse for 2 hours)
-				global.updateRefuseUntil = Date.now() + (2 * 60 * 60 * 1000);
-				global.GoatBot.updateRefuseUntil = global.updateRefuseUntil;
+				const refuseUntil = Date.now() + (2 * 60 * 60 * 1000);
+				global.updateRefuseUntil = refuseUntil;
+				global.GoatBot.updateRefuseUntil = refuseUntil;
+				
+				// Temporarily disable update enforcement
+				if (global.updateAvailable) {
+					global.updateAvailable.hasUpdate = false;
+				}
+				if (global.GoatBot.updateAvailable) {
+					global.GoatBot.updateAvailable.hasUpdate = false;
+				}
 				
 				// Reset notification tracking to allow fresh notifications after 2 hours
 				global.updateNotificationSent = {
@@ -77,7 +92,7 @@ module.exports = {
 					admins: new Set()
 				};
 				
-				const refuseTime = new Date(global.updateRefuseUntil).toLocaleString();
+				const refuseTime = new Date(refuseUntil).toLocaleString();
 				const refuseMessage = `✅ Update Requirement Temporarily Disabled\n\n` +
 					`⏰ Bot will work normally for the next 2 hours.\n` +
 					`📅 Enforcement resumes at: ${refuseTime}\n\n` +

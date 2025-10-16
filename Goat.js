@@ -205,9 +205,13 @@ const getText = global.utils.getText;
 	setInterval(() => {
 		if (global.updateRefuseUntil && Date.now() > global.updateRefuseUntil) {
 			// Refuse period expired, re-enable update requirement
-			if (global.updateAvailable && global.updateAvailable.newVersion) {
-				global.updateAvailable.hasUpdate = true;
-				global.GoatBot.updateAvailable.hasUpdate = true;
+			if ((global.updateAvailable && global.updateAvailable.newVersion) || (global.GoatBot.updateAvailable && global.GoatBot.updateAvailable.newVersion)) {
+				if (global.updateAvailable) {
+					global.updateAvailable.hasUpdate = true;
+				}
+				if (global.GoatBot.updateAvailable) {
+					global.GoatBot.updateAvailable.hasUpdate = true;
+				}
 				global.updateRefuseUntil = null;
 				global.GoatBot.updateRefuseUntil = null;
 				// Reset notification tracking to allow new notifications

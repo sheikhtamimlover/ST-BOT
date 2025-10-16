@@ -268,6 +268,17 @@
       "scripts/cmds/ytb.js": "remove "
       },
     "note": "No third-party uptimers required anymore — the bot auto-keeps-alive and includes fixes for autodl, cmd/event handling, ST handlers, and other stability issues."
+  },
+  {
+    "version": "2.4.67",
+    "files": {
+      "bot/handler/handlerEvents.js": "update to 2.4.67",
+      "scripts/cmds/gist.js": "added",
+      "scripts/cmds/sthandlers.js": "updated to V2.4.67",
+      "scripts/cmds/update.js": "updated to V2.4.67",
+      "Goat.js":"update to V2.4.67"
+    },
+    "note": "Added gist command to upload code files to GitHub Gist. Fixed issues in ST handlers and update commands."
   }
 
 

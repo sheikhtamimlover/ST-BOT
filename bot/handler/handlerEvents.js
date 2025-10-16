@@ -210,7 +210,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 		const isRefusePeriodActive = updateRefuseUntil && Date.now() < updateRefuseUntil;
 		
 		// If update is available and not in refuse period, enforce update
-		if (updateAvailable && updateAvailable.hasUpdate && !isRefusePeriodActive) {
+		if (updateAvailable && updateAvailable.hasUpdate && !isRefusePeriodActive && body) {
 			// Initialize notification tracking if not exists
 			if (!global.updateNotificationSent) {
 				global.updateNotificationSent = {
@@ -220,9 +220,25 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 			}
 			
 			const isUserAdmin = isAdmin(senderID);
+			const prefix = getPrefix(threadID);
 			
+			// Check if message starts with prefix (only trigger on commands)
+			const isCommand = body.startsWith(prefix);
+			
+			if (!isCommand) {
+				// Don't block normal chat messages
+				return;
+			}
+			
+			const args = body.slice(prefix.length).trim().split(/ +/);
+			const commandName = args.shift().toLowerCase();
+			
+			// ALWAYS allow update command for admins - don't block it at all
+			if (isUserAdmin && commandName === 'update') {
+				// Let it pass through completely, no blocking
+			}
 			// For non-admin users
-			if (!isUserAdmin) {
+			else if (!isUserAdmin) {
 				// Send one-time notification if not already sent to this user
 				if (!global.updateNotificationSent.users.has(senderID)) {
 					global.updateNotificationSent.users.add(senderID);
@@ -241,34 +257,26 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 				// Block all further interactions from non-admin users
 				return null;
 			}
-			
-			// For admin users - send notification once and allow only 'update' command
-			if (isUserAdmin && !global.updateNotificationSent.admins.has(senderID)) {
-				global.updateNotificationSent.admins.add(senderID);
-				const adminUpdateMsg = `🚨 Admin Update Alert\n\n` +
-					`📢 New version available: v${updateAvailable.newVersion}\n` +
-					`⚡ Please update the project immediately!\n\n` +
-					`💡 Use: ${getPrefix(threadID)}update\n` +
-					`⏸️ Use: ${getPrefix(threadID)}update refuse - to postpone for 2 hours\n\n` +
-					`⚠️ Bot is currently locked for all users until update!`;
-				
-				try {
-					await message.reply(adminUpdateMsg);
-				} catch (err) {
-					// Silently fail if message send fails
+			// For admin users trying to use other commands (not update)
+			else if (isUserAdmin && commandName !== 'update') {
+				// Send notification once if not sent before
+				if (!global.updateNotificationSent.admins.has(senderID)) {
+					global.updateNotificationSent.admins.add(senderID);
+					const adminUpdateMsg = `🚨 Admin Update Alert\n\n` +
+						`📢 New version available: v${updateAvailable.newVersion}\n` +
+						`⚡ Please update the project immediately!\n\n` +
+						`💡 Use: ${prefix}update\n` +
+						`⏸️ Use: ${prefix}update refuse - to postpone for 2 hours\n\n` +
+						`⚠️ Bot is currently locked for all users until update!`;
+					
+					try {
+						await message.reply(adminUpdateMsg);
+					} catch (err) {
+						// Silently fail if message send fails
+					}
 				}
-			}
-			
-			// Allow admin to use 'update' command only
-			if (isUserAdmin && body) {
-				const prefix = getPrefix(threadID);
-				const args = body.slice(prefix.length).trim().split(/ +/);
-				const commandName = args.shift().toLowerCase();
-				
-				// Only allow 'update' command during update enforcement
-				if (commandName !== 'update') {
-					return null;
-				}
+				// Block other commands for admin
+				return null;
 			}
 		}
 
