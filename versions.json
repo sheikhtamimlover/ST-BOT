@@ -179,9 +179,9 @@
       "Goat.js": "update to V2.4.61",
       "utils.js": "update to V2.4.61"
     },
-    "deletedFiles": [
-      "scripts/cmds/texttoimage.js"
-    ],
+    "deleteFiles": {
+      "scripts/cmds/texttoimage.js":""
+      },
     "note": "Now you can host this project on any free hosting service, such as HidenCloud or Solar Hosting. Set showLoginTitle to false in the config. Removed all unnecessary credential-related code. Ensured email/password login is stable."
   },
   {
@@ -206,10 +206,10 @@
       "scripts/cmds/sing.js": "updated to V2.4.63",
       "scripts/cmds/stai.js": "added to V2.4.63"
     },
-    "deletedFiles": [
-      "fb-chat-api",
-      "scripts/cmds/cs.js"
-    ],
+    "deleteFiles": {
+      "fb-chat-api":"",
+      "scripts/cmds/cs.js":""
+    },
     "imageUrl": [
       "https://i.ibb.co/fd5XNkK7/554539984-4149951255244605-1174908613018936331-n-2.jpg",
       "https://i.ibb.co/JwSjJB71/553963314-2571683476522678-8514315576468358684-n.jpg",
