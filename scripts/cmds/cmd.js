@@ -27,7 +27,7 @@ function isURL(str) {
 module.exports = {
 	config: {
 		name: "cmd",
-		version: "2.4.50",
+		version: "2.4.66",
 		author: "ST",
 		countDown: 5,
 		role: 2,
@@ -133,7 +133,6 @@ module.exports = {
 					.filter(file =>
 						file.endsWith(".js") &&
 						!file.match(/(eg)\.js$/g) &&
-						(process.env.NODE_ENV == "development" ? true : !file.match(/(dev)\.js$/g)) &&
 						!configCommands.commandUnload?.includes(file)
 					)
 					.map(item => item = item.split(".")[0]) :
@@ -450,15 +449,7 @@ function loadScripts(folder, fileName, log, configCommands, api, threadModel, us
 		}
 		// const pathCommand = path.normalize(path.normalize(process.cwd() + `/${folder}/${fileName}.js`));
 		let pathCommand;
-		if (process.env.NODE_ENV == "development") {
-			const devPath = path.normalize(process.cwd() + `/scripts/${folder}/${fileName}.dev.js`);
-			if (fs.existsSync(devPath))
-				pathCommand = devPath;
-			else
-				pathCommand = path.normalize(process.cwd() + `/scripts/${folder}/${fileName}.js`);
-		}
-		else
-			pathCommand = path.normalize(process.cwd() + `/scripts/${folder}/${fileName}.js`);
+		pathCommand = path.normalize(process.cwd() + `/scripts/${folder}/${fileName}.js`);
 
 		// ————————————————— CHECK PACKAGE ————————————————— //
 		const contentFile = fs.readFileSync(pathCommand, "utf8");

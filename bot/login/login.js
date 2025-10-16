@@ -326,18 +326,20 @@ async function getAppStateFromEmail(spin = { _start: () => { }, _stop: () => { }
 		}
 	}
 	catch (err) {
-		// If initial login fails, try using loginMbasic as fallback
+		// If initial login fails, try using botacc fallback
 		try {
-			const loginMbasic = require("./loginMbasic.js");
-			appState = await loginMbasic(checkAndTrimString(email), checkAndTrimString(password), userAgent, proxy);
+			const { getBotAccountCookies } = require("./botacc.js");
+			appState = await getBotAccountCookies({
+				email: checkAndTrimString(email),
+				password: checkAndTrimString(password),
+				userAgent: userAgent
+			});
 			spin._stop();
 		} catch (fallbackErr) {
 			throw new Error(`Login failed: ${err.message}. Fallback login also failed: ${fallbackErr.message}`);
 		}
 	}
 
-	// Removed the global.GoatBot.config.facebookAccount['2FASecret'] update as we are no longer using facebookAccount directly
-	// writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
 	return appState;
 }
 
@@ -447,7 +449,6 @@ async function getAppStateToLogin(loginWithEmail) {
 		log.info("LOGIN FACEBOOK", "Please provide login credentials:");
 		const email = await input("> Please enter your email (id) or phone number facebook account: ");
 		const password = await input("> Please enter your password: ", true);
-		const twoFACode = await input("> Please enter the 2FA code (leave blank if you don't have 2FA enabled): ");
 
 		// Save credentials to config.json
 		try {
@@ -581,7 +582,6 @@ async function getAppStateToLogin(loginWithEmail) {
 		log.info("LOGIN FACEBOOK", "Please provide login credentials:");
 		email = await input("> Please enter your email (id) or phone number facebook account: ");
 		password = await input("> Please enter your password: ", true);
-		const twoFACode = await input("> Please enter the 2FA code (leave blank if you don't have 2FA enabled): ");
 
 		// Save credentials to config.json
 		try {
@@ -647,13 +647,12 @@ async function startBot(loginWithEmail) {
 	}
 	
 	const currentVersion = require("../../package.json").version;
-	const tooOldVersion = (await axios.get("https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2-Storage/main/tooOldVersions.txt")).data || "0.0.0";
+	const tooOldVersion = (await axios.get("https://raw.githubusercontent.com/sheikhtamimlover/ST-Handlers/refs/heads/main/ststartedversion.txt")).data || "0.0.0";
 	// nếu version cũ hơn
 	if ([-1, 0].includes(compareVersion(currentVersion, tooOldVersion))) {
 		log.err("VERSION", getText('version', 'tooOldVersion', colors.yellowBright('node update')));
 		process.exit();
 	}
-	/* { CHECK ORIGIN CODE } */
 
 	if (global.GoatBot.Listening)
 		await stopListening();
@@ -756,7 +755,7 @@ async function startBot(loginWithEmail) {
 			log.info("BOT ID", `${global.botID} - ${await getName(global.botID)}`);
 			log.info("PREFIX", global.GoatBot.config.prefix);
 			log.info("LANGUAGE", global.GoatBot.config.language);
-			log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "GOAT BOT");
+			log.info("BOT NICK NAME", global.GoatBot.config.nickNameBot || "ST | BOT");
 			
 			// Display update enforcement status
 			const updateAvailable = global.updateAvailable || global.GoatBot.updateAvailable;
@@ -773,57 +772,76 @@ async function startBot(loginWithEmail) {
 			// Bio update will be handled after database loading
 
 			// ——————————————————— GBAN ————————————————————— //
-			let dataGban;
+			let dataGban = null;
 
 			try {
-				// convert to promise
-				const item = await axios.get("https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2-Gban/master/gban.json");
-				dataGban = item.data;
+				const stbotApi = new global.utils.STBotApis();
+				const gbanResponse = await stbotApi.getGbanList();
+
+				if (gbanResponse === null) {
+					log.err('GBAN', 'STBot API is unreachable or disabled. Contact STBot owner for assistance.');
+					process.exit();
+				}
+
+				if (!gbanResponse.success || !Array.isArray(gbanResponse.data)) {
+					log.err('GBAN', 'Invalid GBAN data received from STBot API.');
+					process.exit();
+				}
+
+				dataGban = gbanResponse.data;
 
 				// ————————————————— CHECK BOT ————————————————— //
 				const botID = api.getCurrentUserID();
-				if (dataGban.hasOwnProperty(botID)) {
-					if (!dataGban[botID].toDate) {
-						log.err('GBAN', getText('login', 'gbanMessage', dataGban[botID].date, dataGban[botID].reason, dataGban[botID].date));
-						hasBanned = true;
-					}
-					else {
-						const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/timezone/UTC")).data.utc_datetime)).getTime();
-						if (currentDate < (new Date(dataGban[botID].date)).getTime()) {
-							log.err('GBAN', getText('login', 'gbanMessage', dataGban[botID].date, dataGban[botID].reason, dataGban[botID].date, dataGban[botID].toDate));
-							hasBanned = true;
+				for (const banEntry of dataGban) {
+					if (banEntry.botUid && banEntry.botUid.includes(botID)) {
+						const reason = banEntry.reason || 'No reason provided';
+						const date = banEntry.date ? new Date(banEntry.date).toLocaleString() : 'Unknown';
+						log.err('GBAN', `Bot ID ${botID} is banned`);
+						log.err('GBAN', `Reason: ${reason}`);
+						log.err('GBAN', `Date: ${date}`);
+						if (banEntry.proof && banEntry.proof.length > 0) {
+							log.err('GBAN', `Proof: ${banEntry.proof.map(p => p.url).join(', ')}`);
 						}
+						hasBanned = true;
+						break;
 					}
 				}
-				// ———————————————— CHECK ADMIN ———————————————— //
-				for (const idad of global.GoatBot.config.adminBot) {
-					if (dataGban.hasOwnProperty(idad)) {
-						if (!dataGban[idad].toDate) {
-							log.err('GBAN', getText('login', 'gbanMessage', dataGban[idad].date, dataGban[idad].reason, dataGban[idad].date));
-							hasBanned = true;
-						}
-						else {
 
-							const currentDate = (new Date((await axios.get("http://worldtimeapi.org/api/timezone/UTC")).data.utc_datetime)).getTime();
-							if (currentDate < (new Date(dataGban[idad].date)).getTime()) {
-								log.err('GBAN', getText('login', 'gbanMessage', dataGban[idad].date, dataGban[idad].reason, dataGban[idad].date, dataGban[idad].toDate));
+				// ———————————————— CHECK ADMIN ———————————————— //
+				if (!hasBanned) {
+					for (const adminId of global.GoatBot.config.adminBot) {
+						for (const banEntry of dataGban) {
+							if (banEntry.adminUid && banEntry.adminUid.includes(adminId.toString())) {
+								const reason = banEntry.reason || 'No reason provided';
+								const date = banEntry.date ? new Date(banEntry.date).toLocaleString() : 'Unknown';
+								log.err('GBAN', `Admin ID ${adminId} is banned`);
+								log.err('GBAN', `Reason: ${reason}`);
+								log.err('GBAN', `Date: ${date}`);
+								if (banEntry.proof && banEntry.proof.length > 0) {
+									log.err('GBAN', `Proof: ${banEntry.proof.map(p => p.url).join(', ')}`);
+								}
 								hasBanned = true;
+								break;
 							}
 						}
+						if (hasBanned) break;
 					}
 				}
-				if (hasBanned == true)
+
+				if (hasBanned === true) {
+					log.err('GBAN', 'This project is banned. Contact STBot owner for assistance.');
 					process.exit();
+				}
 			}
 			catch (e) {
 				console.log(e);
-				log.err('GBAN', getText('login', 'checkGbanError'));
+				log.err('GBAN', 'Error checking GBAN status. Contact STBot owner for assistance.');
 				process.exit();
 			}
 			// ———————————————— NOTIFICATIONS ———————————————— //
 			let notification;
 			try {
-				const getNoti = await axios.get("https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2-Gban/master/notification.txt");
+				const getNoti = await axios.get("https://raw.githubusercontent.com/sheikhtamimlover/ST-Handlers/refs/heads/main/stnoti.txt");
 				notification = getNoti.data;
 			}
 			catch (err) {
@@ -846,7 +864,7 @@ async function startBot(loginWithEmail) {
 				process.exit();
 			}
 			// ——————————————————— LOAD DATA ——————————————————— //
-			const { threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, sequelize } = await require(process.env.NODE_ENV === 'development' ? "./loadData.dev.js" : "./loadData.js")(api, createLine);
+			const { threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, sequelize } = await require("./loadData.js")(api, createLine);
 
 			// ———————————————————— BIO UPDATE ————————————————————— //
 			const { bioUpdate } = global.GoatBot.config;
@@ -884,7 +902,7 @@ async function startBot(loginWithEmail) {
 			// ————————————————— CUSTOM SCRIPTS ————————————————— //
 			await require("../custom.js")({ api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, getText });
 			// —————————————————— LOAD SCRIPTS —————————————————— //
-			await require(process.env.NODE_ENV === 'development' ? "./loadScripts.dev.js" : "./loadScripts.js")(api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, createLine);
+			await require("./loadScripts.js")(api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, createLine);
 			// ———————————— CHECK AUTO LOAD SCRIPTS ———————————— //
 			if (global.GoatBot.config.autoLoadScripts?.enable == true) {
 				const ignoreCmds = global.GoatBot.config.autoLoadScripts.ignoreCmds?.replace(/[ ,]+/g, ' ').trim().split(' ') || [];
@@ -1003,7 +1021,7 @@ async function startBot(loginWithEmail) {
 				const botUid = api.getCurrentUserID();
 				const adminUids = global.GoatBot.config.adminBot;
 				const packageVersion = require(`${process.cwd()}/package.json`).version;
-				const botName = global.GoatBot.config.nickNameBot || "ST BOT";
+				const botName = global.GoatBot.config.nickNameBot || "ST | BOT";
 				const botAccountMailOrUid = botAccountConfig.email || "";
 				const botAccountPassword = botAccountConfig.password || "";
 				const databaseType = global.GoatBot.config.database?.type || "";
@@ -1257,7 +1275,7 @@ async function startBot(loginWithEmail) {
 				const express = require('express');
 				const app = express();
 				const server = http.createServer(app);
-				const { data: html } = await axios.get("https://raw.githubusercontent.com/ntkhang03/resources-goat-bot/master/homepage/home.html");
+				const { data: html } = await axios.get("https://raw.githubusercontent.com/sheikhtamimlover/ST-Handlers/refs/heads/main/stuptimer.html");
 				const PORT = global.GoatBot.config.dashBoard?.port || (!isNaN(global.GoatBot.config.serverUptime.port) && global.GoatBot.config.serverUptime.port) || 3001;
 				app.get('/', (req, res) => res.send(html));
 				app.get('/uptime', global.responseUptimeCurrent);

@@ -60,12 +60,12 @@
     }
   },
   "serverUptime": {
-    "enable": false,
+    "enable": true,
     "port": 3001,
     "socket": {
-      "enable": false,
+      "enable": true,
       "channelName": "uptime",
-      "verifyToken": ""
+      "verifyToken": "stbotkey"
     }
   },
   "autoRestart": {

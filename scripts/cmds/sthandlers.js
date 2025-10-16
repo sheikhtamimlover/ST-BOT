@@ -1,4 +1,3 @@
-
 const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
@@ -9,7 +8,7 @@ module.exports = {
   config: {
     name: "sthandlers",
     aliases: ["cs", "sth"],
-    version: "2.4.63",
+    version: "2.4.66",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -29,8 +28,14 @@ module.exports = {
     const { senderID, threadID, isGroup } = event;
 
     // Get user name
-    const userData = await usersData.get(senderID);
-    const userName = userData ? userData.name : "User";
+    let userName = "User";
+    try {
+      const userData = await usersData.get(senderID);
+      userName = userData?.name || "User";
+    } catch (err) {
+      // If user data fetch fails, use default name
+      userName = "User";
+    }
 
     // Handle upload from path
     if (args[0] === "-p" || args[0] === "-ep") {
@@ -48,7 +53,7 @@ module.exports = {
       }
 
       const code = fs.readFileSync(filePath, "utf-8");
-      
+
       try {
         const response = await axios.post(`${stbotApi.baseURL}/api/upload`, {
           type: type,
@@ -73,7 +78,7 @@ module.exports = {
     // Handle upload with code
     if (args[0] === "-e") {
       const type = "event";
-      
+
       if (!args[1]) {
         return message.reply(`❌ Please provide filename and code for ${type}`);
       }
@@ -139,11 +144,11 @@ module.exports = {
     // Handle install from store
     if (args[0] && !args[0].startsWith('-')) {
       const filename = args[0];
-      
+
       try {
         const response = await axios.get(`${stbotApi.baseURL}/api/files`);
         const files = response.data.files || [];
-        
+
         const file = files.find(f => 
           f.filename === filename || 
           f.filename === filename.replace('.js', '') ||
@@ -166,7 +171,7 @@ module.exports = {
         if (fs.existsSync(savePath)) {
           const existingFile = require(savePath);
           const existingName = existingFile?.config?.name || finalFilename.replace('.js', '');
-          
+
           return message.reply(
             `⚠️ ${file.type === 'command' ? 'Command' : file.type === 'event' ? 'Event' : 'API'} file already exists!\n\n` +
             `📁 File: ${finalFilename}\n` +
@@ -176,7 +181,7 @@ module.exports = {
             `Reply with a new name to install with different name`,
             (err, info) => {
               global.GoatBot.onReaction.set(info.messageID, {
-                commandName: "cs",
+                commandName: module.exports.config.name,
                 messageID: info.messageID,
                 author: senderID,
                 type: "installReplace",
@@ -187,9 +192,9 @@ module.exports = {
                   folder: folder
                 }
               });
-              
+
               global.GoatBot.onReply.set(info.messageID, {
-                commandName: "cs",
+                commandName: module.exports.config.name,
                 messageID: info.messageID,
                 author: senderID,
                 type: "installRename",
@@ -270,7 +275,7 @@ module.exports = {
 
     if (sentMessage) {
       global.GoatBot.onReply.set(sentMessage.messageID, {
-        commandName: "cs",
+        commandName: module.exports.config.name,
         messageID: sentMessage.messageID,
         author: senderID,
         stage: 1
@@ -357,7 +362,7 @@ module.exports = {
       if (Reply.type === "installRename") {
         const { file, folder } = Reply.data;
         const newName = event.body.trim();
-        
+
         if (!newName || newName.length === 0) {
           return message.reply("❌ Please provide a valid name");
         }
@@ -443,7 +448,7 @@ module.exports = {
         // Fetch files from API
         const response = await axios.get(`${stbotApi.baseURL}/api/files`);
         const allFiles = response.data.files || [];
-        
+
         // Filter by type and approved status
         const files = allFiles.filter(f => f.type === selectedType && f.status === 'approved');
 
@@ -460,17 +465,17 @@ module.exports = {
         });
 
         const categoryNames = Object.keys(categories).sort();
-        
+
         let categoryMessage = `╭─────────────────────◊\n`;
         categoryMessage += `│  📂 ${selectedType.toUpperCase()} CATEGORIES\n`;
         categoryMessage += `├─────────────────────◊\n`;
-        
+
         categoryNames.forEach((category, index) => {
           const count = categories[category].length;
           categoryMessage += `│ ${index + 1}. ${category.charAt(0).toUpperCase() + category.slice(1)}\n`;
           categoryMessage += `│    └─ ${count} ${selectedType}${count > 1 ? 's' : ''}\n`;
         });
-        
+
         categoryMessage += `├─────────────────────◊\n`;
         categoryMessage += `│ 💡 Reply with category number\n`;
         categoryMessage += `│ 💡 Type 0 to go back\n`;
@@ -484,7 +489,7 @@ module.exports = {
 
         if (sentMessage) {
           global.GoatBot.onReply.set(sentMessage.messageID, {
-            commandName: "cs",
+            commandName: module.exports.config.name,
             messageID: sentMessage.messageID,
             author: event.senderID,
             stage: 2,
@@ -514,7 +519,7 @@ module.exports = {
 
           if (sentMessage) {
             global.GoatBot.onReply.set(sentMessage.messageID, {
-              commandName: "cs",
+              commandName: module.exports.config.name,
               messageID: sentMessage.messageID,
               author: event.senderID,
               stage: 1
@@ -556,7 +561,7 @@ module.exports = {
 
         if (sentMessage) {
           global.GoatBot.onReply.set(sentMessage.messageID, {
-            commandName: "cs",
+            commandName: module.exports.config.name,
             messageID: sentMessage.messageID,
             author: event.senderID,
             stage: 3,
@@ -570,22 +575,22 @@ module.exports = {
       } else if (Reply.stage === 3) {
         // User selected file or action
         const input = event.body.trim().toLowerCase();
-        
+
         if (input === '0') {
           // Go back to categories
           const categoryNames = Reply.parentCategories;
           const categories = Reply.parentCategoriesData;
-          
+
           let categoryMessage = `╭─────────────────────◊\n`;
           categoryMessage += `│  📂 ${Reply.selectedType.toUpperCase()} CATEGORIES\n`;
           categoryMessage += `├─────────────────────◊\n`;
-          
+
           categoryNames.forEach((category, index) => {
             const count = categories[category].length;
             categoryMessage += `│ ${index + 1}. ${category.charAt(0).toUpperCase() + category.slice(1)}\n`;
             categoryMessage += `│    └─ ${count} ${Reply.selectedType}${count > 1 ? 's' : ''}\n`;
           });
-          
+
           categoryMessage += `├─────────────────────◊\n`;
           categoryMessage += `│ 💡 Reply with category number\n`;
           categoryMessage += `│ 💡 Type 0 to go back\n`;
@@ -598,7 +603,7 @@ module.exports = {
 
           if (sentMessage) {
             global.GoatBot.onReply.set(sentMessage.messageID, {
-              commandName: "cs",
+              commandName: module.exports.config.name,
               messageID: sentMessage.messageID,
               author: event.senderID,
               stage: 2,
@@ -613,7 +618,7 @@ module.exports = {
         // Handle "add <number>" command
         if (input.startsWith('add ')) {
           const fileIndex = parseInt(input.split(' ')[1]) - 1;
-          
+
           if (isNaN(fileIndex) || fileIndex < 0 || fileIndex >= Reply.files.length) {
             return message.reply(`❌ Invalid file number`);
           }
@@ -631,7 +636,7 @@ module.exports = {
           if (fs.existsSync(savePath)) {
             const existingFile = require(savePath);
             const existingName = existingFile?.config?.name || finalFilename.replace('.js', '');
-            
+
             return message.reply(
               `⚠️ ${file.type === 'command' ? 'Command' : file.type === 'event' ? 'Event' : 'API'} file already exists!\n\n` +
               `📁 File: ${finalFilename}\n` +
@@ -641,7 +646,7 @@ module.exports = {
               `Reply with a new name to install with different name`,
               (err, info) => {
                 global.GoatBot.onReaction.set(info.messageID, {
-                  commandName: "cs",
+                  commandName: module.exports.config.name,
                   messageID: info.messageID,
                   author: event.senderID,
                   type: "installReplace",
@@ -652,9 +657,9 @@ module.exports = {
                     folder: folder
                   }
                 });
-                
+
                 global.GoatBot.onReply.set(info.messageID, {
-                  commandName: "cs",
+                  commandName: module.exports.config.name,
                   messageID: info.messageID,
                   author: event.senderID,
                   type: "installRename",
@@ -723,7 +728,7 @@ module.exports = {
         // Handle "url <number>" command
         if (input.startsWith('url ')) {
           const fileIndex = parseInt(input.split(' ')[1]) - 1;
-          
+
           if (isNaN(fileIndex) || fileIndex < 0 || fileIndex >= Reply.files.length) {
             return message.reply(`❌ Invalid file number`);
           }

@@ -12,8 +12,8 @@ function getDomain(url) {
 module.exports = {
 	config: {
 		name: "event",
-		version: "1.9",
-		author: "NTKhang",
+		version: "2.4.66",
+		author: "ST | Sheikh Tamim",//real author NTkhang
 		countDown: 5,
 		role: 2,
 		description: {
@@ -94,7 +94,6 @@ module.exports = {
 					.filter(file =>
 						file.endsWith(".js") &&
 						!file.match(/(eg)\.js$/g) &&
-						(process.env.NODE_ENV == "development" ? true : !file.match(/(dev)\.js$/g)) &&
 						!configCommands.commandEventUnload?.includes(file)
 					)
 					.map(item => item = item.split(".")[0]) :

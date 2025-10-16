@@ -236,5 +236,27 @@
       "updater.js": "update to V2.4.65"
     },
     "note": "Now you’ll automatically receive notifications when new ST-BOT updates are released."
+  },
+  {
+    "version": "2.4.66",
+    "files": {
+      "bot/handler/handlerAction.js": "update to 2.4.66",
+	  "bot/login/connectSocketIO.example.js": "update to 2.4.66",
+	  "bot/login/loadScripts.js": "update to 2.4.66",
+      "bot/login/login.js": "update to 2.4.66",
+	  "logger/log.js": "stable",
+      "scripts/cmds/autodl.js": "update to 2.4.66",
+      "scripts/cmds/cmd.js": "updated to V2.4.66",
+      "scripts/cmds/event.js": "added to V2.4.63",
+	  "scripts/cmds/newcommand.eg.js": "updated to V2.4.66",
+	  "scripts/cmds/sthandlers.js": "updated to V2.4.66",
+	  "config.json": "properly set uptimer",
+	  "utils.js": "update to V2.4.66"
+    },
+    "deletedFiles": [
+      "scripts/cmds/emojimix.js",
+      "scripts/cmds/ytb.js"
+    ],
+    "note": "No third-party uptimers required anymore — the bot auto-keeps-alive and includes fixes for autodl, cmd/event handling, ST handlers, and other stability issues."
   }
 ]

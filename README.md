@@ -1,4 +1,3 @@
-
 <div align="center">
 
 # 🐐 ST-BOT - By Sheikh Tamim
@@ -27,6 +26,23 @@
 
 </div>
 
+## 📖 Table of Contents
+
+- [Features](#-features)
+- [Command Structure](#-command-structure)
+- [Configuration Guide](#-configuration-guide)
+- [Installation & Setup](#-installation--setup)
+- [Premium System](#-premium-system)
+- [ST-FCA (Custom Facebook API)](#-st-fca-custom-facebook-api)
+- [Advanced Features](#-advanced-features)
+- [Dashboard](#-dashboard)
+- [ST Handlers Store](#-st-handlers-store)
+- [AI Command (STAI)](#-ai-command-stai)
+- [Support & Community](#-support--community)
+- [License](#-license)
+
+---
+
 ## 🚀 Features
 
 - **Modular Command System** - Easy to add/remove commands
@@ -39,21 +55,121 @@
 - **Anti-React System** - Advanced message management
 - **Real-time Dashboard** - Live monitoring with WebSocket
 - **Easy Deployment** - One-click deployment on Replit & Render
+- **Custom ST-FCA** - Optimized Facebook Chat API
+- **Bot Logging System** - Comprehensive logging configuration
+- **Prefix Management** - Global and per-thread prefix control
+- **Bio Update System** - Automatic bio updates
+- **Startup Notifications** - Configurable startup messages
 
 ---
 
-## 👨‍💻 About the Developer
+## 📝 Command Structure
 
-**Sheikh Tamim** is actively maintaining and regularly updating this project. This bot framework is reliable, easy to use, and can be deployed without hesitation on Render with no deployment issues.
+<img src="https://i.ibb.co.com/4RDdwr1q/IMG-7416.jpg" alt="Command Structure" width="600">
 
-### 📞 Contact & Support
+Every command in ST-BOT follows a standardized structure for consistency and ease of development:
 
-- **Instagram**: [![Instagram](https://img.shields.io/badge/@sheikh.tamim__lover-E4405F?style=flat&logo=instagram&logoColor=white)](https://www.instagram.com/sheikh.tamim_lover/)
-- **Messenger Group**: [Join Support Group](https://m.me/j/AbYvFRTzENblDU94/)
-- **Facebook**: [m.me/tormairedusi](https://m.me/tormairedusi)
-- **GitHub**: [sheikhtamimlover](https://github.com/sheikhtamimlover)
+### Command Configuration
 
-For any support, feature requests, or issues, feel free to message me or join the Messenger group!
+```javascript
+module.exports = {
+  config: {
+    name: "commandname",           // Command name (lowercase)
+    aliases: ["alias1", "alias2"], // Alternative names
+    version: "1.0.0",              // Command version
+    author: "Your Name",           // Author name
+    countDown: 5,                  // Cooldown in seconds
+    role: 0,                       // 0: Everyone, 1: Group Admin, 2: Bot Admin
+    premium: false,                // true: Premium only, false: Everyone
+    usePrefix: true,               // true: Requires prefix, false: No prefix needed
+    description: "Command description",
+    category: "category name",
+    guide: "{pn} <usage guide>"    // Usage instructions
+  },
+
+  langs: {
+    en: {
+      success: "Command executed successfully!",
+      error: "An error occurred!"
+    }
+  },
+
+  onStart: async function({ message, args, event, api, getLang }) {
+    // Main command logic
+    message.reply(getLang("success"));
+  },
+
+  onReply: async function({ message, Reply, event, api }) {
+    // Handle user replies to bot messages
+  },
+
+  onChat: async function({ message, event, args }) {
+    // Listen to all messages (without prefix)
+  },
+
+  onReaction: async function({ message, Reaction, event, api }) {
+    // Handle reactions to bot messages
+  }
+};
+```
+
+### Available Functions
+
+- **`message.reply(text)`** - Reply to user messages
+- **`message.send(text, threadID)`** - Send message to specific thread
+- **`message.unsend(messageID)`** - Unsend a message
+- **`message.reaction(emoji, messageID)`** - React to a message
+- **`api.sendMessage()`** - Direct API message sending
+- **`getLang(key, ...args)`** - Get localized text
+- **`usersData.get(userID)`** - Get user data
+- **`threadsData.get(threadID)`** - Get thread data
+
+---
+
+## ⚙️ Configuration Guide
+
+<img src="https://i.ibb.co.com/RGH2h5LZ/IMG-7415.jpg" alt="Prefix Configuration" width="600">
+
+### Global Prefix System
+
+Configure prefix usage in `config.json`:
+
+```json
+{
+  "prefix": "!",
+  "usePrefix": {
+    "enable": true,                    // Global prefix requirement
+    "adminUsePrefix": {
+      "enable": true,                  // Admin prefix requirement
+      "specificUids": []               // Specific users who need prefix
+    }
+  }
+}
+```
+
+**Options:**
+- `usePrefix.enable: true` - All users must use prefix
+- `usePrefix.enable: false` - No prefix required globally
+- `adminUsePrefix.enable: true` - Admins must use prefix
+- `adminUsePrefix.enable: false` - Admins don't need prefix
+- `specificUids: ["uid1", "uid2"]` - Specific users affected by admin rules
+
+### Bot Account Configuration
+
+Login credentials are set in `config.json`:
+
+```json
+{
+  "botAccount": {
+    "email": "your_email@example.com",
+    "password": "your_password",
+    "userAgent": "Mozilla/5.0...",
+    "autoUseWhenEmpty": true
+  }
+}
+```
+
+**Note:** If `account.txt` is empty, the bot will automatically use credentials from `config.json` to fetch cookies.
 
 ---
 
@@ -73,302 +189,335 @@ npm install
 
 3. **Configure the bot**:
    - Set your **Admin UID** in `config.json` → `adminBot` array
-   - Add your **Facebook cookies** in `account.txt` (JSON format)
-   - Configure database settings in `config.json`
+   - Add your **Facebook email/password** in `config.json` → `botAccount`
+   - Or add cookies directly in `account.txt` (JSON format)
 
 4. **Start the bot**:
 ```bash
 npm start
 ```
 
-### 🌐 Method 2: Deploy on Render (Recommended)
+### 🌐 Method 2: Deploy on Replit (Recommended)
 
-[![Deploy on Render]((https://img.shields.io/badge/Deploy%20on-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://replit.com/github/sheikhtamimlover/ST-BOT)
+[![Deploy on Replit](https://img.shields.io/badge/Deploy%20on-Replit-667881?style=for-the-badge&logo=replit&logoColor=white)](https://replit.com/github/sheikhtamimlover/ST-BOT)
 
-1. **One-Click Deployment**:
-   - Click the "Deploy on Render" button above
-   - Or fork/import this repository to Render
-   - Simply click the **Run** button - Render handles everything automatically
-
-2. **Configuration**:
-   - Add your Admin UID in `config.json`
-   - Add Facebook cookies in `account.txt`
-   - Dashboard will be available at your Replit URL
-
-3. **24/7 Operation**:
-   - Use Render's "Always On" feature for continuous operation
-   - Built-in SSL and global CDN included
-
-
-
-1. **Quick Deploy**:
-   - Connect your GitHub account to Render
-   - Select this repository
-   - Choose "Web Service"
-   
-2. **Configuration**:
-   ```yaml
-   Build Command: npm install
-   Start Command: npm start
-   Environment: Node
-   ```
-
-3. **Environment Variables** (Optional):
-   - Set any sensitive configuration as environment variables
-   - Dashboard will be accessible via your Render URL
+1. Click the "Deploy on Replit" button above
+2. Configure your bot in `config.json`
+3. Click the **Run** button - Replit handles everything automatically!
 
 ---
 
 ## 💎 Premium System
 
-The bot includes a comprehensive premium user management system that allows you to offer exclusive features to premium users.
+<img src="https://i.ibb.co.com/SYnXPfm/IMG-7399.jpg" alt="Premium System" width="600">
 
-### 🎯 How Premium System Works
+The bot includes a comprehensive premium user management system.
+
+### How Premium Works
 
 **For Users:**
-- Use `.premium request [message]` to request premium access
-- Premium users get access to exclusive commands
-- Status is saved permanently in the database
+- Request premium access: `.premium request <message>`
+- Premium users get exclusive command access
 
 **For Admins:**
-- Manage premium requests through `.premium` commands
-- Add/remove premium users instantly
-- View all premium users and pending requests
+- Add premium: `.premium add <uid/@mention>`
+- Remove premium: `.premium remove <uid/@mention>`
+- View premium users: `.premium list`
+- Check pending requests: `.premium pending`
 
-### 📋 Premium Commands
-
-| Command | Description | Access |
-|---------|-------------|---------|
-| `.premium request [message]` | Request premium access | All Users |
-| `.premium add <uid/@mention>` | Add user to premium | Admins Only |
-| `.premium remove <uid/@mention>` | Remove user from premium | Admins Only |
-| `.premium list [page]` | View premium users list | Admins Only |
-| `.premium pending` | View pending requests | Admins Only |
-
-### 🛠 Creating Premium Commands
-
-To make a command premium-only, add `premium: true` to the command config:
+### Creating Premium Commands
 
 ```javascript
 module.exports = {
-    config: {
-        name: "premiumcommand",
-        premium: true, // This makes the command premium-only
-        version: "1.0.0",
-        author: "Your Name",
-        role: 0,
-        description: "Premium exclusive command",
-        category: "premium"
-    },
+  config: {
+    name: "premiumcommand",
+    premium: true,  // Makes this command premium-only
+    role: 0,
+    // ... other config
+  },
 
-    onStart: async function({ message, getLang }) {
-        // Your premium command logic here
-        message.reply("🌟 This is a premium feature!");
-    }
+  onStart: async function({ message }) {
+    message.reply("🌟 This is a premium feature!");
+  }
 };
 ```
 
-### 💡 Premium Features
+---
 
-- **Automatic Validation**: Bot automatically checks premium status
-- **Database Integration**: Premium status synced across all platforms
-- **Request Management**: Organized system for handling premium requests
-- **Flexible Access**: Admins can grant/revoke access instantly
-- **Error Handling**: Graceful handling of premium restrictions
+## 🔌 ST-FCA (Custom Facebook API)
+
+ST-BOT uses **ST-FCA** - an optimized, custom-built Facebook Chat API for better performance and reliability.
+
+### Installation
+
+```bash
+npm install stfca
+```
+
+### GitHub Repository
+
+🔗 [https://github.com/sheikhtamimlover/ST-FCA.git](https://github.com/sheikhtamimlover/ST-FCA.git)
+
+### Features
+
+- ✅ Better stability and performance
+- ✅ Optimized for ST-BOT
+- ✅ Regular updates and bug fixes
+- ✅ Enhanced error handling
+- ✅ Improved cookie management
 
 ---
 
-## 📋 Essential Configuration
+## 🎯 Advanced Features
 
-Before starting, make sure to configure:
+### Thread Approval System
 
-1. **Admin UID**: Add your Facebook user ID to `config.json`:
-```json
-"adminBot": ["YOUR_FACEBOOK_UID_HERE"]
-```
+<img src="https://i.ibb.co.com/JwGKNzFp/IMG-7405.jpg" alt="Thread Approval 1" width="600">
+<img src="https://i.ibb.co.com/hxFwcf30/IMG-7404.jpg" alt="Thread Approval 2" width="600">
 
-2. **Facebook Cookies**: Replace content in `account.txt` with your Facebook cookies in JSON format
-
-3. **Database**: Choose between SQLite (default) or MongoDB in `config.json`
-
-4. **Bot Settings**: Customize prefix, language, timezone in `config.json`
-
----
-
-## ⭐ Special Features
-
-### 🔐 Thread Approval System
-Control which groups the bot can respond in:
+Control which groups can use your bot:
 
 ```json
-"threadApproval": {
-  "enable": true,
-  "adminNotificationThreads": ["thread_id_1", "thread_id_2"],
-  "autoApproveExisting": true
+{
+  "threadApproval": {
+    "enable": true,
+    "adminNotificationThreads": ["thread_id"],
+    "autoApproveExisting": true,
+    "sendNotifications": true,
+    "sendThreadMessage": true,
+    "autoApprovedThreads": []
+  }
 }
 ```
 
-### 🚀 Bot Startup Notifications
-Get notified when your bot comes online:
+**Commands:**
+- `!threadapprove list` - View all threads
+- `!threadapprove approve <tid>` - Approve a thread
+- `!threadapprove unapprove <tid>` - Unapprove a thread
+- `!threadapprove pending` - View pending threads
+
+### Bot Logging System
+
+<img src="https://i.ibb.co.com/B23tJ0JN/IMG-7413.jpg" alt="Bot Logging" width="600">
+
+Configure comprehensive logging:
 
 ```json
-"botStartupNotification": {
-  "enable": false,
-  "sendToThreads": {
+{
+  "botLogging": {
     "enable": true,
-    "threadIds": ["thread_id_1", "thread_id_2"]
-  },
-  "message": "🤖 Bot is now online and ready to serve!"
+    "sendToThreads": true,
+    "logThreadIds": ["thread_id"],
+    "sendToAdmins": false,
+    "silentOnDisabledThreads": true,
+    "logBotAdded": false,
+    "logBotKicked": true
+  }
 }
 ```
 
-### ⚡ AntiReact System
-Advanced message management through reactions:
+### Anti-React System
+
+Admin-only message management through reactions:
 
 ```json
-"antiReact": {
-  "enable": true,
-  "reactByUnsend": {
+{
+  "antiReact": {
     "enable": true,
-    "emojis": ["👍"]
-  },
-  "reactByRemove": {
-    "enable": true,
-    "emoji": "⚠"
-  },
-  "onlyAdminBot": true
+    "reactByUnsend": {
+      "enable": true,
+      "emojis": ["👍"]
+    },
+    "reactByRemove": {
+      "enable": true,
+      "emoji": "⚠"
+    },
+    "onlyAdminBot": true
+  }
 }
 ```
 
-### 🌐 Web Dashboard
-Protected dashboard with password authentication:
+### Bio Update System
+
+<img src="https://i.ibb.co.com/HTm9jymD/IMG-7411.jpg" alt="Bio Update 1" width="600">
+<img src="https://i.ibb.co.com/TDBnzRVt/IMG-7412.jpg" alt="Bio Update 2" width="600">
+
+Automatically update bot bio:
 
 ```json
-"dashBoard": {
-  "enable": true,
-  "port": 3021,
-  "passwordProtection": {
+{
+  "bioUpdate": {
     "enable": true,
-    "password": "your_secure_password"
+    "bioText": "ST Bot - Your custom bio here",
+    "updateOnce": true
+  }
+}
+```
+
+### Startup Notifications
+
+<img src="https://i.ibb.co.com/nNbvwfwZ/IMG-7396.jpg" alt="Startup Notification" width="600">
+
+Send notifications when bot starts:
+
+```json
+{
+  "botStartupNotification": {
+    "enable": true,
+    "sendToThreads": {
+      "enable": true,
+      "threadIds": ["thread_id"]
+    },
+    "sendToAdmin": {
+      "enable": false,
+      "adminId": ""
+    },
+    "message": "🤖 Bot is now online!"
   }
 }
 ```
 
 ---
 
-## 🎮 Creating Custom Commands
+## 📊 Dashboard
 
-### Command Structure
+<img src="https://i.ibb.co.com/MkHNNYnZ/Screenshot-2025-10-16-090815.png" alt="Dashboard" width="800">
 
-Commands are located in `scripts/cmds/` directory. Each command follows this structure:
+Access the powerful web dashboard with enhanced security:
 
-```javascript
-module.exports = {
-    config: {
-        name: "commandname",           // Command name (lowercase)
-        aliases: ["alias1", "alias2"], // Alternative names
-        version: "1.0.0",             // Command version
-        author: "Your Name",          // Your name
-        countDown: 5,                 // Cooldown in seconds
-        role: 0,                      // 0: Everyone, 1: Group Admin, 2: Bot Admin
-        premium: false,               // true: Premium only, false: Everyone
-        description: "Command description",
-        category: "category name",
-        guide: "{pn} <usage guide>"   // Usage instructions
-    },
-
-    langs: {
-        en: {
-            success: "Command executed successfully!",
-            error: "An error occurred!"
-        }
-    },
-
-    onStart: async function({ message, args, event, api, getLang }) {
-        // Main command logic here
-        try {
-            // Your command code
-            message.reply(getLang("success"));
-        } catch (error) {
-            message.reply(getLang("error"));
-        }
+```json
+{
+  "dashBoard": {
+    "enable": true,
+    "port": 3021,
+    "passwordProtection": {
+      "enable": true,
+      "password": "your_secure_password"
     }
-};
+  }
+}
 ```
 
-### Example Premium Command
+**Features:**
+- 📊 Real-time statistics
+- 👥 User management
+- 💎 Premium user control
+- 📝 Thread management
+- 📈 Command analytics
+- 🔧 System monitoring
 
-```javascript
-module.exports = {
-    config: {
-        name: "premiumfeature",
-        aliases: ["pf"],
-        version: "1.0.0",
-        author: "Sheikh Tamim",
-        countDown: 3,
-        role: 0,
-        premium: true, // Premium only command
-        description: "Exclusive premium feature",
-        category: "premium",
-        guide: "{pn} - Access premium features"
-    },
+---
 
-    onStart: async function({ message, args }) {
-        message.reply("🌟 Welcome to premium features! You have exclusive access.");
-    }
-};
+## 🛍️ ST Handlers Store
+
+<img src="https://i.ibb.co.com/B2xZPTxL/IMG-7414.jpg" alt="ST Handlers" width="600">
+
+Browse, install, and share commands, events, and APIs!
+
+### Usage
+
+```bash
+!sthandlers                    # Open main menu
+!sthandlers <filename>         # Install from store
+!sthandlers <name> <code>      # Upload command
+!sthandlers -e <name> <code>   # Upload event
+!sthandlers -p <filename>      # Upload from file path
+```
+
+### Features
+
+- ✅ Browse commands by category
+- ✅ Install commands instantly
+- ✅ Share your own creations
+- ✅ Version control
+- ✅ Auto-load installed commands
+- ✅ Community-driven content
+
+---
+
+## 🤖 AI Command (STAI)
+
+<img src="https://i.ibb.co.com/t7ZgxMP/IMG-7398.jpg" alt="STAI Command" width="600">
+
+The most advanced AI command with code generation and bug fixing capabilities!
+
+### Features
+
+- 🧠 Generate commands and events
+- 🐛 Fix bugs in existing code
+- 💡 Code suggestions and improvements
+- 🔧 Auto-formatting and optimization
+- 📝 Documentation generation
+
+### Usage
+
+```bash
+!stai generate command <description>
+!stai generate event <description>
+!stai fix <command_name>
+!stai improve <code>
 ```
 
 ---
 
-## 🌐 Web Dashboard
+## 📞 Support & Community
 
-The bot includes a real-time web dashboard accessible via your deployment URL. Features include:
+### Need Help?
 
-- **Live Statistics** - Real-time bot metrics
-- **User Management** - View and manage users
-- **Premium Management** - Handle premium requests
-- **Group Management** - Monitor group activities
-- **Command Analytics** - Track command usage
-- **System Monitoring** - Server status and performance
+- 📱 **Messenger Group**: [Join Support Group](https://m.me/j/AbYvFRTzENblDU94/)
+- 📸 **Instagram**: [@sheikh.tamim_lover](https://www.instagram.com/sheikh.tamim_lover/)
+- 💬 **Facebook**: [m.me/tormairedusi](https://m.me/tormairedusi)
+- 🐛 **Report Issues**: Use `!streport <your issue>` command
+
+### Regular Updates
+
+- ✅ Active development and maintenance
+- ✅ Regular feature additions
+- ✅ Bug fixes and improvements
+- ✅ Community-driven enhancements
+
+### Report Issues
+
+Use the built-in report command:
+```bash
+!streport <describe your issue or feature request>
+```
+
+Your report will be sent directly to the developer!
 
 ---
 
-## 📚 Command Categories
+## 📋 Essential Commands
 
-- **Admin** - Bot administration commands
-- **Premium** - Exclusive premium features
-- **Fun** - Entertainment and games
-- **Utility** - Useful tools and information
-- **Economy** - Virtual currency system
-- **Media** - Image, video, audio processing
-- **AI** - Artificial intelligence integrations
-- **Group** - Group management features
+| Command | Description | Access |
+|---------|-------------|---------|
+| `!help` | View all commands | All Users |
+| `!prefix` | View/change prefix | Group Admin |
+| `!premium request` | Request premium | All Users |
+| `!premium add` | Add premium user | Bot Admin |
+| `!threadapprove` | Manage thread approval | Bot Admin |
+| `!botlog` | Configure bot logging | Bot Admin |
+| `!sthandlers` | Access command store | All Users |
+| `!stai` | AI assistant | All Users |
+| `!streport` | Report issues | All Users |
+| `!update` | Update bot | Bot Admin |
 
 ---
 
-## 🔄 Regular Updates
+## 🔄 Regular Updates & Maintenance
 
 This project receives regular updates with:
-- **New Features** - Enhanced functionality
-- **Bug Fixes** - Stability improvements
-- **Security Patches** - Keep your bot safe
-- **Performance Optimizations** - Faster response times
-- **Premium Features** - Exclusive new commands
+- 🆕 New Features
+- 🐛 Bug Fixes  
+- 🔒 Security Patches
+- ⚡ Performance Optimizations
+- 💎 Premium Features
 
-Stay updated by watching this repository or joining our support group!
-
----
-
-## 📊 Project Statistics
-
-<div align="center">
-
-![GitHub Stats](https://github-readme-stats.vercel.app/api?username=sheikhtamimlover&repo=ST-BOT&show_icons=true&theme=radical)
-
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=sheikhtamimlover&layout=compact&theme=radical)
-
-</div>
+**Stay updated** by:
+- ⭐ Starring this repository
+- 👀 Watching for releases
+- 📱 Following on Instagram
+- 💬 Joining the support group
 
 ---
 
@@ -388,12 +537,17 @@ If you find this project helpful:
 - 🍴 Fork and contribute
 - 📢 Share with others
 - 💬 Join our community
-- 🔗 Follow on Instagram: [@sheikh.tamim_lover](https://www.instagram.com/sheikh.tamim_lover/)
+- 🔗 Follow on Instagram: [@sheikh.tamim_lover](https://www.instagram.com/sheikhtamimlover/)
+
+---
 
 <div align="center">
 
 **Happy Botting! 🤖✨**
 
 *Made with ❤️ by Sheikh Tamim*
+
+**GitHub:** [sheikhtamimlover/ST-BOT](https://github.com/sheikhtamimlover/ST-BOT)  
+**ST-FCA:** [sheikhtamimlover/ST-FCA](https://github.com/sheikhtamimlover/ST-FCA)
 
 </div>

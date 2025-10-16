@@ -60,7 +60,7 @@ module.exports = async function (api, threadModel, userModel, dashBoardModel, gl
 			.filter(file =>
 				file.endsWith(".js") &&
 				!file.endsWith("eg.js") && // ignore example file
-				(process.env.NODE_ENV == "development" ? true : !file.match(/(dev)\.js$/g)) && // ignore dev file in production mode
+				!file.match(/(dev)\.js$/g) && // ignore dev file in production mode
 				!configCommands[folderModules == "cmds" ? "commandUnload" : "commandEventUnload"]?.includes(file) // ignore unload command
 			);
 

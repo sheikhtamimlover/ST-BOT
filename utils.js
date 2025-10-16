@@ -789,6 +789,16 @@ class STBotApis {
 			return { success: false, data: [], count: 0, fullData: [] };
 		}
 	}
+
+	async getGbanList() {
+		try {
+			const response = await axios.get(`${this.baseURL}/api/stgban`);
+			return response.data;
+		} catch (err) {
+			// If API is unreachable or returns error, return null to indicate failure
+			return null;
+		}
+	}
 }
 
 const utils = {
