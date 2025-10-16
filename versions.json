@@ -264,8 +264,8 @@
       "utils.js": "update to V2.4.66"
     },
     "deleteFiles": [
-      "scripts/cmds/emojimix.js":"",
-      "scripts/cmds/ytb.js":""
+      "scripts/cmds/emojimix.js": "remove useless cmd",
+      "scripts/cmds/ytb.js":"" "remove useless cmd"
     ],
     "note": "No third-party uptimers required anymore — the bot auto-keeps-alive and includes fixes for autodl, cmd/event handling, ST handlers, and other stability issues."
   }
