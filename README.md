@@ -14,7 +14,7 @@
 ![Package Version](https://img.shields.io/github/package-json/v/sheikhtamimlover/ST-BOT?style=for-the-badge)
 ![Repository Size](https://img.shields.io/github/repo-size/sheikhtamimlover/ST-BOT?style=for-the-badge)
 ![Last Commit](https://img.shields.io/github/last-commit/sheikhtamimlover/ST-BOT?style=for-the-badge)
-[![Deploy on Replit](https://img.shields.io/badge/Deploy%20on-Replit-667881?style=for-the-badge&logo=replit&logoColor=white)](https://replit.com/github/sheikhtamimlover/ST-BOT)
+[![Deploy on Render](https://img.shields.io/badge/Deploy%20on-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://replit.com/github/sheikhtamimlover/ST-BOT)
 [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=sheikhtamimlover.ST-BOT)](https://github.com/sheikhtamimlover/ST-BOT)
 
 **Enhanced version of GoatBot V2** - Modified and maintained by **Sheikh Tamim**
