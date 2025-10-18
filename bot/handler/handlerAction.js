@@ -109,8 +109,9 @@ module.exports = (api, threadModel, userModel, dashBoardModel, globalModel, user
 			typ, presence, read_receipt
 		} = handlerChat;
 
-
-		onAnyEvent();
+		// Only call onAnyEvent if it exists and is a function
+		if (typeof onAnyEvent === 'function')
+			onAnyEvent();
 		switch (event.type) {
 			case "message":
 			case "message_reply":

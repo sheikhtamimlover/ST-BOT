@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "autodl",
     aliases: [],
-    version: "2.4.66",
+    version: "2.4.68",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -54,7 +54,8 @@ module.exports = {
       const userData = await usersData.get(event.senderID);
       const userName = userData ? userData.name : "User";
 
-      const waitMsg = await message.reply(`⏳ Downloading your video, ${userName}... Please wait 😊`);
+      const startTime = Date.now();
+      const pr = await message.pr(`⏳ Downloading your video, ${userName}... Please wait 😊`, "✅");
 
       const apiUrl = "https://st-dl.vercel.app/api/download/auto";
       const response = await axios.post(apiUrl, { url: validUrl });
@@ -79,10 +80,13 @@ module.exports = {
         `https://tinyurl.com/api-create.php?url=${encodeURIComponent(videoUrl)}`
       );
 
-      message.unsend(waitMsg.messageID);
+      const endTime = Date.now();
+      const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
+
+      await pr.success();
 
       await message.reply({
-        body: `✅ Downloaded from ${data.platform?.toUpperCase() || "UNKNOWN"}\n🔗 Link: ${tinyUrlResponse.data}`,
+        body: `✅ Downloaded from ${data.platform?.toUpperCase() || "UNKNOWN"}\n🔗 Link: ${tinyUrlResponse.data}\n⏱️ Time taken: ${timeTaken}s`,
         attachment: fs.createReadStream(filePath),
       });
 
@@ -90,7 +94,8 @@ module.exports = {
 
     } catch (err) {
       console.error("Download error:", err);
-      message.reply(
+      const pr = await message.pr("Processing failed...");
+      await pr.error(
         `❌ Error: ${err.message}\n\nSupported platforms:\nTikTok, Facebook, Instagram, YouTube, Twitter, Pinterest, Reddit, LinkedIn, CapCut, Douyin, Snapchat, Threads, Tumblr`
       );
     }

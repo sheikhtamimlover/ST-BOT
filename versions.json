@@ -279,6 +279,28 @@
       "Goat.js":"update to V2.4.67"
     },
     "note": "Added gist command to upload code files to GitHub Gist. Fixed issues in ST handlers and update commands."
+  },
+  {
+    "version": "2.4.68",
+    "files": {
+      "bot/handler/handlerAction.js": "update to 2.4.68",
+      "bot/handler/handlerEvents.js": "update to 2.4.68",
+      "bot/login/login.js": "update to 2.4.68",
+      "scripts/cmds/autodl.js": "updated to V2.4.68",
+      "scripts/cmds/flux.js": "updated to V2.4.68",
+      "scripts/cmds/maintid.js": "added",
+      "scripts/cmds/stmsg.js": "added",
+      "config.json": {
+      "mainThreadId": "",
+      "notesMainThreadId": "MANDATORY: Set your main thread ID here. Use the 'tid' command to get your thread ID, then paste it here and restart the bot."
+    },
+      "utils.js":"update to V2.4.68"
+    },
+    "imageUrl": [
+      "https://i.ibb.co.com/7Jdx33sK/Screenshot-2025-10-18-115455.png",
+      "https://i.ibb.co.com/sJ55fTgQ/Screenshot-2025-10-18-115503.png"
+    ],
+    "note": "Important: After updating, the bot may stop if the main thread ID is not set. Every ST Bot project now requires admins to add their primary thread ID in config.json under 'mainThreadId'. After updating, you can use the !maintid command to automatically add it, or manually update config.json. Without this, the bot will not run or respond. You can now send messages to any ST directly from your thread. New function 'message.pr()' added: it allows commands to process messages, send reactions, and automatically unsend messages before output. Commands like autodl and flux have been updated to use this function. Added two new admin commands: stmsg and maintid."
   }
 
 

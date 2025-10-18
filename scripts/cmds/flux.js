@@ -3,7 +3,7 @@ const axios = require("axios");
 module.exports = {
   config: {
     name: "flux",
-    version: "2.0",
+    version: "2.4.68",
     author: "Dipto",
     role: 0, // 0 = all users, 1 = admin only
     shortDescription: {
@@ -19,11 +19,11 @@ module.exports = {
     countDown: 15
   },
 
-  onStart: async function ({ api, event, args }) {
+  onStart: async function ({ args, message }) {
     const dipto = "https://www.noobs-api.rf.gd/dipto";
 
     if (!args[0]) {
-      return api.sendMessage("❌ Please provide a prompt.\nExample: flux cat in space --ratio 16:9", event.threadID, event.messageID);
+      return message.reply("❌ Please provide a prompt.\nExample: flux cat in space --ratio 16:9");
     }
 
     try {
@@ -32,8 +32,7 @@ module.exports = {
         ? input.split("--ratio").map(s => s.trim())
         : [input, "1:1"];
 
-      const loading = await api.sendMessage("🌀 Generating your image, please wait...", event.threadID);
-      api.setMessageReaction("⌛", event.messageID, () => {}, true);
+      const pr = await message.pr("🌀 Generating your image, please wait...", "✅");
 
       const apiurl = `${dipto}/flux?prompt=${encodeURIComponent(prompt)}&ratio=${encodeURIComponent(ratio)}`;
       const response = await axios.get(apiurl, { responseType: "stream" });
@@ -43,14 +42,12 @@ module.exports = {
         attachment: response.data
       };
 
-      api.setMessageReaction("✅", event.messageID, () => {}, true);
-      api.unsendMessage(loading.messageID);
-
-      return api.sendMessage(imageMsg, event.threadID, event.messageID);
+      await pr.success();
+      return message.reply(imageMsg);
 
     } catch (error) {
-      console.error(error);
-      return api.sendMessage("❌ Failed to generate image.\nTry again later or check your prompt.", event.threadID, event.messageID);
+      const pr = await message.pr("Processing failed...");
+      await pr.error("❌ Failed to generate image.\nTry again later or check your prompt.");
     }
   }
 };
