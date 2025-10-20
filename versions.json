@@ -319,10 +319,6 @@
       "utils.js":"update to V2.4.69",
       "Goat.js": "update to V2.4.69"
     },
-    "imageUrl": [
-      "https://i.ibb.co.com/7Jdx33sK/Screenshot-2025-10-18-115455.png",
-      "https://i.ibb.co.com/sJ55fTgQ/Screenshot-2025-10-18-115503.png"
-    ],
     "note": "Now the project includes two FCA options (stfca and @dongdev/fca-unofficial) switchable from the dashboard. Added old message function for DM, added dashboard auto-restart feature for expired/invalid cookies, fixed message.pr() function, and modified cmd/autodl and stai — now autodl and stai only work for ST-BOT."
   }
 
