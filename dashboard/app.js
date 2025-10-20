@@ -515,6 +515,106 @@ module.exports = async (api) => {
 		}
 	});
 
+	// Clear cookies and restart endpoint
+	app.post('/api/clear-cookies-restart', async (req, res) => {
+		try {
+			const accountPath = process.cwd() + '/account.txt';
+			
+			// Clear account.txt by writing empty string (not [])
+			await fs.writeFile(accountPath, '', 'utf8');
+			
+			res.json({ 
+				status: 'success', 
+				message: '🗑️ Cookies cleared. Bot will restart and login using config.json credentials.' 
+			});
+
+			// Restart after sending response
+			setTimeout(() => {
+				console.log('🗑️ Cookies cleared, restarting bot...');
+				process.exit(2); // Exit code 2 for restart
+			}, 1000);
+		} catch (error) {
+			console.error('Clear cookies error:', error);
+			res.status(500).json({ 
+				status: 'error', 
+				message: 'Failed to clear cookies: ' + error.message 
+			});
+		}
+	});
+
+	// Get current FCA type
+	app.get('/api/get-fca-type', (req, res) => {
+		try {
+			const fcaType = global.GoatBot?.fcaType || 'stfca';
+			res.json({
+				success: true,
+				fcaType: fcaType
+			});
+		} catch (error) {
+			res.status(500).json({
+				success: false,
+				message: 'Error getting FCA type: ' + error.message
+			});
+		}
+	});
+
+	// Switch FCA type endpoint
+	app.post('/api/switch-fca', async (req, res) => {
+		try {
+			const { fcaType } = req.body;
+			
+			if (!fcaType || !['stfca', 'dongdev'].includes(fcaType)) {
+				return res.status(400).json({
+					status: 'error',
+					message: 'Invalid FCA type. Must be "stfca" or "dongdev"'
+				});
+			}
+
+			// Update config.json with new FCA type
+			const configPath = process.cwd() + '/config.json';
+			const currentConfig = JSON.parse(await fs.readFile(configPath, 'utf8'));
+			currentConfig.fcaType = fcaType;
+			await fs.writeFile(configPath, JSON.stringify(currentConfig, null, 2), 'utf8');
+
+			// Set global FCA type
+			if (!global.GoatBot) global.GoatBot = {};
+			global.GoatBot.fcaType = fcaType;
+			global.GoatBot.config.fcaType = fcaType;
+
+			// Clear account.txt (write empty string, not [])
+			const accountPath = process.cwd() + '/account.txt';
+			await fs.writeFile(accountPath, '', 'utf8');
+
+			// Reset update check flag if switching away from stfca
+			if (fcaType === 'dongdev') {
+				global.stfcaUpdateChecked = false;
+			}
+
+			const fcaNames = {
+				'stfca': 'ST-FCA',
+				'dongdev': '@dongdev/fca-unofficial'
+			};
+
+			res.json({
+				status: 'success',
+				message: `🔄 Switched to ${fcaNames[fcaType]}. Bot will restart with cleared cookies.`
+			});
+
+			// Restart after sending response
+			setTimeout(() => {
+				console.log(`🔄 FCA type switched to ${fcaType}, restarting bot...`);
+				process.exit(2); // Exit code 2 for restart
+			}, 1000);
+
+		} catch (error) {
+			console.error('Switch FCA error:', error);
+			res.status(500).json({
+				status: 'error',
+				message: 'Failed to switch FCA type: ' + error.message
+			});
+		}
+	});
+
 	// setup route - redirect to dashboard
 	app.get(["/", "/home"], async (req, res) => {
 		return res.redirect('/dashboard');

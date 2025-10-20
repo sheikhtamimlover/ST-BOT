@@ -119,10 +119,29 @@ module.exports = {
 - **`message.send(text, threadID)`** - Send message to specific thread
 - **`message.unsend(messageID)`** - Unsend a message
 - **`message.reaction(emoji, messageID)`** - React to a message
+- **`message.pr(processingMessage, processingEmoji, successEmoji, errorEmoji)`** - Advanced processing message handler
+  - `processingMessage` (optional): Message to display during processing (default: "⏳ Processing...")
+  - `processingEmoji` (optional): Emoji to react with during processing (default: "⏳")
+  - `successEmoji` (optional): Emoji to react with on success (default: "✅")
+  - `errorEmoji` (optional): Emoji to react with on error (default: "❌")
+  - Returns object with methods: `edit(message)`, `success(message)`, `error(message)`
 - **`api.sendMessage()`** - Direct API message sending
 - **`getLang(key, ...args)`** - Get localized text
 - **`usersData.get(userID)`** - Get user data
 - **`threadsData.get(threadID)`** - Get thread data
+
+#### Example: Using message.pr() with custom emojis
+
+```javascript
+// Default emojis
+const pr = await message.pr("⏳ Processing your request...");
+await pr.success("✅ Done!");
+
+// Custom emojis
+const pr = await message.pr("🔄 Working on it...", "🔄", "🎉", "💔");
+await pr.success("🎉 All done!");
+await pr.error("💔 Something went wrong!");
+```
 
 ---
 

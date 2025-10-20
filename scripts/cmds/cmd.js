@@ -27,7 +27,7 @@ function isURL(str) {
 module.exports = {
 	config: {
 		name: "cmd",
-		version: "2.4.66",
+		version: "2.4.69",
 		author: "ST",
 		countDown: 5,
 		role: 2,
@@ -242,7 +242,7 @@ module.exports = {
 			}
 
 			if (url.match(/(https?:\/\/(?:www\.|(?!www)))/)) {
-				global.utils.log.dev("install", "url", url);
+				console.log("install", "url", url);
 				if (!fileName || !fileName.endsWith(".js"))
 					return message.reply(getLang("missingFileNameInstall"));
 
@@ -271,7 +271,7 @@ module.exports = {
 				}
 			}
 			else {
-				global.utils.log.dev("install", "code", args.slice(1).join(" "));
+				console.log("install", "code", args.slice(1).join(" "));
 				if (args[args.length - 1].endsWith(".js")) {
 					fileName = args[args.length - 1];
 					rawCode = event.body.slice(event.body.indexOf('install') + 7, event.body.indexOf(fileName) - 1);

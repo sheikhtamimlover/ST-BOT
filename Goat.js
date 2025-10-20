@@ -67,7 +67,8 @@ global.GoatBot = {
 	callbackListenTime: {}, // store callback listen
 	storage5Message: [], // store 5 message to check listening loop
 	fcaApi: null, // store fca api
-	botID: null // store bot id
+	botID: null, // store bot id
+	fcaType: config.fcaType || "stfca" // FCA type from config
 };
 
 // Initialize update tracking before async operations
@@ -237,13 +238,13 @@ const getText = global.utils.getText;
 		global.updateAvailable.newVersion = version;
 		global.GoatBot.updateAvailable.hasUpdate = true;
 		global.GoatBot.updateAvailable.newVersion = version;
-		
+
 		// Reset notification tracking when new update detected
 		global.updateNotificationSent = {
 			users: new Set(),
 			admins: new Set()
 		};
-		
+
 		utils.log.master("NEW VERSION", getText(
 			"Goat",
 			"newVersionDetected",

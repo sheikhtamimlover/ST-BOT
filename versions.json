@@ -19,7 +19,7 @@
       "scripts/cmds/calendar.js": "added new command",
       "scripts/cmds/file.js": "added new command",
       "scripts/cmds/flux.js": "added new command",
-            "scripts/cmds/fluxpro.js": "added new command",
+      "scripts/cmds/fluxpro.js": "added new command",
       "scripts/cmds/leave.js": "added new command",
       "scripts/cmds/mix.js": "added new command",
       "scripts/cmds/pending.js": "added new command",
@@ -301,6 +301,29 @@
       "https://i.ibb.co.com/sJ55fTgQ/Screenshot-2025-10-18-115503.png"
     ],
     "note": "Important: After updating, the bot may stop if the main thread ID is not set. Every ST Bot project now requires admins to add their primary thread ID in config.json under 'mainThreadId'. After updating, you can use the !maintid command to automatically add it, or manually update config.json. Without this, the bot will not run or respond. You can now send messages to any ST directly from your thread. New function 'message.pr()' added: it allows commands to process messages, send reactions, and automatically unsend messages before output. Commands like autodl and flux have been updated to use this function. Added two new admin commands: stmsg and maintid."
+  },
+  {
+    "version": "2.4.69",
+    "files": {
+      "bot/login/login.js": "update to 2.4.69",
+      "dashboard/js/dashboard.js": "update to 2.4.69",
+      "dashboard/views/dashboard.eta": "update to 2.4.69",
+      "dashboard/app.js": "update to 2.4.69",
+      "scripts/cmds/autodl.js": "updated to V2.4.69",
+      "scripts/cmds/cmd.js": "update to 2.4.69",
+      "scripts/cmds/stai.js": "update to 2.4.69",
+      "config.json": {
+      "fcaType": "stfca",
+      "notesFcaType": "FCA library to use: 'stfca' for ST-FCA or 'dongdev' for @dongdev/fca-unofficial. Switching will clear cookies and restart bot."
+    },
+      "utils.js":"update to V2.4.69",
+      "Goat.js": "update to V2.4.69"
+    },
+    "imageUrl": [
+      "https://i.ibb.co.com/7Jdx33sK/Screenshot-2025-10-18-115455.png",
+      "https://i.ibb.co.com/sJ55fTgQ/Screenshot-2025-10-18-115503.png"
+    ],
+    "note": "Now the project includes two FCA options (stfca and @dongdev/fca-unofficial) switchable from the dashboard. Added old message function for DM, added dashboard auto-restart feature for expired/invalid cookies, fixed message.pr() function, and modified cmd/autodl and stai — now autodl and stai only work for ST-BOT."
   }
 
 

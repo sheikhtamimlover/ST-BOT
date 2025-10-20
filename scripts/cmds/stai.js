@@ -2,13 +2,12 @@
 const fs = require("fs-extra");
 const path = require("path");
 const axios = require("axios");
-const apiKey = "stai_sheikh_tamim_2024";
 const stbotApi = new global.utils.STBotApis();
 
 module.exports = {
   config: {
     name: "stai",
-    version: "2.4.63",
+    version: "2.4.69",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -48,7 +47,7 @@ module.exports = {
         }, {
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": apiKey
+            "x-api-key": stbotApi.chatApiKey
           }
         });
         return response.data.data.response;
@@ -65,7 +64,7 @@ module.exports = {
         }, {
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": apiKey
+            "x-api-key": stbotApi.chatApiKey
           }
         });
       } catch (err) {
@@ -442,7 +441,7 @@ module.exports = {
       }, {
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": apiKey
+          "x-api-key": stbotApi.chatApiKey
         }
       });
       

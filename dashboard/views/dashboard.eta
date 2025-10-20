@@ -239,18 +239,42 @@
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <h6>Quick Actions</h6>
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-warning" onclick="restartBot()">
-                                    <i class="fas fa-redo"></i> Restart Bot
+                        <!-- Actions -->
+                        <div class="card bg-dark border-secondary shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary mb-3">
+                                    <i class="fas fa-cogs me-2"></i>Quick Actions
+                                </h5>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-warning" onclick="restartBot()">
+                                        <i class="fas fa-sync-alt me-2"></i>Restart Bot
+                                    </button>
+                                    <button class="btn btn-danger" onclick="clearCookiesAndRestart()">
+                                        <i class="fas fa-trash-alt me-2"></i>Clear Cookies & Restart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FCA Type Switcher -->
+                        <div class="card bg-dark border-secondary shadow-sm mt-3">
+                            <div class="card-body">
+                                <h5 class="card-title text-info mb-3">
+                                    <i class="fas fa-exchange-alt me-2"></i>FCA Library
+                                </h5>
+                                <div class="mb-2">
+                                    <small class="text-muted">Current: <span id="currentFca" class="badge bg-success">stfca</span></small>
+                                </div>
+                                <select class="form-select bg-secondary text-white mb-2" id="fcaTypeSelect">
+                                    <option value="stfca" selected>ST-FCA (Recommended)</option>
+                                    <option value="dongdev">@dongdev/fca-unofficial</option>
+                                </select>
+                                <button class="btn btn-info w-100" onclick="switchFcaType()">
+                                    <i class="fas fa-sync me-2"></i>Switch & Restart
                                 </button>
-                                <button class="btn btn-info" onclick="refreshStats()">
-                                    <i class="fas fa-sync"></i> Refresh Stats
-                                </button>
-                                <button class="btn btn-secondary" onclick="viewLogs()">
-                                    <i class="fas fa-file-alt"></i> View Logs
-                                </button>
+                                <small class="text-warning d-block mt-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Will clear cookies & restart
+                                </small>
                             </div>
                         </div>
 

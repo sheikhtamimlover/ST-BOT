@@ -2,11 +2,13 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
+const stbotApi = new global.utils.STBotApis();
+
 module.exports = {
   config: {
     name: "autodl",
     aliases: [],
-    version: "2.4.68",
+    version: "2.4.69",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -57,8 +59,10 @@ module.exports = {
       const startTime = Date.now();
       const pr = await message.pr(`⏳ Downloading your video, ${userName}... Please wait 😊`, "✅");
 
-      const apiUrl = "https://st-dl.vercel.app/api/download/auto";
-      const response = await axios.post(apiUrl, { url: validUrl });
+      const apiUrl = `${stbotApi.baseURL}/api/download/auto`;
+      const response = await axios.post(apiUrl, { url: validUrl }, {
+        headers: stbotApi.getHeaders(true)
+      });
 
       const data = response.data;
       if (!data?.success || !data?.data?.videos?.length) {

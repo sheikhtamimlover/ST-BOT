@@ -766,6 +766,134 @@ async function restartBot() {
     }
 }
 
+// Clear cookies and restart bot
+async function clearCookiesAndRestart() {
+    if (!confirm('⚠️ WARNING: This will clear account.txt (cookies) and restart the bot.\n\nThe bot will need to login again using credentials from config.json.\n\nAre you sure you want to continue?')) {
+        return;
+    }
+
+    try {
+        addLog('Clearing cookies and restarting bot...', 'warning');
+        showToast('Clearing cookies...', 'warning');
+
+        const response = await fetch('/api/clear-cookies-restart', {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            addLog('Cookies cleared, bot restarting...', 'success');
+            showToast(data.message, 'success');
+
+            // Enhanced countdown with progress
+            let countdown = 20;
+            const countdownInterval = setInterval(() => {
+                const progress = Math.round(((20 - countdown) / 20) * 100);
+                showToast(`Bot restarting with fresh login... ${countdown}s (${progress}%)`, 'info');
+                countdown--;
+
+                if (countdown < 0) {
+                    clearInterval(countdownInterval);
+                    showToast('Bot should be online now. Refreshing page...', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                }
+            }, 1000);
+
+            // Clear existing intervals
+            if (updateInterval) clearInterval(updateInterval);
+
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error('Error clearing cookies and restarting:', error);
+        addLog('Error during clear cookies and restart', 'error');
+        showToast('Error: ' + error.message, 'error');
+    }
+}
+
+// Switch FCA type
+async function switchFcaType() {
+    const fcaType = document.getElementById('fcaTypeSelect').value;
+    const fcaNames = {
+        'stfca': 'ST-FCA',
+        'dongdev': '@dongdev/fca-unofficial'
+    };
+
+    if (!confirm(`⚠️ WARNING: Switch to ${fcaNames[fcaType]}?\n\nThis will:\n- Clear account.txt (cookies)\n- Restart the bot\n- Require fresh login\n\nContinue?`)) {
+        return;
+    }
+
+    try {
+        addLog(`Switching FCA to ${fcaNames[fcaType]}...`, 'warning');
+        showToast(`Switching to ${fcaNames[fcaType]}...`, 'warning');
+
+        const response = await fetch('/api/switch-fca', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ fcaType })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            addLog(`FCA switched to ${fcaNames[fcaType]}, bot restarting...`, 'success');
+            showToast(data.message, 'success');
+
+            // Enhanced countdown with progress
+            let countdown = 20;
+            const countdownInterval = setInterval(() => {
+                const progress = Math.round(((20 - countdown) / 20) * 100);
+                showToast(`Bot restarting with ${fcaNames[fcaType]}... ${countdown}s (${progress}%)`, 'info');
+                countdown--;
+
+                if (countdown < 0) {
+                    clearInterval(countdownInterval);
+                    showToast('Bot should be online now. Refreshing page...', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                }
+            }, 1000);
+
+            // Clear existing intervals
+            if (updateInterval) clearInterval(updateInterval);
+
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error('Error switching FCA type:', error);
+        addLog('Error during FCA switch', 'error');
+        showToast('Error: ' + error.message, 'error');
+    }
+}
+
+// Update current FCA type display on page load
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/get-fca-type')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const currentFca = document.getElementById('currentFca');
+                const fcaSelect = document.getElementById('fcaTypeSelect');
+                if (currentFca) {
+                    currentFca.textContent = data.fcaType === 'dongdev' ? '@dongdev/fca' : 'stfca';
+                    currentFca.className = `badge ${data.fcaType === 'stfca' ? 'bg-success' : 'bg-info'}`;
+                }
+                if (fcaSelect) {
+                    fcaSelect.value = data.fcaType;
+                }
+            }
+        })
+        .catch(err => console.error('Error fetching FCA type:', err));
+});
+
 // Enhanced keyboard shortcuts
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', function(e) {
