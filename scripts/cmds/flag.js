@@ -9,7 +9,7 @@ module.exports = {
   config: {
     name: "flaggame",
     aliases: ["flag"],
-    version: "1.7",
+    version: "2.4.70",
     author: "MahMUD",
     countDown: 10,
     role: 0,
@@ -51,7 +51,7 @@ module.exports = {
     }
   },
   
-  onStart: async function({ api, event }) {
+  ST: async function({ api, event }) {
     try {
       const apiUrl = await baseApiUrl();
       const response = await axios.get(`${apiUrl}/api/flag`, {
@@ -80,7 +80,7 @@ module.exports = {
         event.threadID,
         (error, info) => {
           global.GoatBot.onReply.set(info.messageID, {
-            commandName: this.config.name,
+            commandName: module.exports.config.name,
             type: "reply",
             messageID: info.messageID,
             author: event.senderID,

@@ -4,27 +4,26 @@ const moment = require('moment-timezone');
 module.exports = {
   config: {
     name: "info",
-    version: "3.1",
-    author: "RAKIB",
+    version: "2.4.70",
+    author: "ST | Sheikh Tamim",
     countDown: 20,
     role: 0,
     shortDescription: "Owner information command",
-    longDescription: "This command provides detailed info about the bot owner, uptime, and contact details.",
+    longDescription: "This command provides detailed info about Sheikh Tamim — the bot owner, uptime, and social contacts.",
     category: "owner",
     guide: {}
   },
 
   onStart: async function ({ message }) {
-    const authorName = "⫷ 𝗥𝗔𝗞𝗜𝗕 ⫸";
-    const ownAge = "⫷vlobasa age mne nh😌⫸";
-    const messenger = "m.me/RAKIB.404X";
-    const authorFB = "https://facebook.com/RAKIB.404X";
-    const authorNumber = "018112760××";
-    const Status = "⫷ 𝐓𝐮𝐫 𝐣𝐚𝐢𝐧𝐚, 𝐥𝐚𝐯 𝐚𝐜𝐡𝐞 ⫸";
+    const authorName = "ST | Sheikh Tamim";
+    const ownAge = "⫷ 21 Years Old ⫸";
+    const messenger = "m.me/sheikhtamimlover";
+    const authorFB = "https://facebook.com/sheikhtamimlover";
+    const authorNumber = "+88017XXXXXXX";
+    const Status = "⫷ 💫 Keep Calm & Code On 💫 ⫸";
 
     const urls = [
-      "https://i.ibb.co/tPZ9V27f/491340593-1199103648320331-755803130140295918-n-jpg-stp-dst-jpg-s480x480-tt6-nc-cat-104-ccb-1-7-nc-s.jpg",
-      "https://i.ibb.co/tPZ9V27f/491340593-1199103648320331-755803130140295918-n-jpg-stp-dst-jpg-s480x480-tt6-nc-cat-104-ccb-1-7-nc-s.jpg"
+      "https://i.ibb.co.com/B52s0L6G/2a3b08a991cb.jpg"
     ];
     const link = urls[Math.floor(Math.random() * urls.length)];
 
@@ -40,27 +39,27 @@ module.exports = {
 
     message.reply({
       body: `
-╔═《✨𝗢𝗪𝗡𝗘𝗥 𝗜𝗡𝗙𝗢✨》═╗
+╔═《✨ 𝗢𝗪𝗡𝗘𝗥 𝗜𝗡𝗙𝗢 ✨》═╗
 
-⭓ 🤖 𝗕𝗼𝘁 𝗡𝗮𝗺𝗲   : ${global.GoatBot.config.nickNameBot} 』
-⭓ ☄️ 𝗣𝗿𝗲𝗳𝗶𝘅      :『 ${global.GoatBot.config.prefix} 』
-⭓ ⚡ 𝗥𝘂𝗻 𝗧𝗶𝗺𝗲   :『 ${uptimeString} 』
-⭓ 🗓️ 𝗗𝗮𝘁𝗲       :『 ${date} 』
-⭓ ⏰ 𝗧𝗶𝗺𝗲       :『 ${time} 』
-⭓ ✉️ 𝗖𝗼𝗻𝘁𝗮𝗰𝘁   :『 ${messenger} 』
+⭓ 🤖 𝗕𝗼𝘁 𝗡𝗮𝗺𝗲   : 『 ${global.GoatBot.config.nickNameBot} 』
+⭓ ☄️ 𝗣𝗿𝗲𝗳𝗶𝘅        : 『 ${global.GoatBot.config.prefix} 』
+⭓ ⚡ 𝗨𝗽𝘁𝗶𝗺𝗲        : 『 ${uptimeString} 』
+⭓ 🗓️ 𝗗𝗮𝘁𝗲          : 『 ${date} 』
+⭓ ⏰ 𝗧𝗶𝗺𝗲          : 『 ${time} 』
+⭓ ✉️ 𝗖𝗼𝗻𝘁𝗮𝗰𝘁     : 『 ${messenger} 』
 
-⭓ 👑 𝗢𝘄𝗻𝗲𝗿       :『 ${authorName} 』
-⭓ 🎂 𝗔𝗴𝗲        :『 ${ownAge} 』
-⭓ ❤️ 𝗦𝘁𝗮𝘁𝘂𝘀      :『 ${Status} 』
-⭓ 📱 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽   :『 ${authorNumber} 』
-⭓ 🌐 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸   :『 ${authorFB} 』
+⭓ 👑 𝗢𝘄𝗻𝗲𝗿        : 『 ${authorName} 』
+⭓ 🎂 𝗔𝗴𝗲          : 『 ${ownAge} 』
+⭓ ❤️ 𝗦𝘁𝗮𝘁𝘂𝘀       : 『 ${Status} 』
+⭓ 📱 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽    : 『 ${authorNumber} 』
+⭓ 🌐 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸    : 『 ${authorFB} 』
 
-╔═《🌍 𝗢𝗪𝗡𝗘𝗥 𝗦𝗢𝗖𝗜𝗔𝗟𝗦》═╗
-• 📺 YouTube : ❝ Channel Deleted ❞
-• ✈️ Telegram : @RAKIBX
-• 📷 Instagram : @rakib_x_404
-• 🧿 CapCut : ❝ Use kori nah ❞
-• 🎵 TikTok : ❝ Eita diye ki bal felmu? ❞
+╔═《🌍 𝗦𝗢𝗖𝗜𝗔𝗟𝗦》═╗
+• 📺 YouTube    : ❝ @sheikhtamimlover ❞
+• ✈️ Telegram  : @sheikh_tamim
+• 📷 Instagram : @sheikh.tamim_lover
+• 🧿 CapCut    : ❝ @sheikhtamim ❞
+• 🎵 TikTok     : ❝ @sheikhtamimlover ❞
 ╚════════════════════╝`,
 
       attachment: await global.utils.getStreamFromURL(link)

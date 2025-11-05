@@ -320,6 +320,37 @@
       "Goat.js": "update to V2.4.69"
     },
     "note": "Now the project includes two FCA options (stfca and @dongdev/fca-unofficial) switchable from the dashboard. Added old message function for DM, added dashboard auto-restart feature for expired/invalid cookies, fixed message.pr() function, and modified cmd/autodl and stai — now autodl and stai only work for ST-BOT."
+  },
+  {
+    "version": "2.4.70",
+    "files": {
+      "languages/cmds/shareit.js": "added",
+      "scripts/cmds/beb.js": "added",
+      "scripts/cmds/cricket.js": "added",
+      "scripts/cmds/fakechat.js": "added",
+      "scripts/cmds/flag.js": "added",
+      "scripts/cmds/football.js": "added",
+      "scripts/cmds/gpt.js": "modified V2.4.70",
+      "scripts/cmds/info.js": "added",
+      "scripts/cmds/metatheme.js": "added",
+      "scripts/cmds/midjourney.js": "added",
+      "scripts/cmds/random.js": "added",
+      "scripts/cmds/settheme.js": "added",
+      "scripts/cmds/shareit.js": "added",
+      "utils.js":"update to V2.4.70"
+    },
+    "imageUrl": [
+     "https://i.ibb.co.com/gb08VBVn/IMG-7559.jpg",
+     "https://i.ibb.co.com/Hfx1xZMp/IMG-7560.jpg",
+     "https://i.ibb.co.com/8nrrFDHL/IMG-7561.jpg",
+     "https://i.ibb.co.com/cXNGh9dx/IMG-7556.jpg",
+     "https://i.ibb.co.com/TDJ6mRNL/IMG-7557.jpg",
+     "https://i.ibb.co.com/Hfk91Y85/IMG-7558.jpg",
+     "https://i.ibb.co.com/q3jT5qfZ/IMG-7562.jpg",
+     "https://i.ibb.co.com/bgVLwCBD/IMG-7563.jpg"
+    ],
+    "note": "ShareIt has a new feature that allows sharing any commands or events between ST BOT users easily. The receiver can get them automatically. The updated version of STFCA now includes meta theme generation, which can be applied to any thread or DM (if DMs are supported). You can generate meta themes with images regardless of your ID's meta status. The chat command 'BEB' now supports full chat reactions, sending images, and teaching new responses. You can also manually set themes using a theme ID. Don't forget to use STAI, the powerful AI, to create commands, events, or fixes without coding knowledge."
+
   }
 
 

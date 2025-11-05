@@ -9,7 +9,7 @@ module.exports = {
   config: {
     name: "cricketgame",
     aliases: ["cricket"],
-    version: "1.7",
+    version: "2.4.70",
     author: "MahMUD",
     countDown: 10,
     role: 0,
@@ -58,7 +58,7 @@ module.exports = {
     }
   },
   
-  onStart: async function({ api, event, usersData }) {
+  ST: async function({ api, event, usersData }) {
     const obfuscatedAuthor = String.fromCharCode(77, 97, 104, 77, 85, 68);
     if (module.exports.config.author !== obfuscatedAuthor) {
       return api.sendMessage(
@@ -90,7 +90,7 @@ module.exports = {
         (err, info) => {
           if (err) return;
           global.GoatBot.onReply.set(info.messageID, {
-            commandName: this.config.name,
+            commandName: module.exports.config.name,
             type: "reply",
             messageID: info.messageID,
             author: event.senderID,

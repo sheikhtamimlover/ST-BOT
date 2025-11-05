@@ -11,8 +11,8 @@ const baseApi = async () => {
 module.exports = {
   config: {
     name: "random",
-    aliases: ["rndm"],
-    version: "1.7",
+    aliases: [],
+    version: "2.4.70",
     author: "Rakib Adil",
     role: 0,
     shortDescription: { en: "Upload, fetch, or list hot videos" },
@@ -21,7 +21,7 @@ module.exports = {
     guide: { en: "{pn} add <category> (reply with video)\n{pn} <category>\n{pn} list\n{pn}" }
   },
   
-  onStart: async function({ api, event, message, args }) {
+  ST: async function({ api, event, message, args }) {
     const apiBase =  await baseApi();
     const action = args[0]?.toLowerCase();
     const category = args[1]?.toLowerCase();

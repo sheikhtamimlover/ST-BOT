@@ -15,7 +15,7 @@ module.exports = {
     name: "midjourney",
     aliases: ["midj", "mj"],
     author: "Rakib Adil",
-    version: "1.1.2",
+    version: "2.4.70",
     role: 0,
     shortDescription: "AI image generation with MidJourney style",
     longDescription: "Generate and upscale MidJourney-style images using xnil’s API.",
@@ -23,7 +23,7 @@ module.exports = {
     guide: "{pn} <prompt>"
   },
 
-  onStart: async function ({ args, message, event }) {
+  ST: async function ({ args, message, event }) {
     const prompt = args.join(" ").trim();
     if (!prompt) return message.reply("⚠️ Please provide a prompt.");
 

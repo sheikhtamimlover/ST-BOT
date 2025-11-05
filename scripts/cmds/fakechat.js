@@ -11,7 +11,7 @@ module.exports = {
   config: {
     name: "fakechat",
     aliases: ["fc", "F", "fake"],
-    version: "1.7",
+    version: "2.4.70",
     author: "MahMUD",
     role: 0,
     category: "fun",
@@ -19,7 +19,7 @@ module.exports = {
     countDown: 5,
   },
   
-  onStart: async ({ event, message, args, usersData, api }) => {
+  ST: async ({ event, message, args, usersData, api }) => {
     const obfuscatedAuthor = String.fromCharCode(77, 97, 104, 77, 85, 68); // "MahMUD"
     if (module.exports.config.author !== obfuscatedAuthor) {
       return api.sendMessage(
