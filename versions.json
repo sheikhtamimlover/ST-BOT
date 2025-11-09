@@ -351,7 +351,35 @@
     ],
     "note": "ShareIt has a new feature that allows sharing any commands or events between ST BOT users easily. The receiver can get them automatically. The updated version of STFCA now includes meta theme generation, which can be applied to any thread or DM (if DMs are supported). You can generate meta themes with images regardless of your ID's meta status. The chat command 'BEB' now supports full chat reactions, sending images, and teaching new responses. You can also manually set themes using a theme ID. Don't forget to use STAI, the powerful AI, to create commands, events, or fixes without coding knowledge."
 
+  },
+  {
+    "version": "2.4.71",
+    "files": {
+      "bot/handler/handlerEvents.js": "update to 2.4.71",
+      "bot/login/login.js": "update to 2.4.71",
+      "dashboard/connectDB.js": "update to v2.4.71",
+      "database/connectDB/connectMongoDB.js": "update to v2.4.71",
+      "database/connectDB/connectSqlite.js": "update to v2.4.71",
+      "database/controller/bankData.js":"added",
+      "database/controller/index.js": "update to v2.4.71",
+      "database/models/mongodb/bank.js": "added",
+      "database/models/sqlite/bank.js": "added",
+      "logger/log.js": "update to v2.4.71",
+      "scripts/cmds/addfriend.js": "added",
+      "scripts/cmds/autodl.js": "update to v2.4.71",
+      "scripts/cmds/balance.js": "update to v2.4.71",
+      "scripts/cmds/bank.js": "added",
+      "scripts/cmds/friendlist.js": "added",
+      "scripts/cmds/loanadmin.js": "added",
+      "scripts/cmds/quiz.js": "added",
+      "scripts/cmds/sing.js": "update to v2.4.71",
+      "scripts/cmds/themeinfo.js": "update to v2.4.71",
+      "scripts/events/checkOverdueLoans.js": "added",
+      "updater.js": "update to V2.4.71",
+      "utils.js":"update to V2.4.71"
+    },
+    "note": "There has been added some new features — bankdb now includes a full bank system with bank and loanadmin cmds, loan activities for events, and checkOverdueLoans function. Also added friendlist check cmd, send friend request, themeinfo, quiz, and more. Updated autodl and balance systems. stfca has also been updated. If there’s any issue, don’t forget to do streport."
+    
   }
-
 
 ]

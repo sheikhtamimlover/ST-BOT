@@ -2,8 +2,8 @@ module.exports = {
 	config: {
 		name: "balance",
 		aliases: ["bal"],
-		version: "1.2",
-		author: "NTKhang",
+		version: "2.4.71",
+		author: "NTKhang | Enhanced by ST",
 		countDown: 5,
 		role: 0,
 		description: {
@@ -30,17 +30,25 @@ module.exports = {
 		}
 	},
 
-	onStart: async function ({ message, usersData, event, getLang }) {
+	ST: async function ({ message, usersData, event, getLang }) {
+		const { bankData } = global.db;
+		
 		if (Object.keys(event.mentions).length > 0) {
 			const uids = Object.keys(event.mentions);
 			let msg = "";
 			for (const uid of uids) {
 				const userMoney = await usersData.get(uid, "money");
-				msg += getLang("moneyOf", event.mentions[uid].replace("@", ""), userMoney) + '\n';
+				const userBank = await bankData.get(uid);
+				const bankBalance = userBank ? userBank.bankBalance : 0;
+				msg += `${event.mentions[uid].replace("@", "")}\n💰 Wallet: $${userMoney.toLocaleString()}\n🏦 Bank: $${bankBalance.toLocaleString()}\n\n`;
 			}
 			return message.reply(msg);
 		}
+		
 		const userData = await usersData.get(event.senderID);
-		message.reply(getLang("money", userData.money));
+		const userBank = await bankData.get(event.senderID);
+		const bankBalance = userBank ? userBank.bankBalance : 0;
+		
+		message.reply(`💰 Your Balance\n━━━━━━━━━━━━━━━━\n💵 Wallet: $${userData.money.toLocaleString()}\n🏦 Bank: $${bankBalance.toLocaleString()}\n━━━━━━━━━━━━━━━━\n💎 Total: $${(userData.money + bankBalance).toLocaleString()}`);
 	}
 };

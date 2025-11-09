@@ -47,7 +47,7 @@ module.exports = async function (api) {
 			process.stderr.clearLine = function () { };
 			spin.start();
 			try {
-				var { threadModel, userModel, dashBoardModel, globalModel } = await require("../connectDB/connectMongoDB.js")(config.database.uriMongodb);
+				var { threadModel, userModel, dashBoardModel, globalModel, bankModel } = await require("../connectDB/connectMongoDB.js")(config.database.uriMongodb);
 				spin.stop();
 				process.stderr.clearLine = defaultClearLine;
 				log.info("MONGODB", getText("indexController", "connectMongoDBSuccess"));
@@ -77,7 +77,7 @@ module.exports = async function (api) {
 			process.stderr.clearLine = function () { };
 			spin.start();
 			try {
-				var { threadModel, userModel, dashBoardModel, globalModel, sequelize } = await require("../connectDB/connectSqlite.js")();
+				var { threadModel, userModel, dashBoardModel, globalModel, bankModel, sequelize } = await require("../connectDB/connectSqlite.js")();
 				process.stderr.clearLine = defaultClearLine;
 				spin.stop();
 				log.info("SQLITE", getText("indexController", "connectMySQLSuccess"));
@@ -98,6 +98,7 @@ module.exports = async function (api) {
 	const usersData = await require("./usersData.js")(databaseType, userModel, api, fakeGraphql);
 	const dashBoardData = await require("./dashBoardData.js")(databaseType, dashBoardModel, fakeGraphql);
 	const globalData = await require("./globalData.js")(databaseType, globalModel, fakeGraphql);
+	const bankData = await require("./bankData.js")(databaseType, bankModel, api);
 
 	global.db = {
 		...global.db,
@@ -105,10 +106,12 @@ module.exports = async function (api) {
 		userModel,
 		dashBoardModel,
 		globalModel,
+		bankModel,
 		threadsData,
 		usersData,
 		dashBoardData,
 		globalData,
+		bankData,
 		sequelize
 	};
 
@@ -117,10 +120,12 @@ module.exports = async function (api) {
 		userModel,
 		dashBoardModel,
 		globalModel,
+		bankModel,
 		threadsData,
 		usersData,
 		dashBoardData,
 		globalData,
+		bankData,
 		sequelize,
 		databaseType
 	};

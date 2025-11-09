@@ -8,6 +8,7 @@ module.exports = async function (uriConnect) {
 	const userModel = require("../models/mongodb/user.js");
 	const dashBoardModel = require("../models/mongodb/userDashBoard.js");
 	const globalModel = require("../models/mongodb/global.js");
+	const bankModel = require("../models/mongodb/bank.js");
 
 	await mongoose.connect(uriConnect, {
 		useNewUrlParser: true,
@@ -18,6 +19,7 @@ module.exports = async function (uriConnect) {
 		threadModel,
 		userModel,
 		dashBoardModel,
-		globalModel
+		globalModel,
+		bankModel
 	};
 };

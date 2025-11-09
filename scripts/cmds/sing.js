@@ -1,3 +1,4 @@
+
 const axios = require("axios");
 const yts = require("yt-search");
 const fs = require("fs");
@@ -6,8 +7,8 @@ const path = require("path");
 module.exports = {
   config: {
     name: "sing",
-    aliases: ["song", "music"],
-    version: "2.4.63",
+    aliases: [],
+    version: "2.4.71",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -19,7 +20,7 @@ module.exports = {
     }
   },
 
-  onStart: async function ({ message, args, event, usersData }) {
+  ST: async function ({ message, args, event, usersData }) {
     const query = args.join(" ");
     if (!query) return message.reply("🎵 Please enter a song name.");
 
@@ -36,11 +37,18 @@ module.exports = {
       const video = searchResult.videos[0];
       const videoUrl = video.url;
 
+      const stbotApi = new global.utils.STBotApis();
       const payload = { url: videoUrl };
+      
       const response = await axios.post(
-        "https://st-dl.vercel.app/api/download/youtube-audio",
+        `${stbotApi.baseURL}/api/download/youtube-audio`,
         payload,
-        { headers: { "Content-Type": "application/json" } }
+        { 
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': stbotApi.xApiKey
+          }
+        }
       );
 
       if (response.data.success && response.data.data.videos && response.data.data.videos[0]) {
