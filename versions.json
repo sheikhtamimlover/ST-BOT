@@ -380,6 +380,17 @@
     },
     "note": "There has been added some new features — bankdb now includes a full bank system with bank and loanadmin cmds, loan activities for events, and checkOverdueLoans function. Also added friendlist check cmd, send friend request, themeinfo, quiz, and more. Updated autodl and balance systems. stfca has also been updated. If there’s any issue, don’t forget to do streport."
     
+  },
+  {
+    "version": "2.4.72",
+    "files": {
+      "scripts/cmds/autodl.js": "update to v2.4.72",
+      "scripts/cmds/sing.js": "update to v2.4.72",
+      "utils.js":"update to V2.4.72"
+    },
+    "note": "The Auto Video Downloader, Sing, and Stai commands now work perfectly. If you encounter any issues, please use STReport."
+
+    
   }
 
 ]

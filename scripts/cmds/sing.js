@@ -8,7 +8,7 @@ module.exports = {
   config: {
     name: "sing",
     aliases: [],
-    version: "2.4.71",
+    version: "2.4.72",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -39,9 +39,9 @@ module.exports = {
 
       const stbotApi = new global.utils.STBotApis();
       const payload = { url: videoUrl };
-      
+
       const response = await axios.post(
-        `${stbotApi.baseURL}/api/download/youtube-audio`,
+        `${stbotApi.baseURL}/cyt/youtube`,
         payload,
         { 
           headers: {
@@ -51,14 +51,20 @@ module.exports = {
         }
       );
 
-      if (response.data.success && response.data.data.videos && response.data.data.videos[0]) {
-        const audioData = response.data.data;
-        const audioUrl = audioData.videos[0];
-        const title = audioData.title;
-        const filename = audioData.filename || "audio.mp3";
+      if (response.data.success && response.data.medias) {
+        const audioMedia = response.data.medias.find(m => m.type === 'audio');
+        
+        if (!audioMedia) {
+          await message.unsend(processingMsg.messageID);
+          return message.reply("❌ No audio format found.");
+        }
+
+        const audioUrl = `${stbotApi.baseURL}${audioMedia.downloadUrl || audioMedia.proxyUrl}`;
+        const title = response.data.title;
+        const filename = `audio.${audioMedia.extension || audioMedia.ext || 'mp3'}`;
 
         const cachePath = path.join(__dirname, "cache", filename);
-        
+
         const audioResponse = await axios.get(audioUrl, {
           responseType: "arraybuffer"
         });
@@ -68,7 +74,7 @@ module.exports = {
         await message.unsend(processingMsg.messageID);
 
         await message.reply({
-          body: `🎶 Now Playing: ${title}\n👤 Requested by: ${userName}\n🎵 Quality: ${audioData.quality}`,
+          body: `🎶 Now Playing: ${title}\n👤 Requested by: ${userName}`,
           attachment: fs.createReadStream(cachePath)
         });
 
