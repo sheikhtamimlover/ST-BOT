@@ -6,8 +6,8 @@ module.exports = {
 	config: {
 		name: "adminonly",
 		aliases: ["adonly", "onlyad", "onlyadmin"],
-		version: "1.5",
-		author: "NTKhang",
+		version: "2.4.73",
+		author: "NTKhang Enhanced by Sheikh Tamim",
 		countDown: 5,
 		role: 2,
 		description: {
@@ -61,6 +61,18 @@ module.exports = {
 		}
 		else {
 			config.adminOnly.enable = value;
+			
+			// Reset notification tracking when adminonly mode changes
+			if (value === true) {
+				// Clear previous notifications when turning ON
+				global.adminOnlyNotificationSent = new Set();
+			} else {
+				// Clear notifications when turning OFF
+				if (global.adminOnlyNotificationSent) {
+					global.adminOnlyNotificationSent.clear();
+				}
+			}
+			
 			message.reply(getLang(value ? "turnedOn" : "turnedOff"));
 		}
 

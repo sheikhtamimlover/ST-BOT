@@ -391,6 +391,32 @@
     "note": "The Auto Video Downloader, Sing, and Stai commands now work perfectly. If you encounter any issues, please use STReport."
 
     
+  },
+  {
+    "version": "2.4.73",
+    "files": {
+      "bot/handler/handlerAction.js": "update to 2.4.73",
+      "bot/handler/handlerEvents.js": "update to 2.4.73",
+      "bot/login/login.js": "update to 2.4.73",
+      "scripts/cmds/activestatus.js": "added",
+      "scripts/cmds/adminonly.js": "updated to V2.4.73",
+      "scripts/cmds/beb.js": "updated to V2.4.73",
+      "scripts/cmds/note.js": "added",
+      "scripts/cmds/profilelock.js": "added",
+      "scripts/cmds/sing.js": "updated to V2.4.73",
+      "scripts/cmds/story.js": "added",
+      "scripts/cmds/whitelist.js": "added",
+      "utils.js":"update to 2.4.73"
+    },
+    "imageUrl": [
+      "https://i.ibb.co.com/5WDZmq4h/Screenshot-2025-11-13-091808.png",
+      "https://i.ibb.co.com/mVkqQZpz/IMG-7585.jpg",
+      "https://i.ibb.co.com/5ghMxswm/IMG-7586.jpg",
+      "https://i.ibb.co.com/60GYnkpG/IMG-7587.jpg",
+      "https://i.ibb.co.com/G457cBJN/IMG-7588.jpg",
+      "https://i.ibb.co.com/zhnjY4kn/IMG-7589.jpg"
+    ],
+    "note": "Now your bot account, if it has any suspect issue during runtime, will be automatically removed. Added some useful features — note (add, edit, delete), story (add, delete, react etc.), account active status on/off options, and account profile lock/unlock options. Fixed the main issue with adminonly for react — admin ID blocking system has been fixed. Whitelist mode and whitelist thread mode for react, which were blocking admins, are also fixed. Enhanced adminonly cmd, added whitelist cmd for configuration. Sing cmd is now faster than before. Stai and autodl will now work properly. If you face any further issues, contact the owner or use streport."
   }
 
 ]
