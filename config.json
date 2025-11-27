@@ -4,9 +4,10 @@
   "botAccount": {
     "email": "",
     "password": "",
+    "twoFactorCode": "",
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6.2 Safari/605.1.15",
     "autoUseWhenEmpty": true,
-    "notes": "Bot account configuration. When account.txt is empty, bot will automatically attempt to fetch cookies from this account. Note: 2FA is not supported - if your account has 2FA enabled, you'll need to login manually and save cookies to account.txt instead."
+    "notes": "Bot account configuration. When account.txt is empty, bot will automatically attempt to fetch cookies from this account. 2FA is now supported - enter your 6-digit code in twoFactorCode field or the bot will prompt you during login."
   },
   "bioUpdate": {
     "enable": false,
@@ -146,6 +147,11 @@
     "logBotAdded": false,
     "logBotKicked": true,
     "notes": "Bot logging system. sendToThreads: if true, sends bot logs to specified thread IDs. logThreadIds: array of thread IDs where bot logs will be sent. sendToAdmins: if true, sends logs to admin IDs. silentOnDisabledThreads: if true, suppresses console errors for disabled threads. logBotAdded/logBotKicked: separate controls for added/kicked events."
+  },
+  "groupNoti": {
+    "enable": false,
+    "threadIds": [],
+    "notes": "Group notification settings. If enable is true and threadIds is empty, it will work in all threads. If threadIds has values, it will only work in those specific threads."
   },
   "antiReact": {
     "enable": true,

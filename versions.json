@@ -379,7 +379,7 @@
       "utils.js":"update to V2.4.71"
     },
     "note": "There has been added some new features — bankdb now includes a full bank system with bank and loanadmin cmds, loan activities for events, and checkOverdueLoans function. Also added friendlist check cmd, send friend request, themeinfo, quiz, and more. Updated autodl and balance systems. stfca has also been updated. If there’s any issue, don’t forget to do streport."
-    
+
   },
   {
     "version": "2.4.72",
@@ -390,7 +390,7 @@
     },
     "note": "The Auto Video Downloader, Sing, and Stai commands now work perfectly. If you encounter any issues, please use STReport."
 
-    
+
   },
   {
     "version": "2.4.73",
@@ -417,6 +417,47 @@
       "https://i.ibb.co.com/zhnjY4kn/IMG-7589.jpg"
     ],
     "note": "Now your bot account, if it has any suspect issue during runtime, will be automatically removed. Added some useful features — note (add, edit, delete), story (add, delete, react etc.), account active status on/off options, and account profile lock/unlock options. Fixed the main issue with adminonly for react — admin ID blocking system has been fixed. Whitelist mode and whitelist thread mode for react, which were blocking admins, are also fixed. Enhanced adminonly cmd, added whitelist cmd for configuration. Sing cmd is now faster than before. Stai and autodl will now work properly. If you face any further issues, contact the owner or use streport."
+  },
+  {
+    "version": "2.4.74",
+    "files": {
+      "bot/handler/handlerEvents.js": "update to 2.4.74",
+      "bot/login/botacc.js": "update to 2.4.74",
+      "bot/login/login.js": "update to 2.4.74",
+      "scripts/cmds/autoaddfriend.js": "added",
+      "scripts/cmds/autodl.js": "updated to V2.4.74",
+      "scripts/cmds/cmdconfig.js": "updated to V2.4.74",
+      "scripts/cmds/gcnoti.js": "added",
+      "scripts/cmds/help.js": "updated to V2.4.74",
+      "scripts/cmds/stai.js": "updated to V2.4.74",
+      "scripts/events/groupnoti.js": "added",
+      "utils.js": "update to 2.4.74"
+    },
+    "config.json": {
+      "botAccount": {
+        "email": "",
+        "password": "",
+        "twoFactorCode": "",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6.2 Safari/605.1.15",
+        "autoUseWhenEmpty": true,
+        "notes": "Bot account configuration. When account.txt is empty, bot will automatically attempt to fetch cookies from this account. 2FA is now supported - enter your 6-digit code in twoFactorCode field or the bot will prompt you during login."
+      },
+      "groupNoti": {
+        "enable": false,
+        "threadIds": [],
+        "notes": "Group notification settings. If enable is true and threadIds is empty, it will work in all threads. If threadIds has values, it will only work in those specific threads."
+      }
+    },
+    "imageUrl": [
+      "https://i.ibb.co.com/6cn0xs4Q/Screenshot-2025-11-28-013622.png",
+      "https://i.ibb.co.com/d057pKmx/Screenshot-2025-11-28-021918.png",
+      "https://i.ibb.co.com/d0P3grXC/Screenshot-2025-11-28-024559.png",
+      "https://i.ibb.co.com/j9vvhSyY/IMG-7723.jpg",
+      "https://i.ibb.co.com/84xXd9yp/IMG-7722.jpg",
+      "https://i.ibb.co.com/N2sD1fr4/IMG-7721.jpg",
+      "https://i.ibb.co.com/fzxZxMxv/IMG-7720.jpg"
+    ],
+    "note": "Most important 2FA now support, any 2FA enable ID can be added for get cookie, fix stai also now it more advance, it can fix multiple cmds or events and support multiple cmds or events generate or at once cmds events fix ability and big anything it can work. Added auto friend add cmd, added group activities based on noti in enable thread for send, for this configure cmd also added, fix autodl now it work fine youtube video/shorts download fine. Added new cmd config unsend new option which is allow to if any cmd added with like unsend: 10, which is after 10 second it will auto unsend those cmd body, if use set unsend: 1m or 1h, it will work minutes and hour also, and some issue fix and updated.I suggest you for go to my project https://github.com/sheikhtamimlover/ST-BOT then manual copy the config.json and add into your project for better structure"
   }
 
 ]

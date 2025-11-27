@@ -5,7 +5,7 @@ const path = require('path');
 module.exports = {
 	config: {
 		name: "help",
-		version: "2.4.60",
+		version: "2.4.74",
 		role: 0,
 		countDown: 0,
 		author: "ST | Sheikh Tamim",
@@ -73,6 +73,17 @@ module.exports = {
 
 					if (command.config.countDown !== undefined) {
 						commandDetails += `│ ⏱️ Cooldown: ${command.config.countDown}s\n`;
+					}
+
+					// Display unsend configuration if present
+					if (command.config.unsend !== undefined && command.config.unsend !== null) {
+						let unsendDisplay;
+						if (typeof command.config.unsend === 'number') {
+							unsendDisplay = `${command.config.unsend}s`;
+						} else if (typeof command.config.unsend === 'string') {
+							unsendDisplay = command.config.unsend;
+						}
+						commandDetails += `│ 🗑️ Auto-unsend: ${unsendDisplay}\n`;
 					}
 
 					commandDetails += `├─────────────────────◊\n`;
@@ -295,6 +306,17 @@ module.exports = {
 
 					if (fullCommand.config.countDown !== undefined) {
 						commandDetails += `│ ⏱️ Cooldown: ${fullCommand.config.countDown}s\n`;
+					}
+
+					// Display unsend configuration if present
+					if (fullCommand.config.unsend !== undefined && fullCommand.config.unsend !== null) {
+						let unsendDisplay;
+						if (typeof fullCommand.config.unsend === 'number') {
+							unsendDisplay = `${fullCommand.config.unsend}s`;
+						} else if (typeof fullCommand.config.unsend === 'string') {
+							unsendDisplay = fullCommand.config.unsend;
+						}
+						commandDetails += `│ 🗑️ Auto-unsend: ${unsendDisplay}\n`;
 					}
 
 					commandDetails += `├─────────────────────◊\n`;

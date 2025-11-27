@@ -6,7 +6,7 @@ module.exports = {
 	config: {
 		name: "cmdconfig",
 		aliases: ["cc"],
-		version: "2.4.60",
+		version: "2.4.74",
 		author: "ST | Sheikh Tamim",
 		countDown: 5,
 		role: 2, // Admin only
@@ -25,10 +25,13 @@ module.exports = {
 				+ "\n   • category: Command category"
 				+ "\n   • premium: Premium requirement (true/false)"
 				+ "\n   • usePrefix: Prefix requirement (true/false)"
+				+ "\n   • unsend: Auto-unsend time (number in seconds or string with units: 10, 5s, 1m, 2h)"
 				+ "\n\nExamples:"
 				+ "\n   {pn} flux premium: true"
 				+ "\n   {pn} flux role: 1"
 				+ "\n   {pn} flux aliases: [\"fl\", \"generate\"]"
+				+ "\n   {pn} gpt unsend: 10"
+				+ "\n   {pn} gpt unsend: 5m"
 				+ "\n   {pn} -r flux premium"
 		}
 	},
@@ -69,6 +72,7 @@ module.exports = {
 				info += `📂 Category: ${config.category || "Not set"}\n`;
 				info += `💎 Premium: ${config.premium !== undefined ? config.premium : "Not set"}\n`;
 				info += `🔗 UsePrefix: ${config.usePrefix !== undefined ? config.usePrefix : "Not set"}\n`;
+				info += `⏰ Unsend: ${config.unsend !== undefined ? config.unsend : "Not set"}\n`;
 				info += `📖 Description: ${config.description || "Not set"}\n`;
 				info += `📚 Guide: ${config.guide ? "Set" : "Not set"}`;
 
@@ -91,8 +95,8 @@ module.exports = {
 				// Remove operation - only allow premium and usePrefix
 				const propertyToRemove = commandArgs[0];
 				
-				if (!["premium", "usePrefix"].includes(propertyToRemove)) {
-					return message.reply("❌ Only 'premium' and 'usePrefix' properties can be removed.");
+				if (!["premium", "usePrefix", "unsend"].includes(propertyToRemove)) {
+					return message.reply("❌ Only 'premium', 'usePrefix', and 'unsend' properties can be removed.");
 				}
 
 				// Remove the property from the config
@@ -137,7 +141,7 @@ module.exports = {
 				const property = propertyString.substring(0, colonIndex).trim();
 				let value = propertyString.substring(colonIndex + 1).trim();
 				
-				const allowedProperties = ["name", "aliases", "role", "guide", "description", "category", "premium", "usePrefix"];
+				const allowedProperties = ["name", "aliases", "role", "guide", "description", "category", "premium", "usePrefix", "unsend"];
 				
 				if (!allowedProperties.includes(property)) {
 					return message.reply(`❌ Invalid property. Allowed: ${allowedProperties.join(", ")}`);
@@ -153,6 +157,16 @@ module.exports = {
 						value = parseInt(value);
 						if (isNaN(value) || value < 0 || value > 2) {
 							throw new Error("Role must be 0, 1, or 2");
+						}
+					} else if (property === "unsend") {
+						// Support number or string with units (s, m, h)
+						if (/^\d+$/.test(value)) {
+							value = parseInt(value);
+						} else if (/^\d+(s|m|h)$/i.test(value)) {
+							// Keep as string if it has units
+							value = value.toLowerCase();
+						} else {
+							throw new Error("Unsend must be a number (seconds) or string with units (e.g., 10s, 5m, 1h)");
 						}
 					} else if (property === "aliases") {
 						// Try to parse as JSON array

@@ -1,6 +1,6 @@
 {
   "name": "st-bot",
-  "version": "2.4.73",
+  "version": "2.4.74",
   "description": "A simple Bot chat messenger using personal account. Made by ST | Sheikh Tamim",
   "main": "index.js",
   "engines": {
@@ -46,9 +46,10 @@
     "socket.io": "^4.5.1",
     "sqlite3": "^5.0.5",
     "stencyption": "^1.0.10",
-    "stfca": "^1.0.18",
+    "stfca": "^1.0.19",
     "tinyurl": "^1.1.7",
     "totp-generator": "^0.0.13",
+    "tweetnacl-sealedbox-js": "^1.2.0",
     "ws": "^8.18.3",
     "yt-search": "^2.13.1"
   },
