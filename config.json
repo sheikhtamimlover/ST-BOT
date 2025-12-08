@@ -9,6 +9,17 @@
     "autoUseWhenEmpty": true,
     "notes": "Bot account configuration. When account.txt is empty, bot will automatically attempt to fetch cookies from this account. 2FA is now supported - enter your 6-digit code in twoFactorCode field or the bot will prompt you during login."
   },
+  "twoIdMode": {
+    "enable": false,
+    "secondaryAccount": {
+      "email": "",
+      "password": "",
+      "twoFactorCode": "",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6.2 Safari/605.1.15"
+    },
+    "autoSwitchOnError": true,
+    "notes": "Two account mode. Primary account uses account.txt. Secondary account uses account.txt2. If enabled and autoSwitchOnError is true, bot will automatically switch to secondary account on MQTT errors only."
+  },
   "bioUpdate": {
     "enable": false,
     "bioText": "",
@@ -43,7 +54,7 @@
     "notes": "if you enable this feature, only the thread in the whiteListThreadIds list can use the bot",
     "how_it_work": "if you enable both whiteListMode and whiteListModeThread, the system will check if the user is in whiteListIds, then check if the thread is in whiteListThreadIds, if one of the conditions is true, the user can use the bot"
   },
-  "showLoginTitle": true,
+  "showLoginTitle": false,
   "database": {
     "type": "sqlite",
     "uriMongodb": "",
@@ -71,6 +82,10 @@
       "verifyToken": "stbotkey"
     }
   },
+  "updateNotification": {
+    "enable": false,
+    "notes": "If true, bot will send update notifications to users. If false, update enforcement will be silent (no messages sent to users or admins)"
+  },
   "autoRestart": {
     "time": null,
     "notes": "you can set time is interval with milisecond or cron time, example: 1000, 10000, 60000, 3600000, 86400000, 0 0 * * *,... docs: https://www.npmjs.com/package/node-cron. If you set time is 0 or false or null, the bot will not auto restart"
@@ -89,7 +104,7 @@
   },
   "autoRefreshFbstate": true,
   "autoReloginWhenChangeAccount": false,
-  "autoRestartWhenListenMqttError": false,
+  "autoRestartWhenListenMqttError": true,
   "restartListenMqtt": {
     "enable": true,
     "timeRestart": 3600000,
@@ -201,5 +216,26 @@
     "notes": "Document here: https://github.com/sheikhtamimlover/fb-chat-api/blob/master/DOCS.md#apisetoptionsoptions "
   },
   "fcaType": "stfca",
-  "notesFcaType": "FCA library to use: 'stfca' for ST-FCA or 'dongdev' for @dongdev/fca-unofficial. Switching will clear cookies and restart bot."
+  "notesFcaType": "FCA library to use: 'stfca' for ST-FCA or 'dongdev' for @dongdev/fca-unofficial. Switching will clear cookies and restart bot.",
+  "githubIntegration": {
+    "enable": false,
+    "repoOwner": "",
+    "repoName": "",
+    "token": "",
+    "branch": "main",
+    "autoCommit": true,
+    "autoSyncOnUpdate": true,
+    "commitMessage": "Auto-sync: {action} - {timestamp}",
+    "excludeFiles": [
+      "account.txt",
+      "account.txt2",
+      "node_modules",
+      ".git",
+      "backups",
+      ".replit",
+      "replit.nix",
+      "database/data"
+    ],
+    "notes": "GitHub integration for auto-syncing changes. Set enable to true and fill in repoOwner, repoName, and token. Token should have repo permissions. Set autoSyncOnUpdate to true to auto-sync after updates."
+  }
 }

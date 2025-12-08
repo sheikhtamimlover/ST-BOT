@@ -68,17 +68,17 @@ module.exports = async (api) => {
 	app.use((req, res, next) => {
 		// Skip password protection for API endpoints and static assets
 		const skipAuth = req.path.startsWith('/api/') || 
-		                req.path.startsWith('/stats') || 
-		                req.path.startsWith('/system-info') ||
-		                req.path.startsWith('/uptime') ||
-		                req.path.startsWith('/css/') ||
-		                req.path.startsWith('/js/') ||
-		                req.path.startsWith('/images/');
-		
+										req.path.startsWith('/stats') || 
+										req.path.startsWith('/system-info') ||
+										req.path.startsWith('/uptime') ||
+										req.path.startsWith('/css/') ||
+										req.path.startsWith('/js/') ||
+										req.path.startsWith('/images/');
+
 		if (skipAuth) {
 			return next();
 		}
-		
+
 		return passwordAuth(req, res, next);
 	});
 
@@ -108,7 +108,7 @@ module.exports = async (api) => {
 		try {
 			const filename = req.params.filename;
 			const allowedFiles = ['config.json', 'account.txt'];
-			
+
 			if (!allowedFiles.includes(filename)) {
 				return res.status(400).json({
 					success: false,
@@ -118,7 +118,7 @@ module.exports = async (api) => {
 
 			const filePath = process.cwd() + '/' + filename;
 			const content = await fs.readFile(filePath, 'utf8');
-			
+
 			res.json({
 				success: true,
 				content: content
@@ -136,7 +136,7 @@ module.exports = async (api) => {
 	app.get('/api/scripts/:type', async (req, res) => {
 		try {
 			const type = req.params.type; // 'cmds' or 'events'
-			
+
 			if (!['cmds', 'events'].includes(type)) {
 				return res.status(400).json({
 					success: false,
@@ -165,7 +165,7 @@ module.exports = async (api) => {
 	app.get('/api/scripts/:type/:filename', async (req, res) => {
 		try {
 			const { type, filename } = req.params;
-			
+
 			if (!['cmds', 'events'].includes(type)) {
 				return res.status(400).json({
 					success: false,
@@ -181,7 +181,7 @@ module.exports = async (api) => {
 			}
 
 			const filePath = `${process.cwd()}/scripts/${type}/${filename}`;
-			
+
 			// Check if file exists
 			if (!await fs.pathExists(filePath)) {
 				return res.status(404).json({
@@ -191,7 +191,7 @@ module.exports = async (api) => {
 			}
 
 			const content = await fs.readFile(filePath, 'utf8');
-			
+
 			res.json({
 				success: true,
 				content: content,
@@ -212,7 +212,7 @@ module.exports = async (api) => {
 			const filename = req.params.filename;
 			const { content } = req.body;
 			const allowedFiles = ['config.json', 'account.txt'];
-			
+
 			if (!allowedFiles.includes(filename)) {
 				return res.status(400).json({
 					success: false,
@@ -242,7 +242,7 @@ module.exports = async (api) => {
 							message: 'Account.txt must be a JSON array of cookies'
 						});
 					}
-					
+
 					// Validate cookie structure
 					for (const cookie of parsed) {
 						if (typeof cookie !== 'object' || !cookie.key || !cookie.value) {
@@ -252,20 +252,20 @@ module.exports = async (api) => {
 							});
 						}
 					}
-					
+
 					// Check for essential cookies
 					const essentialKeys = ['c_user', 'xs'];
 					const hasEssential = essentialKeys.some(key => 
 						parsed.some(cookie => cookie.key === key)
 					);
-					
+
 					if (!hasEssential) {
 						return res.status(400).json({
 							success: false,
 							message: 'Warning: Missing essential cookies (c_user, xs). Bot may not work properly.'
 						});
 					}
-					
+
 				} catch (error) {
 					return res.status(400).json({
 						success: false,
@@ -276,10 +276,25 @@ module.exports = async (api) => {
 
 			const filePath = process.cwd() + '/' + filename;
 			await fs.writeFile(filePath, content, 'utf8');
-			
+
+			// GitHub sync for config.json only (not account.txt for security)
+			let githubSynced = false;
+			if (filename === 'config.json') {
+				try {
+					const githubSync = global.utils?.getGitHubSync();
+					if (githubSync && githubSync.enabled && githubSync.autoCommit) {
+						const syncResult = await githubSync.syncFile("update", filePath, content);
+						githubSynced = syncResult.success;
+					}
+				} catch (syncError) {
+					console.log('GitHub sync warning:', syncError.message);
+				}
+			}
+
 			res.json({
 				success: true,
-				message: 'File saved successfully'
+				message: `File saved successfully${githubSynced ? ' (synced to GitHub)' : ''}`,
+				githubSynced: githubSynced
 			});
 		} catch (error) {
 			console.error('File write error:', error);
@@ -295,7 +310,7 @@ module.exports = async (api) => {
 		try {
 			const { type, filename } = req.params;
 			const { content } = req.body;
-			
+
 			if (!['cmds', 'events'].includes(type)) {
 				return res.status(400).json({
 					success: false,
@@ -323,17 +338,18 @@ module.exports = async (api) => {
 
 			const filePath = `${process.cwd()}/scripts/${type}/${filename}`;
 			const isNewFile = !await fs.pathExists(filePath);
-			
+
 			// Save the file
 			await fs.writeFile(filePath, content, 'utf8');
-			
+
 			// Auto-reload the command/event using the existing cmd system
+			let reloadResult = { success: false, message: '' };
 			if (global.utils && global.utils.loadScripts) {
 				try {
 					const { loadScripts } = global.utils;
 					const { configCommands } = global.GoatBot;
 					const commandName = filename.replace('.js', '');
-					
+
 					// Use the same loading system as cmd.js
 					const infoLoad = loadScripts(
 						type, 
@@ -351,42 +367,47 @@ module.exports = async (api) => {
 						null, // globalData
 						() => {} // getLang placeholder
 					);
-					
-					if (infoLoad.status === "success") {
-						res.json({
-							success: true,
-							message: `${isNewFile ? 'Created' : 'Updated'} and loaded ${filename} successfully`,
-							reloaded: true,
-							isNewFile: isNewFile
-						});
-					} else {
-						res.json({
-							success: true,
-							message: `${isNewFile ? 'Created' : 'Updated'} ${filename} but failed to load: ${infoLoad.error?.message || 'Unknown error'}`,
-							reloaded: false,
-							isNewFile: isNewFile,
-							loadError: infoLoad.error?.message
-						});
-					}
+
+					reloadResult.success = infoLoad.status === "success";
+					reloadResult.message = infoLoad.error?.message || '';
 				} catch (reloadError) {
 					console.error('Auto-reload error:', reloadError);
-					res.json({
-						success: true,
-						message: `${isNewFile ? 'Created' : 'Updated'} ${filename} but auto-reload failed. Use manual reload.`,
-						reloaded: false,
-						isNewFile: isNewFile,
-						loadError: reloadError.message
-					});
+					reloadResult.message = reloadError.message;
 				}
-			} else {
-				res.json({
-					success: true,
-					message: `${isNewFile ? 'Created' : 'Updated'} ${filename} successfully. Manual reload required.`,
-					reloaded: false,
-					isNewFile: isNewFile
-				});
 			}
-			
+
+			// GitHub sync
+			let githubSynced = false;
+			try {
+				const githubSync = global.utils?.getGitHubSync();
+				if (githubSync && githubSync.enabled && githubSync.autoCommit) {
+					const syncResult = await githubSync.syncFile(isNewFile ? "upload" : "update", filePath, content);
+					githubSynced = syncResult.success;
+				}
+			} catch (syncError) {
+				console.log('GitHub sync warning:', syncError.message);
+			}
+
+			// Build response message
+			let message = `${isNewFile ? 'Created' : 'Updated'} ${filename}`;
+			if (reloadResult.success) {
+				message += ' and loaded successfully';
+			} else if (reloadResult.message) {
+				message += ` but failed to load: ${reloadResult.message}`;
+			}
+			if (githubSynced) {
+				message += ' (synced to GitHub)';
+			}
+
+			res.json({
+				success: true,
+				message: message,
+				reloaded: reloadResult.success,
+				isNewFile: isNewFile,
+				githubSynced: githubSynced,
+				loadError: reloadResult.message || undefined
+			});
+
 		} catch (error) {
 			console.error('Script save error:', error);
 			res.status(500).json({
@@ -401,7 +422,7 @@ module.exports = async (api) => {
 		try {
 			const { type } = req.params;
 			const { filename, content } = req.body;
-			
+
 			if (!['cmds', 'events'].includes(type)) {
 				return res.status(400).json({
 					success: false,
@@ -417,7 +438,7 @@ module.exports = async (api) => {
 			}
 
 			const filePath = `${process.cwd()}/scripts/${type}/${filename}`;
-			
+
 			// Check if file already exists
 			if (await fs.pathExists(filePath)) {
 				return res.status(400).json({
@@ -428,16 +449,16 @@ module.exports = async (api) => {
 
 			// Use template if no content provided
 			const defaultContent = content || (type === 'cmds' ? getCommandTemplate(filename) : getEventTemplate(filename));
-			
+
 			await fs.writeFile(filePath, defaultContent, 'utf8');
-			
+
 			res.json({
 				success: true,
 				message: `Created new ${type} file: ${filename}`,
 				filename: filename,
 				type: type
 			});
-			
+
 		} catch (error) {
 			console.error('Script create error:', error);
 			res.status(500).json({
@@ -451,7 +472,7 @@ module.exports = async (api) => {
 	app.delete('/api/scripts/:type/:filename', async (req, res) => {
 		try {
 			const { type, filename } = req.params;
-			
+
 			if (!['cmds', 'events'].includes(type)) {
 				return res.status(400).json({
 					success: false,
@@ -460,7 +481,7 @@ module.exports = async (api) => {
 			}
 
 			const filePath = `${process.cwd()}/scripts/${type}/${filename}`;
-			
+
 			if (!await fs.pathExists(filePath)) {
 				return res.status(404).json({
 					success: false,
@@ -478,13 +499,26 @@ module.exports = async (api) => {
 				}
 			}
 
+			// GitHub sync before deletion
+			let githubSynced = false;
+			try {
+				const githubSync = global.utils?.getGitHubSync();
+				if (githubSync && githubSync.enabled && githubSync.autoCommit) {
+					const syncResult = await githubSync.syncFile("delete", filePath);
+					githubSynced = syncResult.success;
+				}
+			} catch (syncError) {
+				console.log('GitHub sync warning:', syncError.message);
+			}
+
 			await fs.remove(filePath);
-			
+
 			res.json({
 				success: true,
-				message: `Deleted ${filename} successfully`
+				message: `Deleted ${filename} successfully${githubSynced ? ' (synced to GitHub)' : ''}`,
+				githubSynced: githubSynced
 			});
-			
+
 		} catch (error) {
 			console.error('Script delete error:', error);
 			res.status(500).json({
@@ -519,10 +553,10 @@ module.exports = async (api) => {
 	app.post('/api/clear-cookies-restart', async (req, res) => {
 		try {
 			const accountPath = process.cwd() + '/account.txt';
-			
+
 			// Clear account.txt by writing empty string (not [])
 			await fs.writeFile(accountPath, '', 'utf8');
-			
+
 			res.json({ 
 				status: 'success', 
 				message: '🗑️ Cookies cleared. Bot will restart and login using config.json credentials.' 
@@ -562,7 +596,7 @@ module.exports = async (api) => {
 	app.post('/api/switch-fca', async (req, res) => {
 		try {
 			const { fcaType } = req.body;
-			
+
 			if (!fcaType || !['stfca', 'dongdev'].includes(fcaType)) {
 				return res.status(400).json({
 					status: 'error',
@@ -785,7 +819,7 @@ module.exports = async (api) => {
 			// Real-time system metrics
 			const memUsage = process.memoryUsage();
 			const cpuUsage = process.cpuUsage();
-			
+
 			res.setHeader('Cache-Control', 'no-cache');
 			res.json({
 				fcaVersion,
@@ -938,10 +972,10 @@ module.exports = async (api) => {
 	});
 
 	const PORT = config.dashBoard.port || config.serverUptime.port || 3001;
-	
+
 	// Enhanced URL detection for multiple platforms
 	let dashBoardUrl;
-	
+
 	if (process.env.REPL_OWNER && process.env.REPL_SLUG) {
 		// Replit platform
 		dashBoardUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
@@ -967,11 +1001,11 @@ module.exports = async (api) => {
 		// Local development or unknown platform
 		dashBoardUrl = `http://localhost:${PORT}`;
 	}
-	
+
 	await server.listen(PORT, '0.0.0.0');
 	utils.log.info("DASHBOARD", `Dashboard is running: ${dashBoardUrl}`);
 	utils.log.info("DASHBOARD", `Server listening on 0.0.0.0:${PORT}`);
-	
+
 	if (config.serverUptime.socket.enable == true)
 		require("../bot/login/socketIO.js")(server);
 };
@@ -1001,7 +1035,7 @@ function getCommandTemplate(filename) {
 
 	onStart: async function({ message, args, event, usersData, threadsData, getLang }) {
 		const { senderID, threadID } = event;
-		
+
 		try {
 			// Your command logic here
 			await message.reply("Hello! This is a new command created via dashboard.");
@@ -1031,11 +1065,11 @@ function getEventTemplate(filename) {
 
 	onStart: async function({ api, event, threadsData, usersData, getLang }) {
 		const { threadID, senderID } = event;
-		
+
 		try {
 			// Your event logic here
 			console.log("Event ${eventName} triggered");
-			
+
 			// Return a handler function if needed
 			return async function() {
 				// Handler logic here

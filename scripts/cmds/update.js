@@ -6,7 +6,7 @@ const dirBootLogTemp = `${__dirname}/tmp/rebootUpdated.txt`;
 module.exports = {
 	config: {
 		name: "update",
-		version: "2.4.67",
+		version: "2.4.75",
 		author: "ST | Sheikh Tamim",
 		role: 2,
 		description: {
@@ -71,6 +71,12 @@ module.exports = {
 		
 		// Handle refuse command - check first argument
 		if (args[0] && (args[0].toLowerCase() === 'refuse' || args[0].toLowerCase() === 'r')) {
+			// Check if updateNotification is enabled
+			const config = global.GoatBot.config;
+			if (config.updateNotification?.enable === false) {
+				return message.reply("⚠️ Update notifications are disabled in config. The 'refuse' command is not needed.");
+			}
+			
 			// Check if update is available
 			if ((global.updateAvailable && global.updateAvailable.hasUpdate) || (global.GoatBot.updateAvailable && global.GoatBot.updateAvailable.hasUpdate)) {
 				// Set refuse timestamp (refuse for 2 hours)
@@ -263,7 +269,13 @@ module.exports = {
 			
 			// Set flag to indicate update completed successfully
 			global.updateJustCompleted = true;
-			await message.reply(getLang("botWillRestart"));
+			
+			const config = global.GoatBot.config;
+			const syncInfo = config.githubIntegration?.enable && config.githubIntegration?.autoSyncOnUpdate
+				? "\n\n📦 GitHub auto-sync will run after restart (if enabled)"
+				: "";
+			
+			await message.reply(getLang("botWillRestart") + syncInfo);
 			process.exit(2);
 		}
 	}

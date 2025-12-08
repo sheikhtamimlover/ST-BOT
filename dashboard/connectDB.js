@@ -25,17 +25,19 @@ global.db = {
 
 module.exports = async function () {
 	const controller = await require(path.join(__dirname, "..", "database/controller/index.js"))(null); // data is loaded here
-	const { threadModel, userModel, dashBoardModel, globalModel, bankModel, threadsData, usersData, dashBoardData, globalData, bankData } = controller;
+	const { threadModel, userModel, dashBoardModel, globalModel, bankModel, staiHistoryModel, threadsData, usersData, dashBoardData, globalData, bankData, staiHistoryData } = controller;
 	return {
 		threadModel,
 		userModel,
 		dashBoardModel,
 		globalModel,
 		bankModel,
+		staiHistoryModel,
 		threadsData,
 		usersData,
 		dashBoardData,
 		globalData,
-		bankData
+		bankData,
+		staiHistoryData
 	};
 };

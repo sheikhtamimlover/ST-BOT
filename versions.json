@@ -458,6 +458,87 @@
       "https://i.ibb.co.com/fzxZxMxv/IMG-7720.jpg"
     ],
     "note": "Most important 2FA now support, any 2FA enable ID can be added for get cookie, fix stai also now it more advance, it can fix multiple cmds or events and support multiple cmds or events generate or at once cmds events fix ability and big anything it can work. Added auto friend add cmd, added group activities based on noti in enable thread for send, for this configure cmd also added, fix autodl now it work fine youtube video/shorts download fine. Added new cmd config unsend new option which is allow to if any cmd added with like unsend: 10, which is after 10 second it will auto unsend those cmd body, if use set unsend: 1m or 1h, it will work minutes and hour also, and some issue fix and updated.I suggest you for go to my project https://github.com/sheikhtamimlover/ST-BOT then manual copy the config.json and add into your project for better structure"
+  },
+  {
+    "version": "2.4.75",
+    "files": {
+      "bot/handler/handlerEvents.js": "update to 2.4.75",
+      "bot/login/botacc.js": "update to 2.4.75",
+      "bot/login/githubSync.js": "added",
+      "bot/login/loadData.js": "update to 2.4.75",
+      "bot/login/login.js": "update to 2.4.75",
+      "dashboard/app.js": "update to 2.4.75",
+      "dashboard/connectDB.js": "update to v2.4.75",
+      "database/connectDB/connectMongoDB.js": "update to 2.4.75",
+      "database/connectDB/connectSqlite.js": "update to 2.4.75",
+      "database/controller/index.js": "update to 2.4.75",
+      "database/controller/staiHistoryData.js": "added",
+      "database/models/mongodb/staiHistory.js": "added",
+      "database/models/sqlite/staiHistory.js": "added",
+      "scripts/cmds/accountswitch.js": "added",
+      "scripts/cmds/cmd.js": "updated to V2.4.75",
+      "scripts/cmds/event.js": "updated to V2.4.75",
+      "scripts/cmds/github.js": "added",
+      "scripts/cmds/stai.js": "updated to V2.4.75",
+      "scripts/cmds/staidb.js": "added",
+      "scripts/cmds/update.js": "update to 2.4.75",
+      "account.txt2": "added",
+      "Goat.js": "update to V2.4.75",
+      "updater.js": "update to V2.4.75",
+      "utils.js": "update to V2.4.75",
+      "config.json": {
+        "twoIdMode": {
+          "enable": false,
+          "secondaryAccount": {
+            "email": "",
+            "password": "",
+            "twoFactorCode": "",
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6.2 Safari/605.1.15"
+          },
+          "autoSwitchOnError": true,
+          "notes": "Two account mode. Primary account uses account.txt. Secondary account uses account.txt2. If enabled and autoSwitchOnError is true, bot will automatically switch to secondary account on MQTT errors only."
+        },
+        "updateNotification": {
+          "enable": false,
+          "notes": "If true, bot will send update notifications to users. If false, update enforcement will be silent (no messages sent to users or admins)"
+        },
+        "githubIntegration": {
+          "enable": false,
+          "repoOwner": "",
+          "repoName": "",
+          "token": "",
+          "branch": "main",
+          "autoCommit": true,
+          "autoSyncOnUpdate": true,
+          "commitMessage": "Auto-sync: {action} - {timestamp}",
+          "excludeFiles": [
+            "account.txt",
+            "account.txt2",
+            "node_modules",
+            ".git",
+            "backups",
+            ".replit",
+            "replit.nix",
+            "database/data"
+          ],
+          "notes": "GitHub integration for auto-syncing changes. Set enable to true and fill in repoOwner, repoName, and token. Token should have repo permissions. Set autoSyncOnUpdate to true to auto-sync after updates."
+        }
+      }
+    },
+    "imageUrl": [
+      "https://i.ibb.co.com/272RtZV8/Screenshot-2025-12-06-041346.png",
+      "https://i.ibb.co.com/Nd2bdcMP/Screenshot-2025-12-06-041401.png",
+      "https://i.ibb.co.com/wFn4ZL00/Screenshot-2025-12-07-060958.png",
+      "https://i.ibb.co.com/DfFPp72b/Screenshot-2025-12-08-074238.png",
+      "https://i.ibb.co.com/hFrP04tD/Screenshot-2025-12-08-074336.png",
+      "https://i.ibb.co.com/wZKVYsxf/Screenshot-2025-12-08-074553.png",
+      "https://i.ibb.co.com/VcmBtcNq/Screenshot-2025-12-08-074637.png",
+      "https://i.ibb.co.com/39sPVzqf/Screenshot-2025-12-08-074905.png",
+      "https://i.ibb.co.com/5xF3Zr4X/IMG-7884.jpg",
+      "https://i.ibb.co.com/jCCGfPJ/IMG-7885.jpg"
+    ],
+    "note": "Important update for all users: You can now add multiple bot accounts. If the first account shows an error, the second one will automatically connect.Added feature: Direct hosting without auto-deploy. When you update any file, it will automatically push to your Git repo from the host.Follow the steps in the config section or contact admin at m.me/hamza.chudena if you face any issue.STAi DB has been added to store your generated or fixed commands/events. You can check and manage them anytime by staidb cmd used.Also included: Update to block notifications, improved login (mail/pass) system, and many more enhancements.Happy coding..."
+
   }
 
 ]

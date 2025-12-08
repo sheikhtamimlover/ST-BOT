@@ -27,7 +27,7 @@ function isURL(str) {
 module.exports = {
 	config: {
 		name: "cmd",
-		version: "2.4.69",
+		version: "2.4.75",
 		author: "ST",
 		countDown: 5,
 		role: 2,
@@ -189,6 +189,12 @@ module.exports = {
 
 					// Then delete the file
 					if (fs.existsSync(filePath)) {
+						// GitHub sync before deletion
+						const githubSync = global.utils.getGitHubSync();
+						if (githubSync && githubSync.enabled) {
+							await githubSync.syncFile("delete", filePath);
+						}
+
 						fs.unlinkSync(filePath);
 						message.reply(getLang("deletedFile", fileName));
 					} else {
@@ -302,9 +308,23 @@ module.exports = {
 				});
 			else {
 				const infoLoad = loadScripts("cmds", fileName, log, configCommands, api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, getLang, rawCode);
-				infoLoad.status == "success" ?
-					message.reply(getLang("installed", infoLoad.name, path.join(__dirname, fileName).replace(process.cwd(), ""))) :
+
+				if (infoLoad.status == "success") {
+					const filePath = path.join(__dirname, fileName);
+					message.reply(getLang("installed", infoLoad.name, filePath.replace(process.cwd(), "")));
+
+					// GitHub sync
+					try {
+						const githubSync = global.utils.getGitHubSync();
+						if (githubSync && githubSync.enabled && githubSync.autoCommit) {
+							await githubSync.syncFile("upload", filePath, rawCode);
+						}
+					} catch (syncError) {
+						console.log("GitHub sync warning:", syncError.message);
+					}
+				} else {
 					message.reply(getLang("installedError", infoLoad.name, infoLoad.error.name, infoLoad.error.message));
+				}
 			}
 		}
 		else
@@ -349,6 +369,12 @@ module.exports = {
 
 				// Then delete the file
 				if (fs.existsSync(filePath)) {
+					// GitHub sync before deletion
+					const githubSync = global.utils.getGitHubSync();
+					if (githubSync && githubSync.enabled) {
+						await githubSync.syncFile("delete", filePath);
+					}
+
 					fs.unlinkSync(filePath);
 					message.reply(getLang("deletedFile", fileName));
 				} else {
@@ -404,6 +430,12 @@ module.exports = {
 
 				// Then delete the file
 				if (fs.existsSync(filePath)) {
+					// GitHub sync before deletion
+					const githubSync = global.utils.getGitHubSync();
+					if (githubSync && githubSync.enabled) {
+						await githubSync.syncFile("delete", filePath);
+					}
+
 					fs.unlinkSync(filePath);
 					message.reply(getLang("deletedFile", fileName));
 				} else {

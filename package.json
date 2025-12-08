@@ -1,6 +1,6 @@
 {
   "name": "st-bot",
-  "version": "2.4.74",
+  "version": "2.4.75",
   "description": "A simple Bot chat messenger using personal account. Made by ST | Sheikh Tamim",
   "main": "index.js",
   "engines": {
@@ -8,7 +8,7 @@
     "npm": ">=7.0.0"
   },
   "dependencies": {
-    "@dongdev/fca-unofficial": "^2.0.32",
+    "@dongdev/fca-unofficial": "^3.0.12",
     "axios": "^1.4.0",
     "bcrypt": "^5.0.1",
     "canvas": "^3.2.0",

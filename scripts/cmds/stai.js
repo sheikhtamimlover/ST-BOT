@@ -7,7 +7,7 @@ const stbotApi = new global.utils.STBotApis();
 module.exports = {
   config: {
     name: "stai",
-    version: "2.4.74",
+    version: "2.4.75",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -35,7 +35,7 @@ module.exports = {
     }
   },
 
-  ST: async function({ message, args, event, api, getLang }) {
+  ST: async function({ message, args, event, api, getLang, usersData, threadsData, staiHistoryData }) {
     const { senderID, threadID } = event;
 
 
@@ -139,7 +139,7 @@ module.exports = {
 
         // Handle multiple files
         if (fileArgs.length > 1) {
-          const processingMsg = await message.reply(`🔧 ST AI is analyzing and fixing ${fileArgs.length} commands...\n⏳ This may take a moment...`);
+          const processingMsg = await message.reply("🔧 ST AI is analyzing and fixing ${fileArgs.length} commands...\n⏳ This may take a moment...");
 
           try {
             let combinedPrompt = `Fix these ${fileArgs.length} command files. Provide each fixed file separated by ##SEPARATOR##\n\nISSUE: ${issue}\n\n`;
@@ -194,6 +194,26 @@ module.exports = {
                     global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
                   if (result.status === "success") {
+                    // Track in database
+                    if (staiHistoryData) {
+                      try {
+                        const userName = await usersData.getName(senderID);
+                        const threadData = await threadsData.get(threadID);
+                        const threadName = threadData?.threadName || "Private";
+                        await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "fix_command", "command", fileName, fixedCode, issue);
+                      } catch (err) {
+                        console.error("Failed to track command:", err.message);
+                      }
+                    }
+                    // Auto-sync to GitHub if enabled
+                    try {
+                      const githubSync = global.utils.getGitHubSync();
+                      if (githubSync && githubSync.enabled && githubSync.autoCommit) {
+                        await githubSync.syncFile("update", filePath, fixedCode);
+                      }
+                    } catch (err) {
+                      console.error("Failed to sync to GitHub:", err.message);
+                    }
                     results.push(`✅ ${fileName}`);
                     successCount++;
                   } else {
@@ -235,6 +255,17 @@ module.exports = {
                       global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
                     if (result.status === "success") {
+                      // Track in database
+                      if (staiHistoryData) {
+                        try {
+                          const userName = await usersData.getName(senderID);
+                          const threadData = await threadsData.get(threadID);
+                          const threadName = threadData?.threadName || "Private";
+                          await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "fix_command", "command", fileName, fixedCode, issue);
+                        } catch (err) {
+                          console.error("Failed to track command:", err.message);
+                        }
+                      }
                       results.push(`✅ ${fileName}`);
                       successCount++;
                     } else {
@@ -289,6 +320,26 @@ module.exports = {
               message.unsend(processingMsg.messageID);
 
               if (result.status === "success") {
+                // Track in database
+                if (staiHistoryData) {
+                  try {
+                    const userName = await usersData.getName(senderID);
+                    const threadData = await threadsData.get(threadID);
+                    const threadName = threadData?.threadName || "Private";
+                    await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "fix_command", "command", fileName, fixedCode, issue);
+                  } catch (err) {
+                    console.error("Failed to track command:", err.message);
+                  }
+                }
+                // Auto-sync to GitHub if enabled
+                try {
+                  const githubSync = global.utils.getGitHubSync();
+                  if (githubSync && githubSync.enabled && githubSync.autoCommit) {
+                    await githubSync.syncFile("update", filePath, fixedCode);
+                  }
+                } catch (err) {
+                  console.error("Failed to sync to GitHub:", err.message);
+                }
                 message.reply(`✅ Fixed and reloaded command ${fileName}!`);
               } else {
                 message.reply(`✅ Command fixed and saved!\n⚠️ Reload failed: ${result.error?.message}\n\n💡 Use: !cmd load ${commandName}`);
@@ -338,6 +389,24 @@ module.exports = {
               global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
             if (result.status === "success") {
+              // Track in database
+              if (staiHistoryData && usersData && threadsData) {
+                try {
+                  const userName = await usersData.getName(senderID);
+                  const threadData = await threadsData.get(threadID);
+                  const threadName = threadData?.threadName || "Private";
+                  const trackResult = await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "create_command", "command", `${commandName}.js`, code, description);
+                  console.log(`[STAI DB] Tracked command creation: Serial #${trackResult.serialNumber}`);
+                } catch (err) {
+                  console.error("[STAI DB] Failed to track command:", err.message);
+                }
+              } else {
+                console.error("[STAI DB] Missing dependencies:", {
+                  staiHistoryData: !!staiHistoryData,
+                  usersData: !!usersData,
+                  threadsData: !!threadsData
+                });
+              }
               const guideMatch = code.match(/guide:\s*{[^}]*en:\s*["']([^"']+)["']/);
               const guide = guideMatch ? guideMatch[1].replace(/{pn}/g, '!' + commandName) : `Use: !${commandName}`;
 
@@ -448,6 +517,17 @@ module.exports = {
                     global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
                   if (result.status === "success") {
+                    // Track in database
+                    if (staiHistoryData) {
+                      try {
+                        const userName = await usersData.getName(senderID);
+                        const threadData = await threadsData.get(threadID);
+                        const threadName = threadData?.threadName || "Private";
+                        await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "fix_event", "event", fileName, fixedCode, issue);
+                      } catch (err) {
+                        console.error("Failed to track event:", err.message);
+                      }
+                    }
                     results.push(`✅ ${fileName}`);
                     successCount++;
                   } else {
@@ -489,6 +569,17 @@ module.exports = {
                       global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
                     if (result.status === "success") {
+                      // Track in database
+                      if (staiHistoryData) {
+                        try {
+                          const userName = await usersData.getName(senderID);
+                          const threadData = await threadsData.get(threadID);
+                          const threadName = threadData?.threadName || "Private";
+                          await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "fix_event", "event", fileName, fixedCode, issue);
+                        } catch (err) {
+                          console.error("Failed to track event:", err.message);
+                        }
+                      }
                       results.push(`✅ ${fileName}`);
                       successCount++;
                     } else {
@@ -543,6 +634,17 @@ module.exports = {
               message.unsend(processingMsg.messageID);
 
               if (result.status === "success") {
+                // Track in database
+                if (staiHistoryData) {
+                  try {
+                    const userName = await usersData.getName(senderID);
+                    const threadData = await threadsData.get(threadID);
+                    const threadName = threadData?.threadName || "Private";
+                    await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "fix_event", "event", fileName, fixedCode, issue);
+                  } catch (err) {
+                    console.error("Failed to track event:", err.message);
+                  }
+                }
                 message.reply(`✅ Fixed and reloaded event ${fileName}!`);
               } else {
                 message.reply(`✅ Event fixed and saved!\n⚠️ Reload failed: ${result.error?.message}\n\n💡 Use: !event load ${eventName}`);
@@ -592,6 +694,17 @@ module.exports = {
               global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
             if (result.status === "success") {
+              // Track in database
+              if (staiHistoryData && usersData && threadsData) {
+                try {
+                  const userName = await usersData.getName(senderID);
+                  const threadData = await threadsData.get(threadID);
+                  const threadName = threadData?.threadName || "Private";
+                  await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "create_event", "event", `${eventName}.js`, code, description);
+                } catch (err) {
+                  console.error("Failed to track event:", err.message);
+                }
+              }
               message.unsend(processingMsg.messageID);
               message.reply(`✅ Event created successfully!\n\n📝 Name: ${eventName}.js\n\n━━━━━━━━━━━━━━━\nMade by Sheikh Tamim`);
             } else {
@@ -654,6 +767,17 @@ module.exports = {
                 global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
               if (result.status === "success") {
+                // Track in database
+                if (staiHistoryData && usersData && threadsData) {
+                  try {
+                    const userName = await usersData.getName(senderID);
+                    const threadData = await threadsData.get(threadID);
+                    const threadName = threadData?.threadName || "Private";
+                    await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "create_command", "command", `${commandName}.js`, cleanCode, "Multi-command generation");
+                  } catch (err) {
+                    console.error("Failed to track command:", err.message);
+                  }
+                }
                 const guideMatch = cleanCode.match(/guide:\s*{[^}]*en:\s*["']([^"']+)["']/);
                 const guide = guideMatch ? guideMatch[1].replace(/{pn}/g, '!' + commandName) : `Use: !${commandName}`;
                 createdCommands.push(`✅ ${commandName}.js\n   ${guide}`);
@@ -700,6 +824,17 @@ module.exports = {
               global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
             if (result.status === "success") {
+              // Track in database
+              if (staiHistoryData && usersData && threadsData) {
+                try {
+                  const userName = await usersData.getName(senderID);
+                  const threadData = await threadsData.get(threadID);
+                  const threadName = threadData?.threadName || "Private";
+                  await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "create_command", "command", `${commandName}.js`, cleanCode, "Chat-based command generation");
+                } catch (err) {
+                  console.error("Failed to track command:", err.message);
+                }
+              }
               const guideMatch = cleanCode.match(/guide:\s*{[^}]*en:\s*["']([^"']+)["']/);
               const guide = guideMatch ? guideMatch[1].replace(/{pn}/g, '!' + commandName) : `Use: !${commandName}`;
               return message.reply(`✅ Command created successfully!\n\n📝 Name: ${commandName}.js\n📖 Usage:\n${guide}\n\n━━━━━━━━━━━━━━━\nMade by Sheikh Tamim`);
@@ -788,12 +923,26 @@ module.exports = {
               global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
             if (result.status === "success") {
-              return message.reply(`✅ Event created successfully!\n\n📝 Name: ${eventName}.js\n\n━━━━━━━━━━━━━━━\nMade by Sheikh Tamim`);
+              // Track in database
+              if (staiHistoryData && usersData && threadsData) {
+                try {
+                  const userName = await usersData.getName(senderID);
+                  const threadData = await threadsData.get(threadID);
+                  const threadName = threadData?.threadName || "Private";
+                  await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "create_event", "event", `${eventName}.js`, cleanCode, "Chat-based event generation");
+                } catch (err) {
+                  console.error("Failed to track event:", err.message);
+                }
+              }
+              message.unsend(processingMsg.messageID);
+              message.reply(`✅ Event created successfully!\n\n📝 Name: ${eventName}.js\n\n━━━━━━━━━━━━━━━\nMade by Sheikh Tamim`);
             } else {
-              return message.reply(`✅ Event saved: ${eventName}.js\n⚠️ Load failed: ${result.error?.message}\n\n💡 Use: !event load ${eventName}`);
+              message.unsend(processingMsg.messageID);
+              message.reply(`✅ Event saved: ${eventName}.js\n⚠️ Load failed: ${result.error?.message}\n\n💡 Use: !event load ${eventName}`);
             }
           } catch (loadErr) {
-            return message.reply(`✅ Event saved: ${eventName}.js\n\n💡 Use: !event load ${eventName}`);
+            message.unsend(processingMsg.messageID);
+            message.reply(`✅ Event saved: ${eventName}.js\n\n💡 Use: !event load ${eventName}`);
           }
         }
 
@@ -870,6 +1019,17 @@ module.exports = {
               global.threadsData, global.usersData, global.dashBoardData, global.globalData, getLang);
 
             if (result.status === "success") {
+              // Track in database
+              if (staiHistoryData && usersData && threadsData) {
+                try {
+                  const userName = await usersData.getName(senderID);
+                  const threadData = await threadsData.get(threadID);
+                  const threadName = threadData?.threadName || "Private";
+                  await staiHistoryData.trackAndUpload(senderID, userName, threadID, threadName, "create_command", "command", `${commandName}.js`, cleanCode, "Multi-command generation");
+                } catch (err) {
+                  console.error("Failed to track command:", err.message);
+                }
+              }
               createdCommands.push(`✅ ${commandName}.js`);
             } else {
               createdCommands.push(`⚠️ ${commandName}.js (saved, reload manually)`);
