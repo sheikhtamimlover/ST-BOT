@@ -539,6 +539,16 @@
     ],
     "note": "Important update for all users: You can now add multiple bot accounts. If the first account shows an error, the second one will automatically connect.Added feature: Direct hosting without auto-deploy. When you update any file, it will automatically push to your Git repo from the host.Follow the steps in the config section or contact admin at m.me/hamza.chudena if you face any issue.STAi DB has been added to store your generated or fixed commands/events. You can check and manage them anytime by staidb cmd used.Also included: Update to block notifications, improved login (mail/pass) system, and many more enhancements.Happy coding..."
 
+  },
+  {
+    "version": "2.4.76",
+    "files": {
+      "bot/handler/handlerEvents.js": "update to v2.4.76",
+      "bot/login/botacc.js": "update to v2.4.76"
+    },
+    "note": "Fixed an issue where cmds for mentions were not working properly && fixed bot account login issues.Maybe there has some other issues so use streport for i can see wheres the issue and fix it.Thank you for using ST BOT."
+
+
   }
 
 ]
