@@ -8,7 +8,7 @@ module.exports = {
   config: {
     name: "autodl",
     aliases: [],
-    version: "2.4.74",
+    version: "2.4.77",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -72,8 +72,8 @@ module.exports = {
       let videoUrl, data;
 
       if (isYouTube) {
-        // Use /api/save/download for YouTube
-        const apiUrl = `${stbotApi.baseURL}/api/save/download`;
+        // Use /audioytdlv1 for YouTube
+        const apiUrl = `${stbotApi.baseURL}/audioytdlv1`;
         const payload = {
           url: finalUrl,
           format: "720"
@@ -84,11 +84,11 @@ module.exports = {
         });
 
         data = response.data;
-        if (!data?.status || !data?.result?.download) {
+        if (!data?.success || !data?.downloadUrl) {
           throw new Error("No video found or download failed.");
         }
 
-        videoUrl = data.result.download;
+        videoUrl = data.downloadUrl;
       } else {
         // Use /api/download/auto for other platforms
         const apiUrl = `${stbotApi.baseURL}/api/download/auto`;
