@@ -8,7 +8,7 @@ module.exports = {
   config: {
     name: "sing",
     aliases: ["song", "music"],
-    version: "2.4.73",
+    version: "2.4.77",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
@@ -125,7 +125,7 @@ module.exports = {
       };
 
       const response = await axios.post(
-        `${stbotApi.baseURL}/api/save/download`,
+        `${stbotApi.baseURL}/audioytdlv1`,
         payload,
         {
           headers: {
@@ -135,12 +135,8 @@ module.exports = {
         }
       );
 
-      if (response.data.status && response.data.result && response.data.result.download) {
-        const audioData = response.data.result;
-        const audioUrl = audioData.download;
-        const title = audioData.title;
-        const duration = audioData.duration;
-        const quality = audioData.quality;
+      if (response.data.success && response.data.downloadUrl) {
+        const audioUrl = response.data.downloadUrl;
 
         const cacheDir = path.join(__dirname, "cache");
         if (!fs.existsSync(cacheDir)) {
@@ -158,7 +154,7 @@ module.exports = {
         await message.unsend(downloadMsg.messageID);
 
         await message.reply({
-          body: `🎶 Now Playing: ${title}\n👤 Requested by: ${userName}\n⏱ Duration: ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}\n🎵 Quality: ${quality}kbps`,
+          body: `🎶 Now Playing: ${selectedVideo.title}\n👤 Requested by: ${userName}\n⏱ Duration: ${selectedVideo.timestamp}`,
           attachment: fs.createReadStream(cachePath)
         });
 
