@@ -1,6 +1,6 @@
 {
   "name": "st-bot",
-  "version": "2.4.76",
+  "version": "2.4.77",
   "description": "A simple Bot chat messenger using personal account. Made by ST | Sheikh Tamim",
   "main": "index.js",
   "engines": {
@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@dongdev/fca-unofficial": "^3.0.22",
-    "axios": "^1.4.0",
+    "axios": "^1.13.4",
     "bcrypt": "^5.0.1",
     "canvas": "^3.2.0",
     "cheerio": "^1.0.0-rc.12",
@@ -45,8 +45,9 @@
     "sequelize": "^6.19.0",
     "socket.io": "^4.5.1",
     "sqlite3": "^5.0.5",
+    "st-shazam": "^1.0.1",
     "stencyption": "^1.0.10",
-    "stfca": "^1.0.19",
+    "stfca": "^1.0.20",
     "tinyurl": "^1.1.7",
     "totp-generator": "^0.0.13",
     "tweetnacl-sealedbox-js": "^1.2.0",

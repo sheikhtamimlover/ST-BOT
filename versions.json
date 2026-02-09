@@ -549,6 +549,17 @@
     "note": "Fixed an issue where cmds for mentions were not working properly && fixed bot account login issues.Maybe there has some other issues so use streport for i can see wheres the issue and fix it.Thank you for using ST BOT."
 
 
+  },
+  {
+    "version": "2.4.77",
+    "files": {
+      "scripts/cmds/shazam.js": "added",
+      "scripts/cmds/autodl.js": "update to v2.4.77",
+      "scripts/cmds/sing.js": "update to v2.4.77"
+    },
+    "note": "stfca has update so stfca pkg version has update for theme set now will be worked. Added a new command 'shazam'. Also fix for yt download and fix for both autodl and sing commands. If you encounter any issues, please report them using the streport command."
+
+
   }
 
 ]
