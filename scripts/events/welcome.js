@@ -5,8 +5,8 @@ if (!global.temp.welcomeEvent)
 module.exports = {
 	config: {
 		name: "welcome",
-		version: "2.3.6",
-		author: "ST",
+		version: "2.4.78",
+		author: "ST | Sheikh Tamim",
 		category: "events"
 	},
 
@@ -19,7 +19,7 @@ module.exports = {
 			welcomeMessage: "Cảm ơn bạn đã mời tôi vào nhóm!\nPrefix bot: %1\nĐể xem danh sách lệnh hãy nhập: %1help",
 			multiple1: "bạn",
 			multiple2: "các bạn",
-			defaultWelcomeMessage: "Xin chào {userName}.\nChào mừng bạn đến với {boxName}.\nChúc bạn có buổi {session} vui vẻ!"
+			defaultWelcomeMessage: "🌟 Xin chào {userName}.\n\n➤ Chào mừng {multiple} đến với《 {boxName} 》\n\n📊 Thông tin nhóm:\n❀ Thành viên #{memberNumber}\n❀ Tổng cộng: {totalMembers}\n❀ Được mời bởi: {oo}\n❀ Buổi: {session}\n❀ Lượt tham gia hôm nay: {dailyJoins}\n\nChúc {multiple} có một ngày vui vẻ! 😊"
 		},
 		en: {
 			session1: "morning",
@@ -29,7 +29,7 @@ module.exports = {
 			welcomeMessage: "Thank you for inviting me to the group!\nBot prefix: %1\nTo view the list of commands, please enter: %1help",
 			multiple1: "you",
 			multiple2: "you guys",
-			defaultWelcomeMessage: `Hello {userName}.\nWelcome {multiple} to the chat group: {boxName}\nHave a nice {session} 😊`
+			defaultWelcomeMessage: `🌟 Hello {userName}!\n\n➤ Welcome {multiple} to 《 {boxName} 》\n\n📊 Group Info:\n❀ Member #{memberNumber}\n❀ Total: {totalMembers}\n❀ Added by: {oo}\n❀ Time: {session}\n❀ Joins Today: {dailyJoins}\n\nHave a nice {session}! 😊`
 		}
 	},
 
@@ -207,7 +207,10 @@ module.exports = {
 				// set new timeout
 				global.temp.welcomeEvent[threadID].joinTimeout = setTimeout(async function () {
 					const threadData = await threadsData.get(threadID);
-					if (threadData.settings.sendWelcomeMessage == false)
+					
+					// Check if welcome message is enabled for this thread
+					// Default is true (enabled) if not explicitly disabled
+					if (threadData.settings && threadData.settings.sendWelcomeMessage === false)
 						return;
 					const dataAddedParticipants = global.temp.welcomeEvent[threadID].dataAddedParticipants;
 					const dataBanned = threadData.data.banned_ban || [];
@@ -233,12 +236,71 @@ module.exports = {
 					// {boxName}:    name of group
 					// {threadName}: name of group
 					// {session}:    session of day
+					// {memberNumber}: member position number
+					// {totalMembers}: total group members
+					// {oo}: person who invited the bot
+					// {dailyJoins}: number of people who joined today
 					if (userName.length == 0) return;
 					let { welcomeMessage = getLang("defaultWelcomeMessage") } =
 						threadData.data;
 					const form = {
 						mentions: welcomeMessage.match(/\{userNameTag\}/g) ? mentions : null
 					};
+
+					// Get total members count
+					let totalMembers = threadData.members ? threadData.members.length : 0;
+					
+					// Get member position numbers (if only one user added, use their position; if multiple, use positions)
+					let memberNumbers = [];
+					if (totalMembers > 0) {
+						const membersList = threadData.members || [];
+						for (const user of dataAddedParticipants) {
+							if (!dataBanned.some((item) => item.id == user.userFbId)) {
+								const position = membersList.indexOf(user.userFbId) + 1;
+								memberNumbers.push(position > 0 ? position : totalMembers);
+							}
+						}
+					}
+					const memberNumberText = memberNumbers.length > 0 ? memberNumbers.join(", ") : "?";
+
+					// Get the person who added them (from event.author - the one who subscribed/invited)
+					let addedByName = "Unknown";
+					try {
+						if (event.author) {
+							addedByName = await usersData.getName(event.author);
+							if (!addedByName || addedByName === "Unknown") {
+								try {
+									const userInfo = await api.getUserInfo(event.author);
+									if (userInfo && userInfo[event.author] && userInfo[event.author].name) {
+										addedByName = userInfo[event.author].name;
+									}
+								} catch (apiErr) {
+									// Keep as Unknown
+								}
+							}
+						}
+					} catch (err) {
+						console.error(`Failed to get added by user info:`, err.message);
+					}
+
+					// Calculate daily joins (get today's join count from thread data)
+					let dailyJoins = 0;
+					try {
+						const today = new Date().toISOString().split('T')[0];
+						if (threadData.data.dailyJoinStats && typeof threadData.data.dailyJoinStats === 'object') {
+							dailyJoins = threadData.data.dailyJoinStats[today] || 0;
+						}
+						// Increment for today
+						if (!threadData.data.dailyJoinStats) {
+							threadData.data.dailyJoinStats = {};
+						}
+						threadData.data.dailyJoinStats[today] = (threadData.data.dailyJoinStats[today] || 0) + userName.length;
+						// Save updated daily stats
+						await threadsData.set(threadID, { data: threadData.data });
+					} catch (err) {
+						console.error(`Failed to track daily joins:`, err.message);
+					}
+
 					welcomeMessage = welcomeMessage
 						.replace(/\{userName\}|\{userNameTag\}/g, userName.join(", "))
 						.replace(/\{boxName\}|\{threadName\}/g, threadName)
@@ -255,7 +317,11 @@ module.exports = {
 									: hours <= 18
 										? getLang("session3")
 										: getLang("session4")
-						);
+						)
+						.replace(/\{memberNumber\}/g, memberNumberText)
+						.replace(/\{totalMembers\}/g, totalMembers.toString())
+						.replace(/\{oo\}/g, addedByName)
+						.replace(/\{dailyJoins\}/g, dailyJoins.toString());
 
 					form.body = welcomeMessage;
 

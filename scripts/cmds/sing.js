@@ -1,4 +1,3 @@
-
 const axios = require("axios");
 const yts = require("yt-search");
 const fs = require("fs");
@@ -7,170 +6,162 @@ const path = require("path");
 module.exports = {
   config: {
     name: "sing",
-    aliases: ["song", "music"],
-    version: "2.4.77",
+    aliases: ["song"],
+    version: "2.4.78",
     author: "ST | Sheikh Tamim",
-    countDown: 5,
     role: 0,
-    shortDescription: { en: "Search and download YouTube songs" },
-    longDescription: { en: "Search YouTube and download audio by selecting from results" },
-    category: "music",
-    guide: { en: "{pn} <song name>\nThen reply with a number (1-6) to download" }
+    category: "music"
   },
 
   ST: async function ({ message, args, event, usersData }) {
+    const stapi = new global.utils.STBotApis();
+
+    if (!args[0]) {
+      return message.reply("🎵 Enter song name");
+    }
+
+
+    let showList = false;
+
+    if (args[0] === "-s") {
+      showList = true;
+      args.shift();
+    }
+
     const query = args.join(" ");
-    if (!query) return message.reply("🎵 Please enter a song name.");
+    if (!query) return message.reply("❌ Enter song name");
 
     const userName = await usersData.getName(event.senderID);
-    const processingMsg = await message.reply(`⏳ ${userName}, searching for "${query}"... Please wait.`);
+    const processing = await message.reply(`⏳ Searching "${query}"...`);
 
     try {
-      const searchResult = await yts(query);
-      if (!searchResult.videos.length) {
-        await message.unsend(processingMsg.messageID);
-        return message.reply("❌ No videos found for your query.");
+      const search = await yts(query);
+      if (!search.videos.length) {
+        await message.unsend(processing.messageID);
+        return message.reply("❌ No results found");
       }
 
-      const top6 = searchResult.videos.slice(0, 6);
-      
-      let resultMsg = `🔍 Top ${top6.length} YouTube Results for "${query}":\n\n`;
-      
-      const thumbnailStreams = [];
-      
-      for (let i = 0; i < top6.length; i++) {
-        const v = top6[i];
-        resultMsg += `${i + 1}. ${v.title}\n`;
-        resultMsg += `   📺 ${v.author.name}\n`;
-        resultMsg += `   ⏱ ${v.timestamp}\n`;
-        resultMsg += `   🔗 ${v.url}\n\n`;
-        
-        // Download thumbnail
-        try {
-          const thumbResponse = await axios.get(v.thumbnail, { responseType: "arraybuffer" });
-          const cacheDir = path.join(__dirname, "cache");
-          if (!fs.existsSync(cacheDir)) {
-            fs.mkdirSync(cacheDir, { recursive: true });
-          }
-          const thumbPath = path.join(cacheDir, `thumb_${Date.now()}_${i}.jpg`);
-          fs.writeFileSync(thumbPath, Buffer.from(thumbResponse.data));
-          thumbnailStreams.push(fs.createReadStream(thumbPath));
-        } catch (err) {
-          console.error(`Error downloading thumbnail ${i}:`, err.message);
-        }
-      }
-      
-      resultMsg += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-      resultMsg += `💡 Reply with a number (1-${top6.length}) to download!`;
 
-      await message.unsend(processingMsg.messageID);
+      if (!showList) {
+        const v = search.videos[0];
 
-      return message.reply({
-        body: resultMsg,
-        attachment: thumbnailStreams
-      }, (err, info) => {
-        // Clean up thumbnail files
-        for (let i = 0; i < top6.length; i++) {
-          const thumbPath = path.join(__dirname, "cache", `thumb_${Date.now()}_${i}.jpg`);
-          if (fs.existsSync(thumbPath)) {
-            fs.unlinkSync(thumbPath);
-          }
-        }
-        
-        if (!err) {
-          global.GoatBot.onReply.set(info.messageID, {
-            commandName: module.exports.config.name,
-            messageID: info.messageID,
-            author: event.senderID,
-            videos: top6,
-            userName: userName
-          });
-        }
-      });
+        await message.unsend(processing.messageID);
 
-    } catch (err) {
-      console.error(err);
-      await message.unsend(processingMsg.messageID);
-      return message.reply("⚠️ Error while searching: " + err.message);
-    }
-  },
+        const dlMsg = await message.reply(`⬇️ Downloading: ${v.title}`);
 
-  onReply: async function ({ message, event, Reply, api }) {
-    const { videos, userName, author, messageID } = Reply;
-    
-    if (event.senderID !== author) {
-      return message.reply("⚠️ Only the person who searched can download!");
-    }
+        const res = await axios.post(`${stapi.baseURL}/audioytdlv1`, {
+          url: v.url,
+          format: "mp3"
+        });
 
-    const choice = parseInt(event.body.trim());
-    
-    if (isNaN(choice) || choice < 1 || choice > videos.length) {
-      return message.reply(`❌ Invalid choice! Please reply with a number between 1 and ${videos.length}`);
-    }
-
-    // Unsend the search results message
-    await message.unsend(messageID);
-
-    const selectedVideo = videos[choice - 1];
-    const videoUrl = selectedVideo.url;
-
-    const downloadMsg = await message.reply(`⏳ Downloading "${selectedVideo.title}"... Please wait.`);
-
-    try {
-      const stbotApi = new global.utils.STBotApis();
-      
-      const payload = {
-        url: videoUrl,
-        format: "mp3"
-      };
-
-      const response = await axios.post(
-        `${stbotApi.baseURL}/audioytdlv1`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': stbotApi.xApiKey
-          }
-        }
-      );
-
-      if (response.data.success && response.data.downloadUrl) {
-        const audioUrl = response.data.downloadUrl;
-
-        const cacheDir = path.join(__dirname, "cache");
-        if (!fs.existsSync(cacheDir)) {
-          fs.mkdirSync(cacheDir, { recursive: true });
+        if (!res.data?.downloadUrl) {
+          await message.unsend(dlMsg.messageID);
+          return message.reply("❌ Download failed");
         }
 
-        const cachePath = path.join(cacheDir, `audio_${Date.now()}.mp3`);
-
-        const audioResponse = await axios.get(audioUrl, {
+        const audio = await axios.get(res.data.downloadUrl, {
           responseType: "arraybuffer"
         });
 
-        fs.writeFileSync(cachePath, Buffer.from(audioResponse.data));
+        const file = path.join(__dirname, "cache", `audio_${Date.now()}.mp3`);
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, Buffer.from(audio.data));
 
-        await message.unsend(downloadMsg.messageID);
+        await message.unsend(dlMsg.messageID);
 
         await message.reply({
-          body: `🎶 Now Playing: ${selectedVideo.title}\n👤 Requested by: ${userName}\n⏱ Duration: ${selectedVideo.timestamp}`,
-          attachment: fs.createReadStream(cachePath)
+          body:
+            `🎶 ${v.title}\n` +
+            `👤 ${v.author.name}\n` +
+            `⏱ ${v.timestamp}`,
+          attachment: fs.createReadStream(file)
         });
 
-        fs.unlinkSync(cachePath);
-        
-        global.GoatBot.onReply.delete(messageID);
-
-      } else {
-        await message.unsend(downloadMsg.messageID);
-        return message.reply("❌ Failed to download the audio. The API returned an error.");
+        fs.unlinkSync(file);
+        return;
       }
+
+
+      const top = search.videos.slice(0, 6);
+
+      let msg = `🔍 Results for "${query}"\n\n`;
+
+      top.forEach((v, i) => {
+        msg += `${i + 1}. ${v.title}\n⏱ ${v.timestamp}\n\n`;
+      });
+
+      msg += "👉 Reply with number";
+
+      await message.unsend(processing.messageID);
+
+      return message.reply(msg, (err, info) => {
+        global.GoatBot.onReply.set(info.messageID, {
+          commandName: module.exports.config.name,
+          author: event.senderID,
+          videos: top
+        });
+      });
+
+    } catch (e) {
+      console.error(e);
+      await message.unsend(processing.messageID);
+      return message.reply("❌ Error: " + e.message);
+    }
+  },
+
+
+  onReply: async function ({ message, event, Reply, usersData }) {
+    if (event.senderID !== Reply.author) {
+      return message.reply("⚠️ Not your request");
+    }
+
+    const choice = parseInt(event.body);
+    if (isNaN(choice) || choice < 1 || choice > Reply.videos.length) {
+      return message.reply("❌ Invalid choice");
+    }
+
+    const stapi = new global.utils.STBotApis();
+    const video = Reply.videos[choice - 1];
+
+    const userName = await usersData.getName(event.senderID);
+
+    const dlMsg = await message.reply(`⬇️ Downloading: ${video.title}`);
+
+    try {
+      const res = await axios.post(`${stapi.baseURL}/audioytdlv1`, {
+        url: video.url,
+        format: "mp3"
+      });
+
+      if (!res.data?.downloadUrl) {
+        await message.unsend(dlMsg.messageID);
+        return message.reply("❌ Download failed");
+      }
+
+      const audio = await axios.get(res.data.downloadUrl, {
+        responseType: "arraybuffer"
+      });
+
+      const file = path.join(__dirname, "cache", `audio_${Date.now()}.mp3`);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, Buffer.from(audio.data));
+
+      await message.unsend(dlMsg.messageID);
+
+      await message.reply({
+        body:
+          `🎶 ${video.title}\n` +
+          `👤 Requested by: ${userName}\n` +
+          `⏱ ${video.timestamp}`,
+        attachment: fs.createReadStream(file)
+      });
+
+      fs.unlinkSync(file);
 
     } catch (err) {
       console.error(err);
-      await message.unsend(downloadMsg.messageID);
-      return message.reply("⚠️ Error while downloading: " + err.message);
+      await message.unsend(dlMsg.messageID);
+      return message.reply("❌ Download error");
     }
   }
 };

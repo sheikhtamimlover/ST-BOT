@@ -1,6 +1,6 @@
 {
   "name": "st-bot",
-  "version": "2.4.77",
+  "version": "2.4.78",
   "description": "A simple Bot chat messenger using personal account. Made by ST | Sheikh Tamim",
   "main": "index.js",
   "engines": {
@@ -8,7 +8,7 @@
     "npm": ">=7.0.0"
   },
   "dependencies": {
-    "@dongdev/fca-unofficial": "^3.0.22",
+    "@dongdev/fca-unofficial": "^3.0.31",
     "axios": "^1.13.4",
     "bcrypt": "^5.0.1",
     "canvas": "^3.2.0",
@@ -26,6 +26,7 @@
     "form-data": "^4.0.0",
     "fs": "^0.0.1-security",
     "fs-extra": "^11.1.0",
+    "gifencoder": "^2.0.1",
     "gradient-string": "^2.0.2",
     "graphql-query-to-json": "^2.0.1",
     "https": "^1.0.0",
@@ -43,14 +44,16 @@
     "request": "^2.88.2",
     "searchitunes": "^2.5.4",
     "sequelize": "^6.19.0",
+    "sharp": "^0.34.5",
     "socket.io": "^4.5.1",
     "sqlite3": "^5.0.5",
     "st-shazam": "^1.0.1",
     "stencyption": "^1.0.10",
-    "stfca": "^1.0.20",
+    "stfca": "^1.0.25",
     "tinyurl": "^1.1.7",
     "totp-generator": "^0.0.13",
     "tweetnacl-sealedbox-js": "^1.2.0",
+    "twemoji": "^14.0.2",
     "ws": "^8.18.3",
     "yt-search": "^2.13.1"
   },

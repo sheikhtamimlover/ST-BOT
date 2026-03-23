@@ -560,6 +560,76 @@
     "note": "stfca has update so stfca pkg version has update for theme set now will be worked. Added a new command 'shazam'. Also fix for yt download and fix for both autodl and sing commands. If you encounter any issues, please report them using the streport command."
 
 
+  },
+    {
+    "version": "2.4.78",
+    "files": {
+      "bot/handler/handlerEvents.js": "update to 2.4.79 now it support this.config.name",
+      "bot/login/loadScripts.js": "update to 2.4.78",
+      "bot/login/login.js": "update to 2.4.78",
+      "bot/login/botacc.js": "update to v2.4.78",
+      "dashboard/js/dashboard.js":"update to 2.4.78",
+      "dashboard/app.js":"update to 2.4.78",
+      "scripts/cmds/addmoney.js": "added to 2.4.78",
+      "scripts/cmds/aimirror.js": "added to 2.4.78",
+      "scripts/cmds/album.js": "added to 2.4.78",
+      "scripts/cmds/beb.js": "update to 2.4.78",
+      "scripts/cmds/cai.js": "added to 2.4.78",
+      "scripts/cmds/casino.js": "added to 2.4.78",
+      "scripts/cmds/casino2.js": "added to 2.4.78",
+      "scripts/cmds/casinoslot.js": "added to 2.4.78",
+      "scripts/cmds/cmd.js": "updated to V2.4.78",
+      "scripts/cmds/cpanel.js": "added to 2.4.78",
+      "scripts/cmds/cpanel2.js": "added to 2.4.78",
+      "scripts/cmds/cpanel3.js": "added to 2.4.78",
+      "scripts/cmds/emojimix.js": "added to 2.4.78",
+      "scripts/cmds/fakechat2.js": "added to 2.4.78",
+      "scripts/cmds/fca.js": "added to 2.4.78",
+      "scripts/cmds/flux.js": "update to 2.4.78 better than any once",
+      "scripts/cmds/gist.js": "update to 2.4.78",
+      "scripts/cmds/megaspin.js": "added to 2.4.78",
+      "scripts/cmds/midjourney.js": "update to 2.4.78",
+      "scripts/cmds/midjourneyprompt.js": "added to 2.4.78",
+      "scripts/cmds/music.js": "added to 2.4.78",
+      "scripts/cmds/nanobanana.js": "added to 2.4.78",
+      "scripts/cmds/niji.js": "added to 2.4.78",
+      "scripts/cmds/pin.js": "added to 2.4.78",
+      "scripts/cmds/raw.js": "added to 2.4.78",
+      "scripts/cmds/richest.js": "added to 2.4.78",
+      "scripts/cmds/seedream.js": "added to 2.4.78",
+      "scripts/cmds/sendmail.js": "added to 2.4.78",
+      "scripts/cmds/setwelcome.js": "update to 2.4.78",
+      "scripts/cmds/sing.js": "update to 2.4.78",
+      "scripts/cmds/slot.js": "added to 2.4.78",
+      "scripts/cmds/slot3d.js": "added to 2.4.78",
+      "scripts/cmds/slots.js": "added to 2.4.78",
+      "scripts/cmds/spycard.js": "added to 2.4.78",
+      "scripts/cmds/ssweb.js": "added to 2.4.78",
+      "scripts/cmds/stai.js": "update to 2.4.78",
+      "scripts/cmds/sysgif.js": "added to 2.4.78",
+      "scripts/cmds/sysgif2.js": "added to 2.4.78",
+      "scripts/cmds/sysgif3.js": "added to 2.4.78",
+      "scripts/cmds/system.js": "added to 2.4.78",
+      "scripts/cmds/tm.js": "added to 2.4.78",
+      "scripts/cmds/typing.js": "added to 2.4.78",
+      "scripts/cmds/vidgen.js": "added to 2.4.78",
+      "scripts/cmds/wlg.js": "added to 2.4.78",
+      "scripts/cmds/zom.js": "added to 2.4.78",
+      "scripts/events/groupnoti.js": "update to 2.4.78",
+      "scripts/events/leave.js": "update to 2.4.78",
+      "scripts/events/welcome.js": "update to 2.4.78",
+      "config.json": {
+        "enableTypingIndicator": true,
+        "typingDuration": 2000
+      },
+      "fca.js": "added new file",
+      "Goat.js": "update to V2.4.78",
+      "utils.js": "update to V2.4.78"
+    },
+    "deleteFiles": {
+      "scripts/cmds/fluxpro.js": "remove useless cmd"
+      },
+    "note": "A big update in 2.4.78. There were many issues in onReply for command name where this.config.name was not working, and now it has been fixed. STFCA has been updated to version 1.0.25 where user mention issues for commands were occurring, and this has also been resolved. The bot now shows a typing indicator before any response, which can be configured from config.json or by using the typing command.The powerful STAI system is now fully working and will no longer stop—it is now permanent. Several new special commands have been added, including flux-2 official, nanobanana pro version, aimirror with 700+ models and an improved zombie filter, real midjourney, mjprompt, and niji models. The private gist system has been improved and now works only between two users for better privacy, and URL onReply commands can also be installed.Fast sing and music commands have been improved with better options, and seedream now supports image editing, so no additional model commands are needed. A premium command, vidgen, has been added with 16+ models. The sendmail command is now available, allowing you to send emails to any user. A better FCA system switch has been added, which works automatically, and CAI now includes a voice system.There are many more fixes, including improvements to the Facebook mail/password login system.Also welcome leave gcnoti system for wlg cmd. If you or your users face any issues or want further updates, you can use the streport command, join the testing group https://m.me/j/AbZ97lRsGGcIgwPN/?send_source=gc:copy_invite_link_c, or contact the admin at https://m.me/hamza.lover1."
   }
 
 ]

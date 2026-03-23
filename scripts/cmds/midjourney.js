@@ -1,118 +1,407 @@
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
 
-const TASK_JSON = path.join(__dirname, "midj_tasks.json");
-if (!fs.existsSync(TASK_JSON)) fs.writeFileSync(TASK_JSON, "{}");
-
-const BASE_URL = async () => {
-  const rakib = await axios.get("https://gitlab.com/Rakib-Adil-69/shizuoka-command-store/-/raw/main/apiUrls.json");
-  return rakib.data.mj;
-}
+const axios = require('axios');
+const FormData = require('form-data');
+const fs = require('fs');
+const path = require('path');
+const stapi = new global.utils.STBotApis();
 
 module.exports = {
   config: {
-    name: "midjourney",
-    aliases: ["midj", "mj"],
-    author: "Rakib Adil",
-    version: "2.4.70",
+    name: "mj",
+    aliases: ["midjourney"],
+    author: "ST | Sheikh Tamim",
+    version: "2.4.78",
+    countDown: 5,
     role: 0,
-    shortDescription: "AI image generation with MidJourney style",
-    longDescription: "Generate and upscale MidJourney-style images using xnil’s API.",
-    category: "image",
-    guide: "{pn} <prompt>"
-  },
-
-  ST: async function ({ args, message, event }) {
-    const prompt = args.join(" ").trim();
-    if (!prompt) return message.reply("⚠️ Please provide a prompt.");
-
-    const loading = await message.reply("Generating image, please wait.. 🎨");
-    await message.reaction("⏳", event.messageID);
-
-    try {
-      const res = await axios.get(`${await BASE_URL()}/imagine`, {
-        params: { prompt: encodeURIComponent(prompt) }
-      });
-
-      const data = res.data;
-      if (!data || !data.murl) {
-        await message.unsend(loading.messageID);
-        await message.reaction("❌", event.messageID);
-        return message.reply("❌ Failed to generate image. Please try again later.");
-      }
-
-      const taskId = data.taskId || "unknown";
-      const murl = data.murl;
-
-      const tasks = JSON.parse(fs.readFileSync(TASK_JSON, "utf8"));
-      tasks[event.threadID] = taskId;
-      fs.writeFileSync(TASK_JSON, JSON.stringify(tasks, null, 2));
-
-      await message.unsend(loading.messageID);
-      await message.reaction("✅", event.messageID);
-
-      const img = await global.utils.getStreamFromURL(murl);
-      const sent = await message.reply({
-        body: `🧠 Prompt: ${prompt}\n💬 Reply with U1–U4 to upscale..`,
-        attachment: img
-      });
-
-      global.GoatBot.onReply.set(sent.messageID, {
-        commandName: module.exports.config.name,
-        taskId,
-        prompt
-      });
-    } catch (err) {
-      console.error("Generation error:", err.message || err);
-      await message.unsend(loading.messageID);
-      await message.reaction("❌", event.messageID);
-      return message.reply("❌ Generation failed. Try again later.");
+    description: "Generate images using Midjourney AI with advanced controls",
+    category: "ai",
+    guide: {
+      en: "{pn} <prompt> - Generate image\nReply to image with {pn} <prompt> - Use image reference\nExample: {pn} A futuristic cityscape at sunset"
     }
   },
 
-  onReply: async function ({ event, Reply, message }) {
-    const input = (event.body || "").trim().toLowerCase();
-    const validActions = ["u1", "u2", "u3", "u4", "v1", "v2", "v3", "v4"];
-    if (!validActions.includes(input)) return;
-
-    const cid = input.replace(/[uv]/, "");
-    const mode = input.startsWith("v") ? "variation" : "upscale";
-    const processing = await message.reply(`🔄 Processing ${input.toUpperCase()} (${mode})...`);
-    await message.reaction("⏳", event.messageID);
-
+  ST: async ({ event, message, args, api, usersData }) => {
     try {
-      const endpoint = mode === "upscale" ? "up" : "var";
-      const url = `${await BASE_URL()}/${endpoint}?tid=${Reply.taskId}&cid=${cid}`;
+      const userData = await usersData.get(event.senderID);
+      const userName = userData ? userData.name : "User";
 
-      const res = await axios.get(url);
-      const data = res.data;
-
-      if (!data || !data.url) {
-        await message.unsend(processing.messageID);
-        await message.reaction("❌", event.messageID);
-        return message.reply(`❌ ${mode} failed for ${input.toUpperCase()}.`);
+      if (args.length === 0) {
+        return message.reply(
+          `🎨 Midjourney Image Generator\n\n` +
+          `Usage:\n` +
+          `• {pn} <prompt> - Generate image\n` +
+          `• Reply to image with {pn} <prompt> - Use image reference\n\n` +
+          `Example:\n` +
+          `{pn} A futuristic cityscape at sunset\n\n` +
+          `Tip: Use 'mjprompt' command to get AI-generated prompts from images!`
+        );
       }
 
-      await message.unsend(processing.messageID);
-      await message.reaction("✅", event.messageID);
+      const prompt = args.join(' ');
+      let imageBuffer = null;
 
-      const img = await global.utils.getStreamFromURL(data.url);
-      const sent = await message.reply({
-        body: `✅ ${mode === "upscale" ? "Upscaled" : "Variation"} ${input.toUpperCase()} done.\n💬 Reply again with U1–U4.. `,
-        attachment: img
+      // Check if replying to an image with prompt
+      if (event.messageReply && event.messageReply.attachments && event.messageReply.attachments.length > 0) {
+        const attachment = event.messageReply.attachments[0];
+        if (attachment.type === "photo" || attachment.type === "animated_image") {
+          try {
+            const imageUrl = attachment.url;
+            imageBuffer = await global.utils.getStreamFromURL(imageUrl);
+          } catch (error) {
+            return message.reply(`❌ Failed to process image: ${error.message}`);
+          }
+        }
+      }
+
+      const processingMsg = await message.reply(`🎨 ${userName}\nGenerating: ${prompt}\n\n⏳ Progress: 0%`);
+
+      // Submit task
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      formData.append('botType', 'MID_JOURNEY');
+
+      if (imageBuffer) {
+        formData.append('images', imageBuffer, {
+          filename: 'reference.webp',
+          contentType: 'image/webp'
+        });
+      }
+
+      let taskId;
+      try {
+        const response = await axios.post(`${stapi.baseURL}/mj/imagine`, formData, {
+          headers: formData.getHeaders()
+        });
+
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Task submission failed');
+        }
+
+        taskId = response.data.taskId;
+      } catch (error) {
+        await api.editMessage(
+          `❌ Failed to submit task: ${error.message}`,
+          processingMsg.messageID
+        );
+        return;
+      }
+
+      // Poll for progress with smart editing
+      let isCompleted = false;
+      let lastProgress = 0;
+      let progressData = null;
+      let editCount = 0;
+
+      while (!isCompleted) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        try {
+          const progressResponse = await axios.get(`${stapi.baseURL}/mj/progress/${taskId}`);
+          progressData = progressResponse.data;
+
+          const currentProgress = parseInt(progressData.progress) || 0;
+
+          // Edit at: first update, 50%, and near completion
+          if (currentProgress !== lastProgress && currentProgress < 100) {
+            lastProgress = currentProgress;
+            
+            // Edit on first update, when reaching 50%, and one more before 100%
+            if (editCount === 0 || (currentProgress >= 50 && editCount === 1) || (currentProgress >= 90 && editCount === 2)) {
+              editCount++;
+              await api.editMessage(
+                `🎨 ${userName}\nGenerating: ${prompt}\n\n⏳ Progress: ${progressData.progress}`,
+                processingMsg.messageID
+              );
+            }
+          }
+
+          if (progressData.isCompleted) {
+            isCompleted = true;
+          }
+
+          if (progressData.status === 'FAILURE' || progressData.error) {
+            throw new Error(progressData.error || 'Generation failed');
+          }
+        } catch (error) {
+          if (error.response?.status === 404) {
+            await api.editMessage(
+              `❌ Task not found or expired`,
+              processingMsg.messageID
+            );
+            return;
+          }
+          throw error;
+        }
+      }
+
+      if (!progressData.task || !progressData.task.imageUrl) {
+        await api.editMessage(
+          `❌ No image generated`,
+          processingMsg.messageID
+        );
+        return;
+      }
+
+      // Download image
+      const imageUrl = progressData.task.imageUrl;
+      const tmpDir = path.join(__dirname, '..', '..', 'tmp');
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+
+      const webpPath = path.join(tmpDir, `mj_${taskId}.webp`);
+
+      const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      fs.writeFileSync(webpPath, Buffer.from(imageResponse.data));
+
+      // Delete processing message
+      await message.unsend(processingMsg.messageID);
+
+      const buttonMap = new Map();
+      let actionLine = '';
+
+      if (progressData.task.buttons && progressData.task.buttons.length > 0) {
+        const uButtons = progressData.task.buttons.filter(btn => btn.label && btn.label.startsWith('U'));
+        const vButtons = progressData.task.buttons.filter(btn => btn.label && btn.label.startsWith('V'));
+        const refreshButton = progressData.task.buttons.find(btn => btn.emoji === '🔄');
+
+        uButtons.forEach(btn => {
+          buttonMap.set(btn.label, { customId: btn.customId, label: btn.label });
+        });
+
+        vButtons.forEach(btn => {
+          buttonMap.set(btn.label, { customId: btn.customId, label: btn.label });
+        });
+
+        if (refreshButton) {
+          buttonMap.set('🔄', { customId: refreshButton.customId, label: 'Regenerate' });
+        }
+
+        const uLabels = uButtons.map(btn => btn.label).join(' ');
+        const vLabels = vButtons.map(btn => btn.label).join(' ');
+        const parts = [uLabels, refreshButton ? '🔄' : '', vLabels].filter(p => p);
+        
+        if (parts.length > 0) {
+          actionLine = `\n\n${parts.join(' ')}`;
+        }
+      }
+
+      const resultMsg = await message.reply({
+        body: actionLine,
+        attachment: fs.createReadStream(webpPath)
       });
 
-      global.GoatBot.onReply.set(sent.messageID, {
-        commandName: Reply.commandName,
-        taskId: data.tid || Reply.taskId,
-        prompt: Reply.prompt
+      global.GoatBot.onReply.set(resultMsg.messageID, {
+        commandName: module.exports.config.name,
+        taskId: taskId,
+        prompt: prompt,
+        buttons: progressData.task.buttons || [],
+        buttonMap: buttonMap,
+        messageID: resultMsg.messageID,
+        author: event.senderID,
+        isInitial: true
       });
-    } catch (err) {
-      console.error(`${mode} error:`, err.message || err);
-      await message.unsend(processing.messageID);
-      await message.reaction("❌", event.messageID);
-      message.reply(`❌ Error while processing ${input.toUpperCase()}. Try again later.`);
+
+      // Clean up
+      if (fs.existsSync(webpPath)) {
+        fs.unlinkSync(webpPath);
+      }
+
+    } catch (error) {
+      console.error('Error in mj command:', error);
+      await message.reply(`❌ Error: ${error.message}`);
+    }
+  },
+
+  onReply: async function ({ message, event, Reply, api, usersData }) {
+    const { author, taskId, prompt, buttonMap, isInitial } = Reply;
+    if (event.senderID !== author) return;
+
+    const input = event.body.trim();
+    let selectedButton;
+
+    if (isInitial) {
+      selectedButton = buttonMap.get(input);
+      
+      if (!selectedButton) {
+        const availableActions = Array.from(buttonMap.keys()).join(' ');
+        return message.reply(`❌ Invalid selection.\n\nAvailable: ${availableActions}`);
+      }
+    } else {
+      if (!/^\d+$/.test(input)) {
+        return message.reply(`❌ Please reply with a number to select an action.`);
+      }
+
+      const btnNum = parseInt(input);
+      selectedButton = buttonMap.get(btnNum);
+
+      if (!selectedButton) {
+        const availableActions = Array.from(buttonMap.entries()).map(([key, val]) => `${key}. ${val.label}`);
+        return message.reply(`❌ Invalid selection.\n\nAvailable actions:\n${availableActions.join('\n')}`);
+      }
+    }
+
+    const userData = await usersData.get(event.senderID);
+    const userName = userData ? userData.name : "User";
+
+    // Determine action type and next display format
+    let actionName = 'Processing';
+    let isUpscale = false;
+    
+    if (selectedButton.customId.includes('upsample')) {
+      actionName = 'Upscaling';
+      isUpscale = true;
+    } else if (selectedButton.customId.includes('variation')) {
+      actionName = 'Creating variation';
+    } else if (selectedButton.customId.includes('reroll')) {
+      actionName = 'Regenerating';
+    }
+
+    const processingMsg = await message.reply(`⏳ ${userName}\n${actionName}...\n\nProgress: 0%`);
+
+    try {
+      // Send action request
+      const actionResponse = await axios.post(`${stapi.baseURL}/mj/action`, {
+        taskId: taskId,
+        customId: selectedButton.customId
+      });
+
+      if (!actionResponse.data.success) {
+        await api.editMessage(
+          `❌ Action failed`,
+          processingMsg.messageID
+        );
+        return;
+      }
+
+      const newTaskId = actionResponse.data.taskId;
+
+      // Poll for new task with progress tracking
+      let isCompleted = false;
+      let lastProgress = 0;
+      let progressData = null;
+      let editCount = 0;
+
+      while (!isCompleted) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        const progressResponse = await axios.get(`${stapi.baseURL}/mj/progress/${newTaskId}`);
+        progressData = progressResponse.data;
+
+        const currentProgress = parseInt(progressData.progress) || 0;
+
+        if (currentProgress !== lastProgress && currentProgress < 100) {
+          lastProgress = currentProgress;
+          
+          if (editCount === 0 || (currentProgress >= 50 && editCount === 1) || (currentProgress >= 90 && editCount === 2)) {
+            editCount++;
+            await api.editMessage(
+              `⏳ ${userName}\n${actionName}...\n\nProgress: ${progressData.progress}`,
+              processingMsg.messageID
+            );
+          }
+        }
+
+        if (progressData.isCompleted) {
+          isCompleted = true;
+        }
+
+        if (progressData.status === 'FAILURE' || progressData.error) {
+          throw new Error(progressData.error || 'Action failed');
+        }
+      }
+
+      const imageUrl = progressData.task.imageUrl;
+      const tmpDir = path.join(__dirname, '..', '..', 'tmp');
+      const webpPath = path.join(tmpDir, `mj_${newTaskId}.webp`);
+
+      const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      fs.writeFileSync(webpPath, Buffer.from(imageResponse.data));
+
+      await message.unsend(processingMsg.messageID);
+
+      const newButtonMap = new Map();
+      let displayBody = '';
+      let nextIsInitial = true;
+
+      if (progressData.task.buttons && progressData.task.buttons.length > 0) {
+        if (isUpscale) {
+          let btnIndex = 0;
+          const actionLines = [];
+
+          progressData.task.buttons.forEach(btn => {
+            const btnId = btnIndex + 1;
+            let displayLabel = '';
+            
+            if (btn.emoji && btn.label) {
+              displayLabel = `${btn.emoji} ${btn.label}`;
+            } else if (btn.label) {
+              displayLabel = btn.label;
+            } else {
+              displayLabel = btn.emoji || `Action ${btnId}`;
+            }
+            
+            newButtonMap.set(btnId, { customId: btn.customId, label: displayLabel });
+            actionLines.push(`${btnId}. ${displayLabel}`);
+            btnIndex++;
+          });
+
+          if (actionLines.length > 0) {
+            displayBody = `\n\n✨ Available Actions:\n${actionLines.join('\n')}\n\n💡 Reply with a number to select`;
+          }
+          nextIsInitial = false;
+        } else {
+          const uButtons = progressData.task.buttons.filter(btn => btn.label && btn.label.startsWith('U'));
+          const vButtons = progressData.task.buttons.filter(btn => btn.label && btn.label.startsWith('V'));
+          const refreshButton = progressData.task.buttons.find(btn => btn.emoji === '🔄');
+
+          uButtons.forEach(btn => {
+            newButtonMap.set(btn.label, { customId: btn.customId, label: btn.label });
+          });
+
+          vButtons.forEach(btn => {
+            newButtonMap.set(btn.label, { customId: btn.customId, label: btn.label });
+          });
+
+          if (refreshButton) {
+            newButtonMap.set('🔄', { customId: refreshButton.customId, label: 'Regenerate' });
+          }
+
+          const uLabels = uButtons.map(btn => btn.label).join(' ');
+          const vLabels = vButtons.map(btn => btn.label).join(' ');
+          const parts = [uLabels, refreshButton ? '🔄' : '', vLabels].filter(p => p);
+          
+          if (parts.length > 0) {
+            displayBody = `\n\n${parts.join(' ')}`;
+          }
+          nextIsInitial = true;
+        }
+      }
+
+      const resultMsg = await message.reply({
+        body: displayBody,
+        attachment: fs.createReadStream(webpPath)
+      });
+
+      global.GoatBot.onReply.set(resultMsg.messageID, {
+        commandName: module.exports.config.name,
+        taskId: newTaskId,
+        prompt: prompt,
+        buttons: progressData.task.buttons || [],
+        buttonMap: newButtonMap,
+        messageID: resultMsg.messageID,
+        author: event.senderID,
+        isInitial: nextIsInitial
+      });
+
+
+      if (fs.existsSync(webpPath)) {
+        fs.unlinkSync(webpPath);
+      }
+
+    } catch (error) {
+      console.error('Error in mj action:', error);
+      await message.reply(`❌ Error: ${error.message}`);
     }
   }
 };

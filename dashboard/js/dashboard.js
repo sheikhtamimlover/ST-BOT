@@ -882,12 +882,23 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 const currentFca = document.getElementById('currentFca');
                 const fcaSelect = document.getElementById('fcaTypeSelect');
+                const fcaType = data.fcaType;
+                const fcaConfig = data.fcaConfig || { packages: { stfca: 'stfca', dongdev: '@dongdev/fca-unofficial' } };
+
                 if (currentFca) {
-                    currentFca.textContent = data.fcaType === 'dongdev' ? '@dongdev/fca' : 'stfca';
-                    currentFca.className = `badge ${data.fcaType === 'stfca' ? 'bg-success' : 'bg-info'}`;
+                    currentFca.textContent = fcaConfig.packages[fcaType] || fcaType;
+                    currentFca.className = `badge ${fcaType === 'stfca' ? 'bg-success' : 'bg-info'}`;
                 }
+
                 if (fcaSelect) {
-                    fcaSelect.value = data.fcaType;
+                    fcaSelect.innerHTML = '';
+                    Object.keys(fcaConfig.packages).forEach(key => {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = `${key} (${fcaConfig.packages[key]})`;
+                        if (key === fcaType) option.selected = true;
+                        fcaSelect.appendChild(option);
+                    });
                 }
             }
         })

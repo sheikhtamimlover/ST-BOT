@@ -4,8 +4,8 @@ module.exports = {
 	config: {
 		name: "setwelcome",
 		aliases: ["setwc"],
-		version: "1.7",
-		author: "NTKhang",
+		version: "2.4.78",
+		author: "NTKhang | Enhanced by ST",
 		countDown: 5,
 		role: 1,
 		description: {
@@ -21,6 +21,10 @@ module.exports = {
 					+ "\n  + {boxName}:  tên của nhóm chat"
 					+ "\n  + {multiple}: bạn || các bạn"
 					+ "\n  + {session}:  buổi trong ngày"
+					+ "\n  + {memberNumber}: số thứ tự thành viên"
+					+ "\n  + {totalMembers}: tổng số thành viên"
+					+ "\n  + {oo}: người mời bot vào nhóm"
+					+ "\n  + {dailyJoins}: số người tham gia hôm nay"
 					+ "\n\n   Ví dụ:"
 					+ "\n    {pn} text Hello {userName}, welcome to {boxName}, chúc {multiple} một ngày mới vui vẻ"
 					+ "\n"
@@ -38,6 +42,10 @@ module.exports = {
 					+ "\n  + {boxName}:  group chat name"
 					+ "\n  + {multiple}: you || you guys"
 					+ "\n  + {session}:  session in day"
+					+ "\n  + {memberNumber}: member position number"
+					+ "\n  + {totalMembers}: total group members"
+					+ "\n  + {oo}: person who invited the bot"
+					+ "\n  + {dailyJoins}: number of people who joined today"
 					+ "\n\n   Example:"
 					+ "\n    {pn} text Hello {userName}, welcome to {boxName}, have a nice day {multiple}"
 					+ "\n"

@@ -10,6 +10,7 @@ const exec = (cmd, options) => new Promise((resolve, reject) => {
 const { log, loading, getText, colors, removeHomeDir } = global.utils;
 const { GoatBot } = global;
 const { configCommands } = GoatBot;
+const { fcaList, defaultFca } = require(`${process.cwd()}/fca.js`);
 const regExpCheckPackage = /require(\s+|)\((\s+|)[`'"]([^`'"]+)[`'"](\s+|)\)/g;
 const packageAlready = [];
 // const spinner = '\\|/-';
@@ -21,9 +22,59 @@ const spinner = [
 ];
 let count = 0;
 
-module.exports = async function (api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, createLine) {
-	/* { CHECK ORIGIN CODE } */
+async function ensureFcaPackageInstalled() {
+	const configPath = path.join(process.cwd(), 'config.json');
+	if (!existsSync(configPath)) return;
 
+	// Check ALL packages listed in fca.js
+	let installedCount = 0;
+	let totalCount = Object.keys(fcaList).length;
+	const missingPackages = [];
+	
+	for (const [key, packageName] of Object.entries(fcaList)) {
+		if (existsSync(`${process.cwd()}/node_modules/${packageName}`)) {
+			installedCount++;
+		} else {
+			missingPackages.push({ key, packageName });
+		}
+	}
+	
+	// If all installed, just log summary
+	if (missingPackages.length === 0) {
+		console.log(`${colors.green('✓')} FCA: ${colors.cyan(`${installedCount}/${totalCount}`)} packages ready`);
+		return;
+	}
+	
+	// Install missing packages with animation
+	console.log(`${colors.yellow('⚠')} FCA: Installing ${missingPackages.length} missing package(s)...\n`);
+	
+	for (const { key, packageName } of missingPackages) {
+		let animCount = 0;
+		const animSpinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+		
+		const animInterval = setInterval(() => {
+			process.stderr.write(`\r${colors.hex("#FFD700")(animSpinner[animCount % animSpinner.length])} ${packageName}`);
+			animCount++;
+		}, 80);
+		
+		try {
+			await exec(`npm install ${packageName}`, { cwd: process.cwd() });
+			clearInterval(animInterval);
+			process.stderr.write('\r\x1b[K');
+			console.log(`${colors.green('✓')} ${packageName}`);
+			installedCount++;
+		} catch (err) {
+			clearInterval(animInterval);
+			process.stderr.write('\r\x1b[K');
+			console.error(`${colors.red('✗')} ${packageName}: ${err.message}`);
+		}
+	}
+	
+	console.log(`${colors.green('✓')} FCA: ${colors.cyan(`${installedCount}/${totalCount}`)} packages ready\n`);
+}
+
+module.exports = async function (api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, createLine) {
+	await ensureFcaPackageInstalled();
 	const aliasesData = await globalData.get('setalias', 'data', []);
 	if (aliasesData) {
 		for (const data of aliasesData) {

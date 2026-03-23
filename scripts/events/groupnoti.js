@@ -4,8 +4,8 @@ const { getTime } = global.utils;
 module.exports = {
   config: {
     name: "adminUpdate",
-    version: "2.4.74",
-    author: "karan jalvanshi | Updated by ST",
+    version: "2.4.78",
+    author: "ST | Sheikh Tamim",
     category: "events",
     description: "Update group information quickly",
     envConfig: {
@@ -37,15 +37,12 @@ module.exports = {
     
     if (!threadID || author == threadID) return;
 
-    
-    const globalConfig = global.GoatBot.config.groupNoti || { enable: true, threadIds: [] };
-    
-    
-    if (!globalConfig.enable) return;
-    
-   
-    if (globalConfig.threadIds && globalConfig.threadIds.length > 0) {
-      if (!globalConfig.threadIds.includes(threadID)) return;
+    // Check if gcnoti is enabled for this thread (from database)
+    try {
+      const threadData = await threadsData.get(threadID);
+      if (!threadData || threadData.settings?.sendGcNoti === false) return;
+    } catch (err) {
+      return; // If can't get thread data, skip
     }
 
     try {

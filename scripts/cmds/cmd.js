@@ -27,7 +27,7 @@ function isURL(str) {
 module.exports = {
 	config: {
 		name: "cmd",
-		version: "2.4.75",
+		version: "2.4.78",
 		author: "ST",
 		countDown: 5,
 		role: 2,
@@ -235,6 +235,33 @@ module.exports = {
 			let fileName = args[2];
 			let rawCode;
 
+			// Check if user is replying to a message with URL
+			if (event.messageReply && event.messageReply.body) {
+				const repliedText = event.messageReply.body.trim();
+				
+				// If replying with a URL and filename is provided in command
+				if (isURL(repliedText) && args[1] && args[1].endsWith('.js')) {
+					url = repliedText;
+					fileName = args[1];
+				}
+			}
+
+			// If only filename is provided, ask for URL via reply
+			if (args[1] && !args[2] && args[1].endsWith('.js') && !isURL(args[1]) && !event.messageReply) {
+				fileName = args[1];
+				return message.reply(`📥 Please reply to this message with the URL of the command file to install as "${fileName}"`, (err, info) => {
+					global.GoatBot.onReply.set(info.messageID, {
+						commandName: "cmd",
+						messageID: info.messageID,
+						type: "install_url",
+						author: event.senderID,
+						data: {
+							fileName
+						}
+					});
+				});
+			}
+
 			if (!url || !fileName)
 				return message.reply(getLang("missingUrlCodeOrFileName"));
 
@@ -331,7 +358,7 @@ module.exports = {
 			message.SyntaxError();
 	},
 
-	onReply: async function ({ Reply, message, event, getLang }) {
+	onReply: async function ({ Reply, message, event, api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, getLang }) {
 		const { author, type, data } = Reply;
 
 		// Check if the user replying is the same as the author of the original command
@@ -348,9 +375,100 @@ module.exports = {
 			return message.reply("❌ Only bot's admin can use this command");
 		}
 
-		const userResponse = event.body.toLowerCase().trim();
+		const userResponse = event.body.trim();
 
-		if (type == "delete" && (userResponse === "yes" || userResponse === "y" || userResponse === "confirm")) {
+		// Handle install via URL reply
+		if (type == "install_url") {
+			const { fileName } = data;
+			const url = userResponse;
+
+			// Delete the reply message
+			Reply.delete();
+
+			// Check if response is a valid URL
+			if (!isURL(url)) {
+				return message.reply("❌ Invalid URL. Please provide a valid URL to the command file.");
+			}
+
+			try {
+				let rawCode;
+				const domain = getDomain(url);
+				let processedUrl = url;
+
+				if (!domain) {
+					return message.reply(getLang("invalidUrl"));
+				}
+
+				// Process different URL types
+				if (domain == "pastebin.com") {
+					const regex = /https:\/\/pastebin\.com\/(?!raw\/)(.*)/;
+					if (processedUrl.match(regex))
+						processedUrl = processedUrl.replace(regex, "https://pastebin.com/raw/$1");
+					if (processedUrl.endsWith("/"))
+						processedUrl = processedUrl.slice(0, -1);
+				}
+				else if (domain == "github.com") {
+					const regex = /https:\/\/github\.com\/(.*)\/blob\/(.*)/;
+					if (processedUrl.match(regex))
+						processedUrl = processedUrl.replace(regex, "https://raw.githubusercontent.com/$1/$2");
+				}
+
+				// Fetch the code
+				rawCode = (await axios.get(processedUrl)).data;
+
+				if (domain == "savetext.net") {
+					const $ = cheerio.load(rawCode);
+					rawCode = $("#content").text();
+				}
+
+				if (!rawCode) {
+					return message.reply(getLang("invalidUrlOrCode"));
+				}
+
+				// Check if file already exists
+				if (fs.existsSync(path.join(__dirname, fileName))) {
+					return message.reply(getLang("alreadExist"), (err, info) => {
+						global.GoatBot.onReaction.set(info.messageID, {
+							commandName: "cmd",
+							messageID: info.messageID,
+							type: "install",
+							author: event.senderID,
+							data: {
+								fileName,
+								rawCode
+							}
+						});
+					});
+				}
+
+				// Install the command
+				const { loadScripts } = global.utils;
+				const { configCommands } = global.GoatBot;
+				const infoLoad = loadScripts("cmds", fileName, log, configCommands, api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, getLang, rawCode);
+
+				if (infoLoad.status == "success") {
+					const filePath = path.join(__dirname, fileName);
+					message.reply(getLang("installed", infoLoad.name, filePath.replace(process.cwd(), "")));
+
+					// GitHub sync
+					try {
+						const githubSync = global.utils.getGitHubSync();
+						if (githubSync && githubSync.enabled && githubSync.autoCommit) {
+							await githubSync.syncFile("upload", filePath, rawCode);
+						}
+					} catch (syncError) {
+						console.log("GitHub sync warning:", syncError.message);
+					}
+				} else {
+					message.reply(getLang("installedError", infoLoad.name, infoLoad.error.name, infoLoad.error.message));
+				}
+
+			} catch (error) {
+				message.reply(`❌ Failed to install command: ${error.message}`);
+			}
+		}
+		// Handle delete confirmation
+		else if (type == "delete" && (userResponse.toLowerCase() === "yes" || userResponse.toLowerCase() === "y" || userResponse.toLowerCase() === "confirm")) {
 			const { unloadScripts } = global.utils;
 			const { fileName, filePath } = data;
 			const { configCommands } = global.GoatBot;

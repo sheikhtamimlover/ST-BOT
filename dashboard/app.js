@@ -7,7 +7,23 @@ const eta = require("eta");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const http = require("http");
+const { execSync } = require('child_process');
 const server = http.createServer(app);
+
+const { fcaList, defaultFca } = require('../fca.js');
+
+function readJsonSafe(filePath, defaults = {}) {
+	try {
+		if (!fs.existsSync(filePath)) {
+			return defaults;
+		}
+		const raw = fs.readFileSync(filePath, 'utf8');
+		return JSON.parse(raw);
+	} catch (error) {
+		console.error(`Failed to read JSON from ${filePath}:`, error);
+		return defaults;
+	}
+}
 
 module.exports = async (api) => {
 	if (!api)
@@ -576,13 +592,14 @@ module.exports = async (api) => {
 		}
 	});
 
-	// Get current FCA type
+	// Get current FCA type & FCA package list
 	app.get('/api/get-fca-type', (req, res) => {
 		try {
-			const fcaType = global.GoatBot?.fcaType || 'stfca';
+			const fcaType = global.GoatBot?.fcaType || (config.fcaType || defaultFca || 'stfca');
 			res.json({
 				success: true,
-				fcaType: fcaType
+				fcaType: fcaType,
+				fcaConfig: { packages: fcaList, default: defaultFca }
 			});
 		} catch (error) {
 			res.status(500).json({
@@ -597,10 +614,10 @@ module.exports = async (api) => {
 		try {
 			const { fcaType } = req.body;
 
-			if (!fcaType || !['stfca', 'dongdev'].includes(fcaType)) {
+			if (!fcaType || !Object.keys(fcaList).includes(fcaType)) {
 				return res.status(400).json({
 					status: 'error',
-					message: 'Invalid FCA type. Must be "stfca" or "dongdev"'
+					message: 'Invalid FCA type. Use one of: ' + Object.keys(fcaList).join(', ')
 				});
 			}
 
@@ -610,28 +627,49 @@ module.exports = async (api) => {
 			currentConfig.fcaType = fcaType;
 			await fs.writeFile(configPath, JSON.stringify(currentConfig, null, 2), 'utf8');
 
-			// Set global FCA type
+			// Update app-level and global fcaType
 			if (!global.GoatBot) global.GoatBot = {};
 			global.GoatBot.fcaType = fcaType;
 			global.GoatBot.config.fcaType = fcaType;
 
-			// Clear account.txt (write empty string, not [])
+			// Ensure package is installed before restart
+			const packageName = fcaList[fcaType] || fcaType;
+			let packageInstalled = true;
+			try {
+				require.resolve(packageName);
+			} catch (err) {
+				packageInstalled = false;
+			}
+			if (!packageInstalled) {
+				try {
+					execSync(`npm install ${packageName}`, {
+						stdio: ['ignore', 'inherit', 'inherit'],
+						cwd: process.cwd()
+					});
+				} catch (e) {
+					return res.status(500).json({
+						status: 'error',
+						message: `Failed to install ${packageName}: ${e.message}`
+					});
+				}
+			}
+
+			// Clear account.txt (write empty string)
 			const accountPath = process.cwd() + '/account.txt';
 			await fs.writeFile(accountPath, '', 'utf8');
 
-			// Reset update check flag if switching away from stfca
-			if (fcaType === 'dongdev') {
+			if (fcaType === 'stfca') {
 				global.stfcaUpdateChecked = false;
 			}
 
-			const fcaNames = {
-				'stfca': 'ST-FCA',
-				'dongdev': '@dongdev/fca-unofficial'
-			};
+			const fcaNames = Object.entries(fcaList).reduce((acc, [key, value]) => {
+				acc[key] = value;
+				return acc;
+			}, {});
 
 			res.json({
 				status: 'success',
-				message: `🔄 Switched to ${fcaNames[fcaType]}. Bot will restart with cleared cookies.`
+				message: `🔄 Switched to ${packageName}. Bot will restart with cleared cookies.`
 			});
 
 			// Restart after sending response
@@ -639,12 +677,11 @@ module.exports = async (api) => {
 				console.log(`🔄 FCA type switched to ${fcaType}, restarting bot...`);
 				process.exit(2); // Exit code 2 for restart
 			}, 1000);
-
 		} catch (error) {
-			console.error('Switch FCA error:', error);
+			console.error('Switch FCA type error:', error);
 			res.status(500).json({
 				status: 'error',
-				message: 'Failed to switch FCA type: ' + error.message
+				message: 'Restart failed: ' + error.message
 			});
 		}
 	});

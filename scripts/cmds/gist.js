@@ -1,4 +1,3 @@
-
 const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
@@ -8,146 +7,126 @@ const stbotApi = new global.utils.STBotApis();
 module.exports = {
   config: {
     name: "gist",
-    aliases: ["rawupload"],
-    version: "2.4.67",
+    aliases: [],
+    version: "2.4.78",
     author: "ST | Sheikh Tamim",
     countDown: 5,
     role: 0,
-    description: "Upload code files to get raw URL",
+    description: "Upload code files to gist system",
     category: "utility",
     guide: {
-      en: "   {pn} <filename.ext> <code> - Upload code with extension\n"
-        + "   {pn} -c <filename> - Upload command from path\n"
-        + "   {pn} -e <filename> - Upload event from path"
+      en:
+        "   {pn} <filename.ext> <code>\n" +
+        "   {pn} -c <filename>\n" +
+        "   {pn} -e <filename>"
     }
   },
 
-  ST: async function({ message, args, event }) {
-    const { senderID } = event;
+  ST: async function ({ message, args, event }) {
 
     if (!args[0]) {
       return message.reply(
-        "📝 Gist Upload Usage:\n\n" +
-        "1. Upload code directly:\n" +
-        "   !gist file.js <code>\n" +
-        "   !gist style.css <code>\n" +
-        "   !gist data.json <code>\n\n" +
-        "2. Upload from path:\n" +
-        "   !gist -c <filename> (command)\n" +
-        "   !gist -e <filename> (event)"
+        "📝 Gist Usage:\n\n" +
+        "1. Direct upload:\n" +
+        "   !gist file.js <code>\n\n" +
+        "2. From path:\n" +
+        "   !gist -c <filename>\n" +
+        "   !gist -e <filename>"
       );
     }
 
-    // Handle upload from command path
+    let filename, filePath, content;
+
+    // ========================
+    // 📁 COMMAND FILE (-c)
+    // ========================
     if (args[0] === "-c") {
       if (!args[1]) {
-        return message.reply("❌ Please provide a command filename");
+        return message.reply("❌ Provide command filename");
       }
 
-      const filename = args[1].endsWith('.js') ? args[1] : args[1] + '.js';
-      const filePath = path.join(__dirname, filename);
+      filename = args[1].endsWith(".js") ? args[1] : args[1] + ".js";
+      filePath = path.join(__dirname, filename);
 
       if (!fs.existsSync(filePath)) {
-        return message.reply(`❌ Command file not found: ${filename}`);
+        return message.reply(`❌ File not found: ${filename}`);
       }
 
-      const code = fs.readFileSync(filePath, "utf-8");
-      const format = path.extname(filename);
-
-      try {
-        const response = await axios.post(`${stbotApi.baseURL}/api/raw/upload`, {
-          filename: filename.replace(format, ''),
-          code: code,
-          format: format
-        });
-
-        if (response.data.success) {
-          return message.reply(
-            `✅ Command uploaded successfully!\n\n` +
-            `📁 File: ${response.data.filename}\n` +
-            `📂 Path: ${response.data.path}\n\n` +
-            `🔗 Raw URL:\n${response.data.rawUrl}`
-          );
-        } else {
-          return message.reply(`❌ Upload failed: ${response.data.message}`);
-        }
-      } catch (err) {
-        return message.reply(`❌ Upload error: ${err.message}`);
-      }
+      content = fs.readFileSync(filePath, "utf-8");
     }
 
-    // Handle upload from event path
-    if (args[0] === "-e") {
+    // ========================
+    // 📁 EVENT FILE (-e)
+    // ========================
+    else if (args[0] === "-e") {
       if (!args[1]) {
-        return message.reply("❌ Please provide an event filename");
+        return message.reply("❌ Provide event filename");
       }
 
-      const filename = args[1].endsWith('.js') ? args[1] : args[1] + '.js';
-      const filePath = path.join(__dirname, '../events', filename);
+      filename = args[1].endsWith(".js") ? args[1] : args[1] + ".js";
+      filePath = path.join(__dirname, "../events", filename);
 
       if (!fs.existsSync(filePath)) {
-        return message.reply(`❌ Event file not found: ${filename}`);
+        return message.reply(`❌ File not found: ${filename}`);
       }
 
-      const code = fs.readFileSync(filePath, "utf-8");
-      const format = path.extname(filename);
+      content = fs.readFileSync(filePath, "utf-8");
+    }
 
-      try {
-        const response = await axios.post(`${stbotApi.baseURL}/api/raw/upload`, {
-          filename: filename.replace(format, ''),
-          code: code,
-          format: format
-        });
+    // ========================
+    // 🧾 DIRECT CODE
+    // ========================
+    else {
+      filename = args[0];
 
-        if (response.data.success) {
-          return message.reply(
-            `✅ Event uploaded successfully!\n\n` +
-            `📁 File: ${response.data.filename}\n` +
-            `📂 Path: ${response.data.path}\n\n` +
-            `🔗 Raw URL:\n${response.data.rawUrl}`
-          );
-        } else {
-          return message.reply(`❌ Upload failed: ${response.data.message}`);
-        }
-      } catch (err) {
-        return message.reply(`❌ Upload error: ${err.message}`);
+      if (!path.extname(filename)) {
+        return message.reply("❌ File extension required");
+      }
+
+      content = event.body
+        .slice(event.body.indexOf(filename) + filename.length + 1)
+        .trim();
+
+      if (!content) {
+        return message.reply("❌ No code provided");
       }
     }
 
-    // Handle direct code upload
-    const filename = args[0];
-    const format = path.extname(filename);
-    
-    if (!format) {
-      return message.reply("❌ Please provide a file extension (e.g., .js, .css, .json)");
-    }
-
-    const code = event.body.slice(event.body.indexOf(filename) + filename.length + 1).trim();
-
-    if (!code) {
-      return message.reply("❌ Please provide code to upload");
-    }
-
+    // ========================
+    // 🚀 API REQUEST
+    // ========================
     try {
-      const response = await axios.post(`${stbotApi.baseURL}/api/raw/upload`, {
-        filename: filename.replace(format, ''),
-        code: code,
-        format: format
-      });
+      const response = await axios.post(
+        `${stbotApi.baseURL}/gist/files`,
+        {
+          filename: filename,
+          content: content
+        }
+      );
 
-      if (response.data.success) {
+      const res = response.data;
+
+      if (res.success) {
+        const data = res.data;
+
         return message.reply(
-          `✅ File uploaded successfully!\n\n` +
-          `📁 File: ${response.data.filename}\n` +
-          `📂 Path: ${response.data.path}\n\n` +
-          `🔗 Raw URL:\n${response.data.rawUrl}\n\n` +
-          `💡 Share this URL to access your code!`
+          `✅ Gist Uploaded Successfully & fully private !\n\n` +
+          `📁 Name: ${data.name}\n` +
+          `📦 Size: ${data.size} bytes\n` +
+          `🔗 Download URL:\n${data.download_url}\n\n`
         );
       } else {
-        return message.reply(`❌ Upload failed: ${response.data.message}`);
+        return message.reply(`❌ Upload failed`);
       }
+
     } catch (err) {
-      return message.reply(`❌ Upload error: ${err.message}`);
+      // 🔥 Better error debug
+      if (err.response) {
+        console.error("❌ STATUS:", err.response.status);
+        console.error("❌ DATA:", err.response.data);
+      }
+
+      return message.reply(`❌ Error: ${err.message}`);
     }
   }
 };

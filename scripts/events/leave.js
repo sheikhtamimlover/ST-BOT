@@ -3,8 +3,8 @@ const { getTime, drive } = global.utils;
 module.exports = {
 	config: {
 		name: "leave",
-		version: "1.4",
-		author: "NTKhang",
+		version: "2.4.78",
+		author: "NTKhang | enhanced by ST",
 		category: "events"
 	},
 
@@ -34,7 +34,10 @@ module.exports = {
 			return async function () {
 				const { threadID } = event;
 				const threadData = await threadsData.get(threadID);
-				if (!threadData.settings.sendLeaveMessage)
+				
+				// Check if leave message is enabled for this thread
+				// Default is true (enabled) if not explicitly disabled
+				if (threadData.settings && threadData.settings.sendLeaveMessage === false)
 					return;
 				const { leftParticipantFbId } = event.logMessageData;
 				if (leftParticipantFbId == api.getCurrentUserID())
