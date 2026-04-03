@@ -24,6 +24,14 @@
 
 ---
 
+### 🎬 Tutorial Video
+
+[![Watch Tutorial on YouTube](https://img.shields.io/badge/Watch%20Tutorial-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/8rmZLxJWLX8)
+
+[![YouTube Tutorial](https://img.youtube.com/vi/8rmZLxJWLX8/maxresdefault.jpg)](https://youtu.be/8rmZLxJWLX8)
+
+---
+
 </div>
 
 ## 📖 Table of Contents
