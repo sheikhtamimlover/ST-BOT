@@ -29,8 +29,8 @@
   "antiInbox": false,
   "language": "en",
   "notesLanguage": "change to your language with ISO 639-1 code, available languages: vi (Vietnamese), en (English)",
-  "nickNameBot": "ST | BOT",
-  "prefix": "!",
+  "nickNameBot": "Aurelian II",
+  "prefix": "-",
   "usePrefix": {
     "enable": true,
     "adminUsePrefix": {
@@ -42,7 +42,7 @@
     "enable": false,
     "ignoreCommand": []
   },
-  "adminBot": [],
+  "adminBot": ["61561982970881"]
   "whiteListMode": {
     "enable": false,
     "whiteListIds": [],
