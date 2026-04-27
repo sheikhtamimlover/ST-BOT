@@ -4,8 +4,7 @@ const log = require("./logger/log.js");
 function startProject() {
 	const child = spawn("node", ["Goat.js"], {
 		cwd: __dirname,
-		stdio: "inherit",
-		shell: true
+		stdio: "inherit"
 	});
 
 	child.on("close", (code) => {
