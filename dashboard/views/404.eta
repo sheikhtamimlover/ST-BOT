@@ -1,63 +1,27 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        .error-container {
-            text-align: center;
-            max-width: 500px;
-        }
-        .error-code {
-            font-size: 8rem;
-            font-weight: bold;
-            margin: 0;
-            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        .error-message {
-            font-size: 1.5rem;
-            margin: 1rem 0;
-        }
-        .btn-home {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 12px 30px;
-            font-weight: 600;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-        }
-        .btn-home:hover {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-            transform: translateY(-2px);
-        }
-    </style>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>404 — Not Found</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
-    <div class="error-container">
-        <div class="error-code">404</div>
-        <div class="error-message">
-            <i class="fas fa-exclamation-triangle"></i>
-            Page Not Found
+        <div class="notfound">
+                <div>
+                        <div class="code">404</div>
+                        <h2>Page Not Found</h2>
+                        <p>The page you're looking for doesn't exist or has been moved.</p>
+                        <div style="text-align:center">
+                                <a href="/dashboard" class="btn btn-primary">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6"/></svg>
+                                        Back to Dashboard
+                                </a>
+                        </div>
+                </div>
         </div>
-        <p class="mb-4">The page you're looking for doesn't exist or has been moved.</p>
-        <a href="/dashboard" class="btn btn-home">
-            <i class="fas fa-home me-2"></i>
-            Go to Dashboard
-        </a>
-    </div>
 </body>
 </html>

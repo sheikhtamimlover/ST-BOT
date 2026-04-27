@@ -1,1073 +1,459 @@
-// Enhanced Dashboard JavaScript Functions
-let currentFile = '';
-let lastStatsUpdate = 0;
-let updateInterval;
-let statsCache = {};
+/* ============================================================
+   ST BOT v2.4.79 — Dashboard frontend
+   ============================================================ */
 
-// Global variables for file management
-let currentFileType = '';
-let currentScriptType = '';
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-// Initialize dashboard with real-time updates
-document.addEventListener('DOMContentLoaded', function() {
-    initializeDashboard();
-    setupRealTimeUpdates();
-    setupKeyboardShortcuts();
-    setupVisualEnhancements();
-    initializeFileManagement(); // Initialize file management on load
+const state = {
+        currentTab: 'overview',
+        currentPath: '',
+        currentFile: null,
+        editorDirty: false,
+        autoScroll: true,
+        consoleBuffer: [],
+        scriptType: 'cmds',
+        currentScript: null,
+        scriptDirty: false,
+        modalResolver: null,
+};
+
+/* ---------- Tabs ---------- */
+function switchTab(name) {
+        state.currentTab = name;
+        $$('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === name));
+        $$('.nav-link[data-tab]').forEach(l => l.classList.toggle('active', l.dataset.tab === name));
+        $('#crumbHere').textContent = ({
+                overview: 'Overview', files: 'Files', console: 'Console',
+                config: 'Config', cookies: 'Cookies', scripts: 'Scripts', fca: 'FCA'
+        })[name] || 'Dashboard';
+        // close mobile sidebar
+        $('#sidebar')?.classList.remove('open');
+        $('#scrim')?.classList.remove('show');
+        // Lazy-load tab content
+        if (name === 'files' && !state.currentPath) fxOpen('');
+        if (name === 'config') loadConfig();
+        if (name === 'cookies') loadCookies();
+        if (name === 'scripts') loadScripts();
+        if (name === 'fca') loadFca();
+}
+
+document.addEventListener('click', (e) => {
+        const link = e.target.closest('.nav-link[data-tab]');
+        if (link) { e.preventDefault(); switchTab(link.dataset.tab); }
 });
 
-// Initialize dashboard
-function initializeDashboard() {
-    refreshStats();
-    updateUptime();
-    addLog('Dashboard initialized successfully', 'success');
-    showToast('Dashboard loaded successfully!', 'success');
+/* ---------- Toasts ---------- */
+function toast(title, body = '', type = 'info', timeout = 4500) {
+        const wrap = $('#toasts');
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        const ico = ({
+                ok:    '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+                warn:  '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+                err:   '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+                info:  '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+        })[type] || '';
+        el.innerHTML = `${ico}<div class="body"><b>${escapeHtml(title)}</b>${body ? `<span>${escapeHtml(body)}</span>` : ''}</div>`;
+        wrap.appendChild(el);
+        setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(20px)'; el.style.transition = '.25s'; }, timeout - 250);
+        setTimeout(() => el.remove(), timeout);
 }
 
-// Setup real-time updates with WebSocket-like functionality
-function setupRealTimeUpdates() {
-    // Update uptime every 5 seconds for real-time feel
-    updateInterval = setInterval(updateUptime, 5000);
-
-    // Refresh stats every 30 seconds
-    setInterval(refreshStats, 30000);
-
-    // Visual pulse indicators every 10 seconds
-    setInterval(() => {
-        const indicators = document.querySelectorAll('.live-indicator');
-        indicators.forEach(indicator => {
-            indicator.style.animation = 'none';
-            setTimeout(() => {
-                indicator.style.animation = 'pulse 2s infinite';
-            }, 10);
-        });
-
-        // Add ripple effect to online status
-        const onlineElements = document.querySelectorAll('.bg-success');
-        onlineElements.forEach(el => {
-            el.classList.add('status-indicator');
-        });
-    }, 10000);
-
-    // Memory usage animation
-    setInterval(updateMemoryUsage, 15000);
+function escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// Enhanced uptime update with real-time stats
-async function updateUptime() {
-    try {
-        const response = await fetch('/stats', {
-            cache: 'no-cache',
-            headers: {
-                'Cache-Control': 'no-cache'
-            }
+/* ---------- Modal ---------- */
+function confirmModal(title, body, confirmLabel = 'Confirm') {
+        return new Promise(resolve => {
+                $('#modalTitle').textContent = title;
+                $('#modalBody').textContent = body;
+                $('#modalConfirm').textContent = confirmLabel;
+                $('#modalBack').classList.add('show');
+                state.modalResolver = resolve;
         });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        // Animate counter updates
-        const uptimeElement = document.getElementById('uptime');
-        const oldUptime = uptimeElement.textContent;
-
-        if (oldUptime !== data.uptime) {
-            uptimeElement.classList.add('counter', 'updated');
-            setTimeout(() => {
-                uptimeElement.classList.remove('updated');
-            }, 1000);
-        }
-
-        uptimeElement.textContent = data.uptime;
-
-        // Update uptime details with real-time info
-        const uptimeDetails = document.getElementById('uptimeDetails');
-        if (uptimeDetails) {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString();
-            uptimeDetails.innerHTML = `
-                <small class="text-white-50">
-                    <i class="fas fa-clock me-1"></i>
-                    Last updated: ${timeString}
-                    <span class="live-indicator"></span>
-                </small>
-            `;
-        }
-
-        // Cache stats for comparison
-        statsCache = { ...data, lastUpdate: Date.now() };
-
-        // Update memory usage if available
-        if (data.memory) {
-            updateMemoryDisplay(data.memory);
-        }
-
-    } catch (error) {
-        console.error('Error updating uptime:', error);
-        handleConnectionError();
-    }
+}
+function closeModal(ok) {
+        $('#modalBack').classList.remove('show');
+        const r = state.modalResolver; state.modalResolver = null;
+        if (r) r(!!ok);
 }
 
-// Enhanced stats refresh with animation
+/* ---------- API helper ---------- */
+async function api(path, opts = {}) {
+        const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+        const init = { method: opts.method || 'GET', headers };
+        if (opts.body !== undefined) init.body = typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body);
+        const r = await fetch(path, init);
+        const text = await r.text();
+        let json; try { json = JSON.parse(text); } catch { json = { raw: text }; }
+        if (!r.ok) throw new Error(json.message || json.error || `HTTP ${r.status}`);
+        return json;
+}
+
+/* ---------- Overview ---------- */
+async function refreshAll() { await Promise.all([refreshStats(), refreshSystem()]); toast('Refreshed', 'Stats updated', 'ok', 1800); }
+
 async function refreshStats() {
-    try {
-        addLog('Refreshing statistics...', 'info');
-
-        const response = await fetch('/stats', {
-            cache: 'no-cache',
-            headers: {
-                'Cache-Control': 'no-cache'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        try {
+                const s = await api('/stats');
+                $('#totalThreads').textContent = s.totalThread ?? 0;
+                $('#totalUsers').textContent   = s.totalUser   ?? 0;
+                $('#botPrefix').textContent    = s.prefix      ?? '.';
+                $('#uptimeText').textContent   = s.uptime      ?? '—';
+                $('#uptimeBadge').textContent  = `up ${s.uptime ?? '0s'}`;
+                $('#botRam').textContent       = `${s.memory.heapUsed} MB / ${s.memory.heapTotal} MB`;
+                $('#livePill').classList.remove('bad');
+                $('#livePill').firstChild.nextSibling.nodeValue = ' Online';
+        } catch {
+                $('#livePill').classList.add('bad');
+                $('#livePill').firstChild.nextSibling.nodeValue = ' Offline';
         }
-
-        const data = await response.json();
-
-        // Animate stat updates
-        animateStatUpdate('totalThreads', data.totalThread);
-        animateStatUpdate('totalUsers', data.totalUser);
-        animateStatUpdate('dbThreads', data.totalThread);
-        animateStatUpdate('dbUsers', data.totalUser);
-
-        lastStatsUpdate = Date.now();
-        addLog('Statistics refreshed successfully', 'success');
-        showToast('Statistics updated successfully!', 'success');
-
-    } catch (error) {
-        console.error('Error refreshing stats:', error);
-        addLog('Failed to refresh statistics', 'error');
-        showToast('Failed to refresh statistics', 'error');
-        handleConnectionError();
-    }
 }
 
-// Animate statistical updates
-function animateStatUpdate(elementId, newValue) {
-    const element = document.getElementById(elementId);
-    if (element && element.textContent != newValue) {
-        element.classList.add('counter', 'updated');
-        element.textContent = newValue;
-
-        setTimeout(() => {
-            element.classList.remove('updated');
-        }, 1000);
-    }
+async function refreshSystem() {
+        try {
+                const s = await api('/system-info');
+                $('#hostName').textContent  = s.platform + ' ' + s.arch;
+                $('#cpuLabel').textContent  = s.cpu;
+                $('#memLabel').textContent  = s.memUsage;
+                $('#nodeVer').textContent   = s.nodeVersion;
+                $('#projectSize').textContent = s.projectSize;
+                const memPct = parseFloat(String(s.diskUsage || '').replace(/[^0-9.]/g, '')) || 0;
+                $('#memBar').style.width = Math.min(memPct, 100) + '%';
+                const cpuPct = Math.min(parseFloat(String(s.cpuLoad || '').replace(/[^0-9.]/g, '')) * 100 || 0, 100);
+                $('#cpuBar').style.width = cpuPct + '%';
+        } catch {}
 }
 
-// Handle connection errors
-function handleConnectionError() {
-    const uptimeElement = document.getElementById('uptime');
-    const uptimeDetails = document.getElementById('uptimeDetails');
-
-    if (uptimeElement) {
-        uptimeElement.textContent = 'Offline';
-        uptimeElement.classList.add('text-danger');
-    }
-
-    if (uptimeDetails) {
-        uptimeDetails.innerHTML = `
-            <small class="text-danger">
-                <i class="fas fa-exclamation-triangle me-1"></i>
-                Connection error - Retrying...
-            </small>
-        `;
-    }
-
-    // Retry connection after 10 seconds
-    setTimeout(() => {
-        updateUptime();
-        const uptimeEl = document.getElementById('uptime');
-        if (uptimeEl) uptimeEl.classList.remove('text-danger');
-    }, 10000);
+/* ---------- Live console (SSE) ---------- */
+let sseSource;
+function consoleConnect() {
+        if (sseSource) sseSource.close();
+        sseSource = new EventSource('/api/console-stream');
+        sseSource.onopen = () => { $('#streamStatus').textContent = 'connected'; };
+        sseSource.onerror = () => {
+                $('#streamStatus').textContent = 'reconnecting…';
+                setTimeout(consoleConnect, 3000);
+                try { sseSource.close(); } catch {}
+        };
+        sseSource.onmessage = (ev) => {
+                try {
+                        const data = JSON.parse(ev.data);
+                        if (Array.isArray(data.history)) data.history.forEach(consoleAppend);
+                        else consoleAppend(data);
+                } catch {}
+        };
 }
 
-// Update memory usage display
-function updateMemoryDisplay(memoryData) {
-    const memBadge = document.getElementById('memoryUsage');
-    if (memBadge && memoryData.heapUsed && memoryData.heapTotal) {
-        const percentage = Math.round((memoryData.heapUsed / memoryData.heapTotal) * 100);
-        memBadge.textContent = `${percentage}%`;
-
-        // Update badge color based on usage
-        memBadge.className = 'badge me-2 ' +
-            (percentage > 80 ? 'bg-danger' :
-             percentage > 60 ? 'bg-warning' : 'bg-success');
-
-        // Add memory details to tooltip
-        memBadge.setAttribute('title',
-            `Used: ${memoryData.heapUsed}MB / Total: ${memoryData.heapTotal}MB\nRSS: ${memoryData.rss}MB`);
-    }
+function consoleClassify(line) {
+        const s = line || '';
+        if (/✖|ERROR|Error:|EXCEPTION/i.test(s)) return 'error';
+        if (/▲|WARN|Warning/i.test(s))             return 'warn';
+        if (/✔|SUCCESS|OK\s*│/i.test(s))           return 'success';
+        if (/★|MASTER/i.test(s))                   return 'master';
+        if (/❯|DEV/i.test(s))                       return 'dev';
+        if (/ℹ|INFO/i.test(s))                     return 'info';
+        return '';
 }
 
-// Dynamic memory usage updates
-function updateMemoryUsage() {
-    const memBadge = document.getElementById('memoryUsage');
-    if (memBadge && !statsCache.memory) {
-        // Simulate realistic memory usage if real data unavailable
-        const currentUsage = parseInt(memBadge.textContent) || 0;
-        const variation = (Math.random() - 0.5) * 10; // ±5% variation
-        const newUsage = Math.max(15, Math.min(85, currentUsage + variation));
-
-        memBadge.textContent = `${Math.round(newUsage)}%`;
-        memBadge.className = 'badge me-2 ' +
-            (newUsage > 80 ? 'bg-danger' :
-             newUsage > 60 ? 'bg-warning' : 'bg-success');
-    }
+function consoleAppend(entry) {
+        const text = (entry && entry.line) || '';
+        if (!text) return;
+        // strip ANSI
+        const clean = text.replace(/\x1b\[[0-9;]*m/g, '').replace(/\r/g, '');
+        const cls = consoleClassify(clean);
+        state.consoleBuffer.push({ text: clean, cls });
+        if (state.consoleBuffer.length > 5000) state.consoleBuffer.splice(0, state.consoleBuffer.length - 5000);
+        appendLineTo($('#bigConsole'), clean, cls);
+        appendLineTo($('#miniConsole'), clean, cls, 200);
+        $('#logCount').textContent = `${state.consoleBuffer.length} lines`;
 }
 
-// Enhanced toast notifications
-function showToast(message, type = 'info') {
-    const toastBody = document.getElementById('toastBody');
-    const toast = document.getElementById('toast');
-    const toastElement = new bootstrap.Toast(toast, {
-        autohide: true,
-        delay: 4000
-    });
-
-    toastBody.innerHTML = `<i class="fas fa-${getToastIcon(type)} me-2"></i>${message}`;
-
-    // Enhanced toast styling
-    toast.className = `toast ${getToastClass(type)}`;
-
-    toastElement.show();
+function appendLineTo(container, text, cls, cap) {
+        if (!container) return;
+        const span = document.createElement('span');
+        span.className = `line ${cls}`;
+        span.textContent = text;
+        container.appendChild(span);
+        if (cap && container.children.length > cap) container.removeChild(container.firstChild);
+        if (state.autoScroll) container.scrollTop = container.scrollHeight;
 }
 
-// Get appropriate toast icon
-function getToastIcon(type) {
-    const icons = {
-        'success': 'check-circle',
-        'error': 'exclamation-triangle',
-        'warning': 'exclamation-circle',
-        'info': 'info-circle'
-    };
-    return icons[type] || 'info-circle';
+function consoleClear() { $('#bigConsole').innerHTML = ''; state.consoleBuffer = []; $('#logCount').textContent = '0 lines'; }
+function consoleToggleAuto() { state.autoScroll = !state.autoScroll; $('#consoleAutoBtn').textContent = `Auto-scroll: ${state.autoScroll ? 'ON' : 'OFF'}`; }
+function consoleDownload() {
+        const blob = new Blob([state.consoleBuffer.map(l => l.text).join('\n')], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `st-bot-console-${Date.now()}.log`;
+        document.body.appendChild(a); a.click(); a.remove();
 }
 
-// Get appropriate toast class
-function getToastClass(type) {
-    const classes = {
-        'success': 'bg-success text-white',
-        'error': 'bg-danger text-white',
-        'warning': 'bg-warning text-dark',
-        'info': 'bg-info text-white'
-    };
-    return classes[type] || 'bg-info text-white';
+/* ---------- File explorer ---------- */
+const TEXT_EXT = new Set(['js','json','txt','md','eta','html','css','log','env','yaml','yml','ts','jsx','tsx','sh','bash','xml','svg','toml','ini','cfg','conf']);
+
+function langOf(name) {
+        const ext = (name.split('.').pop() || '').toLowerCase();
+        return TEXT_EXT.has(ext) ? ext.toUpperCase() : 'TEXT';
+}
+function isTextFile(name) {
+        const ext = (name.split('.').pop() || '').toLowerCase();
+        return TEXT_EXT.has(ext) || !name.includes('.');
 }
 
-// Enhanced log entry with timestamps and icons
-function addLog(message, type = 'info') {
-    const logsContainer = document.getElementById('logsContainer');
-    const timestamp = new Date().toLocaleTimeString();
-    const logClass = `text-${type === 'error' ? 'danger' :
-                           type === 'success' ? 'success' :
-                           type === 'warning' ? 'warning' : 'info'}`;
-
-    const logEntry = document.createElement('div');
-    logEntry.className = 'log-entry';
-    logEntry.innerHTML = `
-        <span class="${logClass}">
-            <i class="fas fa-${getLogIcon(type)} me-1"></i>
-            [${type.toUpperCase()}]
-        </span>
-        <span class="text-muted">${timestamp}</span> - ${message}
-    `;
-
-    logsContainer.appendChild(logEntry);
-    logsContainer.scrollTop = logsContainer.scrollHeight;
-
-    // Limit log entries to prevent memory issues
-    const entries = logsContainer.querySelectorAll('.log-entry');
-    if (entries.length > 100) {
-        entries[0].remove();
-    }
+async function fxOpen(p) {
+        state.currentPath = p || '';
+        renderFxPath();
+        $('#fxList').innerHTML = '<div class="skeleton" style="width:80%;margin:6px 0"></div>';
+        try {
+                const r = await api('/api/fs/list?path=' + encodeURIComponent(state.currentPath));
+                renderFxList(r.items || []);
+        } catch (e) {
+                $('#fxList').innerHTML = `<div style="color:var(--err);padding:8px">${escapeHtml(e.message)}</div>`;
+        }
 }
 
-// Get appropriate log icon
-function getLogIcon(type) {
-    const icons = {
-        'success': 'check',
-        'error': 'times',
-        'warning': 'exclamation',
-        'info': 'info'
-    };
-    return icons[type] || 'info';
+function renderFxPath() {
+        const segs = state.currentPath.split('/').filter(Boolean);
+        const parts = [`<span class="seg" onclick="fxOpen('')">root</span>`];
+        let acc = '';
+        segs.forEach(s => { acc = acc ? acc + '/' + s : s; const ap = acc; parts.push('<span class="sep">/</span>'); parts.push(`<span class="seg" onclick="fxOpen('${escapeHtml(ap)}')">${escapeHtml(s)}</span>`); });
+        $('#fxPath').innerHTML = parts.join('');
 }
 
-// Load file type (config, cmds, events)
-async function loadFileType() {
-	const fileType = document.getElementById('fileType').value;
-	const fileSelect = document.getElementById('fileSelect');
-	const createBtn = document.getElementById('createFileBtn');
-
-	// Reset file selection
-	fileSelect.innerHTML = '<option value="">Choose a file...</option>';
-	fileSelect.disabled = !fileType;
-	createBtn.disabled = !fileType;
-	currentFileType = fileType;
-
-	// Clear current file
-	currentFile = '';
-	document.getElementById('fileContent').value = '';
-	updateFileInfo('');
-	toggleActionButtons(false);
-
-	if (!fileType) return;
-
-	try {
-		if (fileType === 'config') {
-			// Load config files
-			fileSelect.innerHTML = `
-				<option value="">Choose a file...</option>
-				<option value="config.json">config.json</option>
-				<option value="account.txt">account.txt</option>
-			`;
-		} else {
-			// Load scripts
-			const response = await fetch(`/api/scripts/${fileType}`);
-			const data = await response.json();
-
-			if (data.success) {
-				currentScriptType = fileType;
-				data.files.forEach(file => {
-					const option = document.createElement('option');
-					option.value = file;
-					option.textContent = file;
-					fileSelect.appendChild(option);
-				});
-				addLog(`Loaded ${data.files.length} ${fileType} files`, 'info');
-			} else {
-				throw new Error(data.message);
-			}
-		}
-
-		fileSelect.disabled = false;
-		createBtn.disabled = fileType === 'config'; // Don't allow creating config files
-
-	} catch (error) {
-		console.error('Error loading file type:', error);
-		showToast(`Error loading ${fileType}: ${error.message}`, 'error');
-		addLog(`Error loading ${fileType}: ${error.message}`, 'error');
-	}
+function renderFxList(items) {
+        items.sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'dir' ? -1 : 1));
+        const list = $('#fxList');
+        list.innerHTML = '';
+        if (state.currentPath) {
+                const up = document.createElement('div');
+                up.className = 'fx-item dir';
+                up.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> ..`;
+                up.onclick = () => fxOpen(state.currentPath.split('/').slice(0, -1).join('/'));
+                list.appendChild(up);
+        }
+        for (const it of items) {
+                const row = document.createElement('div');
+                row.className = `fx-item ${it.type}`;
+                const child = state.currentPath ? `${state.currentPath}/${it.name}` : it.name;
+                if (it.type === 'dir') {
+                        row.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> <span>${escapeHtml(it.name)}</span>`;
+                        row.onclick = () => fxOpen(child);
+                } else {
+                        row.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> <span>${escapeHtml(it.name)}</span><span class="size">${formatBytes(it.size)}</span>`;
+                        row.onclick = () => fxLoadFile(child, row);
+                }
+                list.appendChild(row);
+        }
 }
 
-// Enhanced file loading with syntax highlighting
-async function loadFile(filename) {
-	if (!filename) return;
-
-	currentFile = filename;
-	document.getElementById('fileSelect').value = filename;
-
-	try {
-		addLog(`Loading file: ${filename}`, 'info');
-		showLoadingState(true);
-
-		let response, data;
-
-		if (currentFileType === 'config') {
-			// Load config files using original endpoint
-			response = await fetch(`/api/file/${filename}`);
-			data = await response.json();
-		} else {
-			// Load script files
-			response = await fetch(`/api/scripts/${currentScriptType}/${filename}`);
-			data = await response.json();
-		}
-
-		if (data.success) {
-			const textarea = document.getElementById('fileContent');
-			textarea.value = data.content;
-			textarea.setAttribute('data-language', filename.endsWith('.json') ? 'json' : 'javascript');
-
-			updateFileInfo(filename, data.content.length);
-			toggleActionButtons(true);
-
-			addLog(`File loaded: ${filename} (${data.content.length} characters)`, 'success');
-			showToast(`${filename} loaded successfully!`, 'success');
-			highlightFileContent();
-		} else {
-			throw new Error(data.message);
-		}
-	} catch (error) {
-		console.error('Error loading file:', error);
-		addLog(`Error loading file: ${filename} - ${error.message}`, 'error');
-		showToast(`Error loading ${filename}: ${error.message}`, 'error');
-		toggleActionButtons(false);
-	} finally {
-		showLoadingState(false);
-	}
+function formatBytes(b) {
+        if (!b && b !== 0) return '';
+        if (b < 1024) return b + ' B';
+        if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+        return (b / 1024 / 1024).toFixed(2) + ' MB';
 }
 
-// Update file info display
-function updateFileInfo(filename, size = 0) {
-	const fileInfo = document.getElementById('fileInfo');
-	if (filename) {
-		const type = currentFileType === 'config' ? 'Config' : currentScriptType.toUpperCase();
-		fileInfo.textContent = `${type} | ${filename} | ${size} characters`;
-	} else {
-		fileInfo.textContent = '';
-	}
+async function fxLoadFile(p, row) {
+        $$('#fxList .fx-item.active').forEach(x => x.classList.remove('active'));
+        if (row) row.classList.add('active');
+        if (!isTextFile(p)) {
+                state.currentFile = null;
+                $('#fxName').textContent = p + ' — (binary, not editable)';
+                $('#fxLang').style.display = 'none';
+                $('#fxEditor').value = ''; $('#fxEditor').disabled = true; $('#fxEditor').style.display = 'none';
+                $('#fxEmpty').style.display = 'flex';
+                $('#fxSaveBtn').disabled = true; $('#fxDeleteBtn').disabled = false;
+                return;
+        }
+        try {
+                const r = await api('/api/fs/read?path=' + encodeURIComponent(p));
+                state.currentFile = p;
+                state.editorDirty = false;
+                $('#fxName').textContent = p;
+                $('#fxLang').textContent = langOf(p);
+                $('#fxLang').style.display = 'inline-block';
+                const ed = $('#fxEditor');
+                ed.style.display = ''; ed.disabled = false; ed.value = r.content || '';
+                $('#fxEmpty').style.display = 'none';
+                $('#fxSaveBtn').disabled = true; $('#fxDeleteBtn').disabled = false;
+        } catch (e) { toast('Could not open file', e.message, 'err'); }
 }
 
-// Toggle action buttons
-function toggleActionButtons(enabled) {
-	const buttons = ['saveBtn', 'reloadBtn', 'deleteBtn'];
-	buttons.forEach(btnId => {
-		const btn = document.getElementById(btnId);
-		if (btn) {
-			btn.disabled = !enabled;
-		}
-	});
+$(document).addEventListener?.('input', () => {});
+document.addEventListener('input', (e) => {
+        if (e.target && e.target.id === 'fxEditor') { state.editorDirty = true; $('#fxSaveBtn').disabled = false; }
+        if (e.target && e.target.id === 'scriptEditor') { state.scriptDirty = true; $('#scriptsSaveBtn').disabled = false; }
+});
 
-	// Special handling for reload and delete buttons
-	const reloadBtn = document.getElementById('reloadBtn');
-	const deleteBtn = document.getElementById('deleteBtn');
-
-	if (reloadBtn) {
-		reloadBtn.disabled = !enabled || currentFileType === 'config';
-		reloadBtn.style.display = currentFileType === 'config' ? 'none' : 'inline-block';
-	}
-
-	if (deleteBtn) {
-		deleteBtn.disabled = !enabled || currentFileType === 'config';
-		deleteBtn.style.display = currentFileType === 'config' ? 'none' : 'inline-block';
-	}
+async function fxSave() {
+        if (!state.currentFile) return;
+        try {
+                await api('/api/fs/write', { method: 'POST', body: { path: state.currentFile, content: $('#fxEditor').value } });
+                state.editorDirty = false; $('#fxSaveBtn').disabled = true;
+                toast('Saved', state.currentFile, 'ok');
+        } catch (e) { toast('Save failed', e.message, 'err'); }
 }
 
-// Enhanced file saving with validation
-async function saveFile() {
-	if (!currentFile) {
-		showToast('Please select a file first', 'warning');
-		return;
-	}
-
-	const content = document.getElementById('fileContent').value;
-
-	// Validate JSON files
-	if (currentFile.endsWith('.json')) {
-		try {
-			JSON.parse(content);
-		} catch (error) {
-			showToast('Invalid JSON format. Please fix syntax errors.', 'error');
-			addLog(`JSON validation failed: ${error.message}`, 'error');
-			return;
-		}
-	}
-
-	try {
-		addLog(`Saving file: ${currentFile}`, 'info');
-		showLoadingState(true);
-
-		let response, data;
-
-		if (currentFileType === 'config') {
-			// Save config files using original endpoint
-			response = await fetch(`/api/file/${currentFile}`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ content })
-			});
-		} else {
-			// Save script files with auto-reload
-			response = await fetch(`/api/scripts/${currentScriptType}/${currentFile}`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ content })
-			});
-		}
-
-		data = await response.json();
-
-		if (data.success) {
-			updateFileInfo(currentFile, content.length);
-
-			let message = `${currentFile} saved successfully!`;
-			if (data.reloaded) {
-				message += ' (Auto-reloaded)';
-			} else if (data.loadError) {
-				message += ` (Reload failed: ${data.loadError})`;
-			}
-
-			addLog(`File saved: ${currentFile}`, 'success');
-			showToast(message, data.reloaded ? 'success' : 'warning');
-			highlightFileContent('success');
-
-			// Auto-restart prompt for account.txt
-			if (currentFile === 'account.txt') {
-				setTimeout(() => {
-					if (confirm('Cookie file updated! Restart bot now to apply changes?')) {
-						restartBot();
-					}
-				}, 1000);
-			}
-		} else {
-			throw new Error(data.message);
-		}
-	} catch (error) {
-		console.error('Error saving file:', error);
-		addLog(`Error saving file: ${currentFile} - ${error.message}`, 'error');
-		showToast(`Error saving ${currentFile}: ${error.message}`, 'error');
-	} finally {
-		showLoadingState(false);
-	}
+async function fxDelete() {
+        if (!state.currentFile) return;
+        const ok = await confirmModal('Delete file?', `This will permanently delete ${state.currentFile}.`, 'Delete');
+        if (!ok) return;
+        try {
+                await api('/api/fs/delete', { method: 'POST', body: { path: state.currentFile } });
+                toast('Deleted', state.currentFile, 'ok');
+                state.currentFile = null; state.editorDirty = false;
+                $('#fxEditor').value = ''; $('#fxEditor').style.display = 'none'; $('#fxEditor').disabled = true;
+                $('#fxEmpty').style.display = 'flex'; $('#fxName').textContent = 'No file selected'; $('#fxLang').style.display = 'none';
+                $('#fxSaveBtn').disabled = true; $('#fxDeleteBtn').disabled = true;
+                fxRefresh();
+        } catch (e) { toast('Delete failed', e.message, 'err'); }
 }
 
-// Reload command/event
-async function reloadFile() {
-	if (!currentFile || currentFileType === 'config') {
-		showToast('Reload only available for script files', 'warning');
-		return;
-	}
+function fxRefresh() { fxOpen(state.currentPath); }
 
-	const content = document.getElementById('fileContent').value;
-
-	try {
-		addLog(`Reloading file: ${currentFile}`, 'info');
-		showLoadingState(true);
-
-		const response = await fetch(`/api/scripts/${currentScriptType}/${currentFile}`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ content })
-		});
-
-		const data = await response.json();
-
-		if (data.success && data.reloaded) {
-			addLog(`File reloaded: ${currentFile}`, 'success');
-			showToast(`${currentFile} reloaded successfully!`, 'success');
-		} else if (data.success) {
-			addLog(`File saved but reload failed: ${currentFile}`, 'warning');
-			showToast(`File saved but reload failed: ${data.loadError || 'Unknown error'}`, 'warning');
-		} else {
-			throw new Error(data.message);
-		}
-	} catch (error) {
-		console.error('Error reloading file:', error);
-		addLog(`Error reloading file: ${currentFile} - ${error.message}`, 'error');
-		showToast(`Error reloading ${currentFile}: ${error.message}`, 'error');
-	} finally {
-		showLoadingState(false);
-	}
+async function fxNewFile() {
+        const name = prompt(`New file name (relative to ${state.currentPath || 'root'}/):`);
+        if (!name) return;
+        const fullPath = state.currentPath ? `${state.currentPath}/${name}` : name;
+        try {
+                await api('/api/fs/write', { method: 'POST', body: { path: fullPath, content: '' } });
+                toast('Created', fullPath, 'ok');
+                fxRefresh();
+        } catch (e) { toast('Create failed', e.message, 'err'); }
 }
 
-// Show create file modal
-function showCreateFileModal() {
-	if (currentFileType === 'config') {
-		showToast('Cannot create config files', 'warning');
-		return;
-	}
-
-	document.getElementById('newFileName').value = '';
-	document.getElementById('newFileContent').value = '';
-
-	const modal = new bootstrap.Modal(document.getElementById('createFileModal'));
-	modal.show();
+/* ---------- Config ---------- */
+async function loadConfig() {
+        try { const r = await api('/api/file/config.json'); $('#configEditor').value = r.content; }
+        catch (e) { toast('Load failed', e.message, 'err'); }
+}
+async function saveConfig() {
+        try { await api('/api/file/config.json', { method: 'POST', body: { content: $('#configEditor').value } }); toast('Saved', 'config.json updated', 'ok'); }
+        catch (e) { toast('Save failed', e.message, 'err'); }
 }
 
-// Create new file
-async function createNewFile() {
-	const filename = document.getElementById('newFileName').value.trim();
-	const content = document.getElementById('newFileContent').value;
-
-	if (!filename) {
-		showToast('Please enter a filename', 'warning');
-		return;
-	}
-
-	if (!filename.endsWith('.js')) {
-		showToast('Filename must end with .js', 'warning');
-		return;
-	}
-
-	try {
-		addLog(`Creating new file: ${filename}`, 'info');
-
-		const response = await fetch(`/api/scripts/${currentScriptType}`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ filename, content })
-		});
-
-		const data = await response.json();
-
-		if (data.success) {
-			// Close modal
-			const modal = bootstrap.Modal.getInstance(document.getElementById('createFileModal'));
-			modal.hide();
-
-			// Refresh file list
-			await loadFileType();
-
-			// Load the new file
-			document.getElementById('fileSelect').value = filename;
-			await loadFile(filename);
-
-			addLog(`File created: ${filename}`, 'success');
-			showToast(`${filename} created successfully!`, 'success');
-		} else {
-			throw new Error(data.message);
-		}
-	} catch (error) {
-		console.error('Error creating file:', error);
-		addLog(`Error creating file: ${filename} - ${error.message}`, 'error');
-		showToast(`Error creating ${filename}: ${error.message}`, 'error');
-	}
+/* ---------- Cookies ---------- */
+async function loadCookies() {
+        try { const r = await api('/api/file/account.txt'); $('#cookieEditor').value = r.content; }
+        catch (e) { toast('Load failed', e.message, 'err'); }
+}
+async function saveCookies(restart) {
+        try {
+                await api('/update-cookie', { method: 'POST', body: { cookieData: $('#cookieEditor').value, restartBot: !!restart } });
+                toast('Saved', restart ? 'Cookies updated, bot will restart' : 'Cookies updated', 'ok');
+        } catch (e) { toast('Save failed', e.message, 'err'); }
+}
+async function clearCookies() {
+        const ok = await confirmModal('Clear cookies & restart?', 'The bot will restart and try to log in again using config.json credentials.', 'Clear & Restart');
+        if (!ok) return;
+        try { await api('/api/clear-cookies-restart', { method: 'POST' }); toast('Cleared', 'Bot is restarting…', 'warn'); }
+        catch (e) { toast('Failed', e.message, 'err'); }
 }
 
-// Delete file
-async function deleteFile() {
-	if (!currentFile || currentFileType === 'config') {
-		showToast('Cannot delete config files', 'warning');
-		return;
-	}
-
-	if (!confirm(`Are you sure you want to delete ${currentFile}? This action cannot be undone.`)) {
-		return;
-	}
-
-	try {
-		addLog(`Deleting file: ${currentFile}`, 'warning');
-		showLoadingState(true);
-
-		const response = await fetch(`/api/scripts/${currentScriptType}/${currentFile}`, {
-			method: 'DELETE'
-		});
-
-		const data = await response.json();
-
-		if (data.success) {
-			addLog(`File deleted: ${currentFile}`, 'success');
-			showToast(`${currentFile} deleted successfully!`, 'success');
-
-			// Clear current file and refresh list
-			currentFile = '';
-			document.getElementById('fileContent').value = '';
-			updateFileInfo('');
-			toggleActionButtons(false);
-
-			// Refresh file list
-			await loadFileType();
-		} else {
-			throw new Error(data.message);
-		}
-	} catch (error) {
-		console.error('Error deleting file:', error);
-		addLog(`Error deleting file: ${currentFile} - ${error.message}`, 'error');
-		showToast(`Error deleting ${currentFile}: ${error.message}`, 'error');
-	} finally {
-		showLoadingState(false);
-	}
+/* ---------- Scripts ---------- */
+async function loadScripts() {
+        const t = $('#scriptType').value; state.scriptType = t;
+        const list = $('#scriptList');
+        list.innerHTML = '<div class="skeleton" style="width:90%;margin:6px"></div>';
+        try {
+                const r = await api(`/api/scripts/${t}`);
+                list.innerHTML = '';
+                for (const f of r.files || []) {
+                        const row = document.createElement('div');
+                        row.className = 'fx-item file';
+                        row.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> <span>${escapeHtml(f)}</span>`;
+                        row.onclick = () => loadScript(f, row);
+                        list.appendChild(row);
+                }
+        } catch (e) { list.innerHTML = `<div style="color:var(--err);padding:8px">${escapeHtml(e.message)}</div>`; }
 }
 
-// Loading state management
-function showLoadingState(isLoading) {
-    const textarea = document.getElementById('fileContent');
-    const saveBtn = document.querySelector('button[onclick="saveFile()"]');
-	const reloadBtn = document.getElementById('reloadBtn');
-	const deleteBtn = document.getElementById('deleteBtn');
-	const createFileBtn = document.getElementById('createFileBtn');
-
-
-    if (isLoading) {
-        textarea.classList.add('loading');
-        textarea.disabled = true;
-        if (saveBtn) saveBtn.disabled = true;
-		if (reloadBtn) reloadBtn.disabled = true;
-		if (deleteBtn) deleteBtn.disabled = true;
-		if (createFileBtn) createFileBtn.disabled = true;
-    } else {
-        textarea.classList.remove('loading');
-        textarea.disabled = false;
-        if (saveBtn) saveBtn.disabled = false;
-		if (reloadBtn) reloadBtn.disabled = false;
-		if (deleteBtn) deleteBtn.disabled = false;
-		if (createFileBtn) createFileBtn.disabled = false;
-		// Re-enable create button if a file type is selected
-		if(currentFileType && currentFileType !== 'config') {
-			createFileBtn.disabled = false;
-		}
-    }
+async function loadScript(name, row) {
+        $$('#scriptList .fx-item.active').forEach(x => x.classList.remove('active'));
+        if (row) row.classList.add('active');
+        try {
+                const r = await api(`/api/scripts/${state.scriptType}/${encodeURIComponent(name)}`);
+                state.currentScript = name; state.scriptDirty = false;
+                $('#scriptName').textContent = `scripts/${state.scriptType}/${name}`;
+                const ed = $('#scriptEditor'); ed.disabled = false; ed.value = r.content || '';
+                $('#scriptsSaveBtn').disabled = true;
+        } catch (e) { toast('Load failed', e.message, 'err'); }
 }
 
-// Visual file content highlighting
-function highlightFileContent(type = 'info') {
-    const textarea = document.getElementById('fileContent');
-    const colors = {
-        'info': '#e8f5e8',
-        'success': '#d4edda',
-        'error': '#f8d7da'
-    };
-
-    textarea.style.backgroundColor = colors[type];
-    setTimeout(() => {
-        textarea.style.backgroundColor = '';
-    }, 1000);
+async function saveScript() {
+        if (!state.currentScript) return;
+        try {
+                const r = await api(`/api/scripts/${state.scriptType}/${encodeURIComponent(state.currentScript)}`, { method: 'POST', body: { content: $('#scriptEditor').value } });
+                state.scriptDirty = false; $('#scriptsSaveBtn').disabled = true;
+                toast('Saved', r.message || 'Script updated', 'ok');
+        } catch (e) { toast('Save failed', e.message, 'err'); }
 }
 
-// Enhanced restart functionality
+/* ---------- FCA ---------- */
+async function loadFca() {
+        const grid = $('#fcaGrid');
+        grid.innerHTML = '<div class="skeleton" style="width:80%;margin:6px"></div>';
+        try {
+                const r = await api('/api/get-fca-type');
+                const cur = r.fcaType;
+                $('#fcaCurrent').innerHTML = `Current: <code style="color:var(--accent)">${escapeHtml(cur)}</code> → <code>${escapeHtml(r.fcaConfig.packages[cur] || cur)}</code>`;
+                grid.innerHTML = '';
+                for (const [key, pkg] of Object.entries(r.fcaConfig.packages || {})) {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.style.padding = '14px';
+                        card.innerHTML = `
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                                        <div>
+                                                <div style="font-weight:700;font-size:14px">${escapeHtml(key)}</div>
+                                                <div style="color:var(--text-2);font-size:12px;font-family:var(--font-mono);margin-top:2px">${escapeHtml(pkg)}</div>
+                                        </div>
+                                        ${key === cur ? '<span class="live-pill"><span class="live-dot"></span>active</span>' : `<button class="btn btn-primary" onclick="switchFca('${escapeHtml(key)}')">Switch</button>`}
+                                </div>`;
+                        grid.appendChild(card);
+                }
+        } catch (e) { grid.innerHTML = `<div style="color:var(--err)">${escapeHtml(e.message)}</div>`; }
+}
+
+async function switchFca(key) {
+        const ok = await confirmModal('Switch FCA?', `Switch to ${key}? The bot will restart and clear cookies.`, 'Switch');
+        if (!ok) return;
+        try { await api('/api/switch-fca', { method: 'POST', body: { fcaType: key } }); toast('Switching', `Restarting with ${key}…`, 'warn'); }
+        catch (e) { toast('Failed', e.message, 'err'); }
+}
+
+/* ---------- Restart / Logout ---------- */
 async function restartBot() {
-    if (!confirm('Are you sure you want to restart the bot? This will temporarily stop all bot functions.')) {
-        return;
-    }
-
-    try {
-        addLog('Initiating bot restart...', 'warning');
-        showToast('Restarting bot...', 'warning');
-
-        const response = await fetch('/api/restart', {
-            method: 'POST'
-        });
-
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            addLog('Bot restart initiated successfully', 'success');
-
-            // Enhanced countdown with progress
-            let countdown = 15;
-            const countdownInterval = setInterval(() => {
-                const progress = Math.round(((15 - countdown) / 15) * 100);
-                showToast(`Bot restarting... ${countdown}s (${progress}%)`, 'info');
-                countdown--;
-
-                if (countdown < 0) {
-                    clearInterval(countdownInterval);
-                    showToast('Bot should be online now. Refreshing page...', 'success');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                }
-            }, 1000);
-
-            // Clear existing intervals
-            if (updateInterval) clearInterval(updateInterval);
-
-        } else {
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        console.error('Error restarting bot:', error);
-        addLog('Error during bot restart', 'error');
-        showToast('Error restarting bot', 'error');
-    }
+        const ok = await confirmModal('Restart bot?', 'The bot process will exit and restart. Active sessions stay.', 'Restart');
+        if (!ok) return;
+        try { await api('/api/restart', { method: 'POST' }); toast('Restarting', 'Bot is restarting…', 'warn'); }
+        catch (e) { toast('Failed', e.message, 'err'); }
+}
+async function logout() {
+        try { await fetch('/logout', { method: 'POST' }); location.href = '/login'; } catch {}
 }
 
-// Clear cookies and restart bot
-async function clearCookiesAndRestart() {
-    if (!confirm('⚠️ WARNING: This will clear account.txt (cookies) and restart the bot.\n\nThe bot will need to login again using credentials from config.json.\n\nAre you sure you want to continue?')) {
-        return;
-    }
+$('#restartBtn')?.addEventListener('click', (e) => { e.preventDefault(); restartBot(); });
+$('#logoutBtn')?.addEventListener('click',  (e) => { e.preventDefault(); logout(); });
 
-    try {
-        addLog('Clearing cookies and restarting bot...', 'warning');
-        showToast('Clearing cookies...', 'warning');
+/* ---------- Mobile sidebar ---------- */
+$('#navToggle')?.addEventListener('click', () => {
+        $('#sidebar').classList.toggle('open');
+        $('#scrim').classList.toggle('show');
+});
+$('#scrim')?.addEventListener('click', () => { $('#sidebar').classList.remove('open'); $('#scrim').classList.remove('show'); });
 
-        const response = await fetch('/api/clear-cookies-restart', {
-            method: 'POST'
-        });
-
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            addLog('Cookies cleared, bot restarting...', 'success');
-            showToast(data.message, 'success');
-
-            // Enhanced countdown with progress
-            let countdown = 20;
-            const countdownInterval = setInterval(() => {
-                const progress = Math.round(((20 - countdown) / 20) * 100);
-                showToast(`Bot restarting with fresh login... ${countdown}s (${progress}%)`, 'info');
-                countdown--;
-
-                if (countdown < 0) {
-                    clearInterval(countdownInterval);
-                    showToast('Bot should be online now. Refreshing page...', 'success');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                }
-            }, 1000);
-
-            // Clear existing intervals
-            if (updateInterval) clearInterval(updateInterval);
-
-        } else {
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        console.error('Error clearing cookies and restarting:', error);
-        addLog('Error during clear cookies and restart', 'error');
-        showToast('Error: ' + error.message, 'error');
-    }
-}
-
-// Switch FCA type
-async function switchFcaType() {
-    const fcaType = document.getElementById('fcaTypeSelect').value;
-    const fcaNames = {
-        'stfca': 'ST-FCA',
-        'dongdev': '@dongdev/fca-unofficial'
-    };
-
-    if (!confirm(`⚠️ WARNING: Switch to ${fcaNames[fcaType]}?\n\nThis will:\n- Clear account.txt (cookies)\n- Restart the bot\n- Require fresh login\n\nContinue?`)) {
-        return;
-    }
-
-    try {
-        addLog(`Switching FCA to ${fcaNames[fcaType]}...`, 'warning');
-        showToast(`Switching to ${fcaNames[fcaType]}...`, 'warning');
-
-        const response = await fetch('/api/switch-fca', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ fcaType })
-        });
-
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            addLog(`FCA switched to ${fcaNames[fcaType]}, bot restarting...`, 'success');
-            showToast(data.message, 'success');
-
-            // Enhanced countdown with progress
-            let countdown = 20;
-            const countdownInterval = setInterval(() => {
-                const progress = Math.round(((20 - countdown) / 20) * 100);
-                showToast(`Bot restarting with ${fcaNames[fcaType]}... ${countdown}s (${progress}%)`, 'info');
-                countdown--;
-
-                if (countdown < 0) {
-                    clearInterval(countdownInterval);
-                    showToast('Bot should be online now. Refreshing page...', 'success');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                }
-            }, 1000);
-
-            // Clear existing intervals
-            if (updateInterval) clearInterval(updateInterval);
-
-        } else {
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        console.error('Error switching FCA type:', error);
-        addLog('Error during FCA switch', 'error');
-        showToast('Error: ' + error.message, 'error');
-    }
-}
-
-// Update current FCA type display on page load
-document.addEventListener('DOMContentLoaded', function() {
-    fetch('/api/get-fca-type')
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                const currentFca = document.getElementById('currentFca');
-                const fcaSelect = document.getElementById('fcaTypeSelect');
-                const fcaType = data.fcaType;
-                const fcaConfig = data.fcaConfig || { packages: { stfca: 'stfca', dongdev: '@dongdev/fca-unofficial' } };
-
-                if (currentFca) {
-                    currentFca.textContent = fcaConfig.packages[fcaType] || fcaType;
-                    currentFca.className = `badge ${fcaType === 'stfca' ? 'bg-success' : 'bg-info'}`;
-                }
-
-                if (fcaSelect) {
-                    fcaSelect.innerHTML = '';
-                    Object.keys(fcaConfig.packages).forEach(key => {
-                        const option = document.createElement('option');
-                        option.value = key;
-                        option.textContent = `${key} (${fcaConfig.packages[key]})`;
-                        if (key === fcaType) option.selected = true;
-                        fcaSelect.appendChild(option);
-                    });
-                }
-            }
-        })
-        .catch(err => console.error('Error fetching FCA type:', err));
+/* ---------- Boot ---------- */
+window.addEventListener('beforeunload', (e) => {
+        if (state.editorDirty || state.scriptDirty) { e.preventDefault(); e.returnValue = ''; }
 });
 
-// Enhanced keyboard shortcuts
-function setupKeyboardShortcuts() {
-    document.addEventListener('keydown', function(e) {
-        // Ctrl+S to save
-        if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            saveFile();
-        }
-
-        // Ctrl+Shift+F to format JSON
-        if (e.ctrlKey && e.shiftKey && e.key === 'F') {
-            e.preventDefault();
-            formatJSON();
-        }
-
-        // Ctrl+Shift+C to copy
-        if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-            e.preventDefault();
-            copyContent();
-        }
-
-        // Ctrl+R to refresh stats
-        if (e.ctrlKey && e.key === 'r') {
-            e.preventDefault();
-            refreshStats();
-        }
-
-		// Ctrl+Shift+R to reload current script file
-		if (e.ctrlKey && e.shiftKey && e.key === 'R') {
-			e.preventDefault();
-			reloadFile();
-		}
-
-		// Ctrl+N to create new file
-		if (e.ctrlKey && e.key === 'n') {
-			e.preventDefault();
-			showCreateFileModal();
-		}
-
-		// Ctrl+D to delete current file
-		if (e.ctrlKey && e.key === 'd') {
-			e.preventDefault();
-			deleteFile();
-		}
-    });
-}
-
-// Setup visual enhancements
-function setupVisualEnhancements() {
-    // Add hover effects to cards
-    document.querySelectorAll('.card').forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-2px)';
-        });
-
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-        });
-    });
-
-    // Add tooltips to badges
-    document.querySelectorAll('.badge').forEach(badge => {
-        if (!badge.hasAttribute('title')) {
-            badge.setAttribute('title', 'Real-time data');
-        }
-    });
-}
-
-// Enhanced JSON formatting
-function formatJSON() {
-    const textarea = document.getElementById('fileContent');
-    const content = textarea.value;
-
-    try {
-        const parsed = JSON.parse(content);
-        const formatted = JSON.stringify(parsed, null, 2);
-        textarea.value = formatted;
-        showToast('JSON formatted successfully!', 'success');
-        addLog('JSON content formatted', 'info');
-        highlightFileContent('success');
-    } catch (error) {
-        showToast('Invalid JSON format', 'error');
-        addLog('Failed to format JSON: Invalid format', 'error');
-        highlightFileContent('error');
-    }
-}
-
-// Enhanced copy functionality
-async function copyContent() {
-    const content = document.getElementById('fileContent').value;
-
-    try {
-        await navigator.clipboard.writeText(content);
-        showToast('Content copied to clipboard!', 'success');
-        addLog(`Content copied to clipboard (${content.length} characters)`, 'info');
-    } catch (error) {
-        console.error('Error copying content:', error);
-        showToast('Failed to copy content', 'error');
-    }
-}
-
-// Load selected file from dropdown
-function loadSelectedFile() {
-	const select = document.getElementById('fileSelect');
-	if (select.value) {
-		loadFile(select.value);
-	} else {
-		currentFile = '';
-		document.getElementById('fileContent').value = '';
-		updateFileInfo('');
-		toggleActionButtons(false);
-	}
-}
-
-// Initialize file management
-function initializeFileManagement() {
-	// Reset all selections
-	document.getElementById('fileType').value = '';
-	document.getElementById('fileSelect').innerHTML = '<option value="">Choose a file...</option>';
-	document.getElementById('fileSelect').disabled = true;
-	document.getElementById('createFileBtn').disabled = true;
-	document.getElementById('fileContent').value = '';
-	updateFileInfo('');
-	toggleActionButtons(false);
-}
-
-// View logs functionality
-function viewLogs() {
-    const logsContainer = document.getElementById('logsContainer');
-    logsContainer.scrollTop = logsContainer.scrollHeight;
-    showToast('Viewing latest logs', 'info');
-}
-
-// Clear logs with confirmation
-function clearLogs() {
-    if (confirm('Are you sure you want to clear all logs?')) {
-        document.getElementById('logsContainer').innerHTML = '';
-        addLog('Logs cleared by user', 'info');
-        showToast('Logs cleared successfully!', 'success');
-    }
-}
-
-// Enhanced logout
-function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        showToast('Logging out...', 'info');
-
-        fetch('/logout', { method: 'POST' })
-            .then(() => {
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 1000);
-            })
-            .catch(error => {
-                console.error('Logout error:', error);
-                window.location.href = '/login';
-            });
-    }
-}
-
-// Cleanup on page unload
-window.addEventListener('beforeunload', function() {
-    if (updateInterval) {
-        clearInterval(updateInterval);
-    }
-});
+(async function boot() {
+        consoleConnect();
+        refreshStats(); refreshSystem();
+        setInterval(refreshStats, 5000);
+        setInterval(refreshSystem, 10000);
+})();
