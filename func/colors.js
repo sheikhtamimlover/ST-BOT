@@ -1,89 +1,130 @@
+"use strict";
 
-const isHexColor = color => color?.match?.(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/);
-const colorFunctions = {
-	bold: text => `\x1b[1m${text}\x1b[0m`,
-	italic: text => `\x1b[3m${text}\x1b[0m`,
-	underline: text => `\x1b[4m${text}\x1b[0m`,
-	strikethrough: text => `\x1b[9m${text}\x1b[0m`,
-	blink: text => `\x1b[5m${text}\x1b[0m`,
-	inverse: text => `\x1b[7m${text}\x1b[0m`,
-	hidden: text => `\x1b[8m${text}\x1b[0m`,
+const HEX_RE = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+const RESET = "\x1b[0m";
 
-	black: text => `\x1b[30m${text}\x1b[0m`,
-	blue: text => `\x1b[34m${text}\x1b[0m`,
-	blueBright: text => `\x1b[94m${text}\x1b[0m`,
-	cyan: text => `\x1b[36m${text}\x1b[0m`,
-	cyanBright: text => `\x1b[96m${text}\x1b[0m`,
-	default: text => text,
-	gray: text => `\x1b[90m${text}\x1b[0m`,
-	green: text => `\x1b[32m${text}\x1b[0m`,
-	greenBright: text => `\x1b[92m${text}\x1b[0m`,
-	grey: text => `\x1b[90m${text}\x1b[0m`,
-	magenta: text => `\x1b[35m${text}\x1b[0m`,
-	red: text => `\x1b[31m${text}\x1b[0m`,
-	redBright: text => `\x1b[91m${text}\x1b[0m`,
-	reset: text => text,
-	white: text => `\x1b[37m${text}\x1b[0m`,
-	yellow: text => `\x1b[33m${text}\x1b[0m`,
-	yellowBright: text => `\x1b[93m${text}\x1b[0m`,
-	hex: function (color, text) {
-		if (isHexColor(text))
-			[color, text] = [text, color];
+const isHexColor = (color) => typeof color === "string" && HEX_RE.test(color);
 
-		if (text) {
-			return `\x1b[38;2;${parseInt(color.slice(1, 3), 16)};${parseInt(color.slice(3, 5), 16)};${parseInt(color.slice(5, 7), 16)}m${text}\x1b[0m`;
-		}
-		else {
-			if (!isHexColor(color))
-				return function (color_) {
-					return `\x1b[38;2;${parseInt(color_.slice(1, 3), 16)};${parseInt(color_.slice(3, 5), 16)};${parseInt(color_.slice(5, 7), 16)}m${color}\x1b[0m`;
-				};
-			else
-				return function (text) {
-					return `\x1b[38;2;${parseInt(color.slice(1, 3), 16)};${parseInt(color.slice(3, 5), 16)};${parseInt(color.slice(5, 7), 16)}m${text}\x1b[0m`;
-				};
-		}
-	},
-
-	bgBlack: text => `\x1b[40m${text}\x1b[0m`,
-	bgBlue: text => `\x1b[44m${text}\x1b[0m`,
-	bgCyan: text => `\x1b[46m${text}\x1b[0m`,
-	bgGray: text => `\x1b[100m${text}\x1b[0m`,
-	bgGreen: text => `\x1b[42m${text}\x1b[0m`,
-	bgGrey: text => `\x1b[100m${text}\x1b[0m`,
-	bgMagenta: text => `\x1b[45m${text}\x1b[0m`,
-	bgRed: text => `\x1b[41m${text}\x1b[0m`,
-	bgWhite: text => `\x1b[47m${text}\x1b[0m`,
-	bgYellow: text => `\x1b[43m${text}\x1b[0m`,
-	bgHex: function (color, text) {
-		if (isHexColor(text))
-			[color, text] = [text, color];
-
-		if (text) {
-			return `\x1b[48;2;${parseInt(color.slice(1, 3), 16)};${parseInt(color.slice(3, 5), 16)};${parseInt(color.slice(5, 7), 16)}m${text}\x1b[0m`;
-		}
-		else {
-			if (!isHexColor(color))
-				return color_ => `\x1b[48;2;${parseInt(color_.slice(1, 3), 16)};${parseInt(color_.slice(3, 5), 16)};${parseInt(color_.slice(5, 7), 16)}m${color}\x1b[0m`;
-			else
-				return text => `\x1b[48;2;${parseInt(color.slice(1, 3), 16)};${parseInt(color.slice(3, 5), 16)};${parseInt(color.slice(5, 7), 16)}m${text}\x1b[0m`;
-		}
-	}
+const expandHex = (hex) => {
+        if (hex.length === 4) {
+                return "#" + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+        }
+        return hex;
 };
 
+const hexToRgb = (hex) => {
+        const h = expandHex(hex);
+        return [
+                parseInt(h.slice(1, 3), 16),
+                parseInt(h.slice(3, 5), 16),
+                parseInt(h.slice(5, 7), 16)
+        ];
+};
+
+const wrap = (open, close = 0) => (text) => `\x1b[${open}m${text}${`\x1b[${close}m`}`;
+
+const SGR = {
+        bold: [1, 22],
+        dim: [2, 22],
+        italic: [3, 23],
+        underline: [4, 24],
+        inverse: [7, 27],
+        hidden: [8, 28],
+        strikethrough: [9, 29],
+
+        black: [30, 39],
+        red: [31, 39],
+        green: [32, 39],
+        yellow: [33, 39],
+        blue: [34, 39],
+        magenta: [35, 39],
+        cyan: [36, 39],
+        white: [37, 39],
+        gray: [90, 39],
+        grey: [90, 39],
+        default: [39, 39],
+        reset: [0, 0],
+
+        blackBright: [90, 39],
+        redBright: [91, 39],
+        greenBright: [92, 39],
+        yellowBright: [93, 39],
+        blueBright: [94, 39],
+        magentaBright: [95, 39],
+        cyanBright: [96, 39],
+        whiteBright: [97, 39],
+
+        bgBlack: [40, 49],
+        bgRed: [41, 49],
+        bgGreen: [42, 49],
+        bgYellow: [43, 49],
+        bgBlue: [44, 49],
+        bgMagenta: [45, 49],
+        bgCyan: [46, 49],
+        bgWhite: [47, 49],
+        bgGray: [100, 49],
+        bgGrey: [100, 49],
+
+        bgBlackBright: [100, 49],
+        bgRedBright: [101, 49],
+        bgGreenBright: [102, 49],
+        bgYellowBright: [103, 49],
+        bgBlueBright: [104, 49],
+        bgMagentaBright: [105, 49],
+        bgCyanBright: [106, 49],
+        bgWhiteBright: [107, 49]
+};
+
+const buildHex = (color, text) => {
+        const [r, g, b] = hexToRgb(color);
+        return `\x1b[38;2;${r};${g};${b}m${text}${RESET}`;
+};
+
+const buildBgHex = (color, text) => {
+        const [r, g, b] = hexToRgb(color);
+        return `\x1b[48;2;${r};${g};${b}m${text}${RESET}`;
+};
+
+const colorFunctions = {};
+
+for (const [name, [open, close]] of Object.entries(SGR)) {
+        colorFunctions[name] = wrap(open, close);
+}
+
+colorFunctions.hex = function hex(color, text) {
+        if (isHexColor(text)) [color, text] = [text, color];
+        if (text != null) return buildHex(color, text);
+        if (!isHexColor(color)) {
+                // first arg is the text, return a function awaiting the color
+                const cached = color;
+                return (c) => buildHex(c, cached);
+        }
+        return (t) => buildHex(color, t);
+};
+
+colorFunctions.bgHex = function bgHex(color, text) {
+        if (isHexColor(text)) [color, text] = [text, color];
+        if (text != null) return buildBgHex(color, text);
+        if (!isHexColor(color)) {
+                const cached = color;
+                return (c) => buildBgHex(c, cached);
+        }
+        return (t) => buildBgHex(color, t);
+};
 
 const colors = {};
 colors.bold = {};
 
-for (const key in colorFunctions) {
-	if (key === 'bold')
-		continue;
-	colors[key] = colorFunctions[key];
-	colors[key].bold = (text, color) => colorFunctions.bold(colorFunctions[key](text, color));
-	colors.bold[key] = (text, color) => colorFunctions.bold(colorFunctions[key](text, color));
+for (const key of Object.keys(colorFunctions)) {
+        const fn = colorFunctions[key];
+        colors[key] = fn;
+        if (key === "bold") continue;
+        // Allow `colors.red.bold("text")` and `colors.bold.red("text")`
+        colors[key].bold = (text, color) => colorFunctions.bold(fn(text, color));
+        colors.bold[key] = (text, color) => colorFunctions.bold(fn(text, color));
 }
 
 module.exports = {
-	isHexColor,
-	colors
+        isHexColor,
+        colors
 };
