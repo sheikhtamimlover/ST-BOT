@@ -633,6 +633,56 @@
       "https://ibb.co.com/0RJCnL6F"
     ],
     "note": "A big update in 2.4.78. There were many issues in onReply for command name where this.config.name was not working, and now it has been fixed. STFCA has been updated to version 1.0.25 where user mention issues for commands were occurring, and this has also been resolved. The bot now shows a typing indicator before any response, which can be configured from config.json or by using the typing command.The powerful STAI system is now fully working and will no longer stop—it is now permanent. Several new special commands have been added, including flux-2 official, nanobanana pro version, aimirror with 700+ models and an improved zombie filter, real midjourney, mjprompt, and niji models. The private gist system has been improved and now works only between two users for better privacy, and URL onReply commands can also be installed.Fast sing and music commands have been improved with better options, and seedream now supports image editing, so no additional model commands are needed. A premium command, vidgen, has been added with 16+ models. The sendmail command is now available, allowing you to send emails to any user. A better FCA system switch has been added, which works automatically, and CAI now includes a voice system.There are many more fixes, including improvements to the Facebook mail/password login system.Also welcome leave gcnoti system for wlg cmd. If you or your users face any issues or want further updates, you can use the streport command, join the testing group https://m.me/j/AbZ97lRsGGcIgwPN/?send_source=gc:copy_invite_link_c, or contact the admin at https://m.me/hamza.lover1."
+  },
+    {
+    "version": "2.4.79",
+    "files": {
+      "bot/login/loadData.js": "update to 2.4.79",
+      "bot/login/loadScripts.js": "update to 2.4.79",
+      "bot/login/login.js": "update to 2.4.79",
+      "dashboard/css/dashboard.css": "update to 2.4.79",
+      "dashboard/js/dashboard.js":"update to 2.4.79",
+      "dashboard/views/404.eta":"update to 2.4.79",
+      "dashboard/views/dashboard.eta":"update to 2.4.79",
+      "dashboard/views/login.eta":"update to 2.4.79",
+      "dashboard/app.js":"update to 2.4.79",
+      "func/colors.js":"update to 2.4.79",
+      "logger/banner.js":"add new files",
+      "logger/loading.js":"update to 2.4.79",
+      "logger/log.js":"update to 2.4.79",
+      "logger/logColor.js":"update to 2.4.79",
+      "scripts/cmds/casino.js": "update to 2.4.79",
+      "scripts/cmds/casino2.js": "update to 2.4.79",
+      "scripts/cmds/casinoslot.js": "update to 2.4.79",
+      "scripts/cmds/cpanel.js": "update to 2.4.79",
+      "scripts/cmds/cpanel2.js": "update to 2.4.79",
+      "scripts/cmds/cpanel3.js": "update to 2.4.79",
+      "scripts/cmds/emoji_voice.js": "added to 2.4.79",
+      "scripts/cmds/megaspin.js": "update to 2.4.79",
+      "scripts/cmds/pair.js": "added to 2.4.79",
+      "scripts/cmds/richest.js": "update to 2.4.79",
+      "scripts/cmds/slot.js": "update to 2.4.79",
+      "scripts/cmds/slot3d.js": "update to 2.4.79",
+      "scripts/cmds/slots.js": "update to 2.4.79",
+      "scripts/cmds/spycard.js": "update to 2.4.79",
+      "scripts/cmds/sysgif.js": "update to 2.4.79",
+      "scripts/cmds/sysgif2.js": "update to 2.4.79",
+      "scripts/cmds/sysgif3.js": "update to 2.4.79",
+      "scripts/cmds/system.js" : "update to 2.4.79",
+      "Goat.js": "update to 2.4.79",
+      "index.js":"update to 2.4.79",
+      "updater.js":"update to 2.4.79",
+      "utils.js": "update to 2.4.79"
+    },
+    "deleteFiles": {
+      "config.json": {
+     "showLoginTitle": false
+      }
+      },
+      "imageUrl": [
+      "https://i.ibb.co.com/SXG8QKKz/image.png"
+    ],
+    "note": "This update system full terminal/console design has been updated with modern design and new package system.New dashboard added with new UI/UX, animations and file explorer inside.Canvas type issues (discord-generator / gifencoder) fixed using updated versions.Now connected with new STFCA for better performance and stability"
   }
 
 ]
