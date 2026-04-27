@@ -3,7 +3,7 @@ const pidusage = require("pidusage");
 const fs = require("fs");
 const path = require("path");
 const { createCanvas } = require("canvas");
-const GIFEncoder = require("gifencoder");
+const GIFEncoder = require("gif-encoder-2");
 
 const toTime = (sec) => {
   const d = Math.floor(sec / 86400);

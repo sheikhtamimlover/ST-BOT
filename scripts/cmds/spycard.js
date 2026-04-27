@@ -2,7 +2,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const Canvas = require("canvas");
 const moment = require("moment");
-const GIFEncoder = require("gifencoder");
+const GIFEncoder = require("gif-encoder-2");
 
 // Units & shortenNumber function
 const units = ["", "K", "M", "B", "T", "Q", "S", "O", "N", "D"];

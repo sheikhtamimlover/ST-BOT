@@ -1,7 +1,7 @@
 const os = require("os");
 const moment = require("moment-timezone");
 const { createCanvas } = require("canvas");
-const GIFEncoder = require("gifencoder");
+const GIFEncoder = require("gif-encoder-2");
 const fs = require("fs");
 const path = require("path");
 

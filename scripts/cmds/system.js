@@ -3,7 +3,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const axios = require("axios");
 const Canvas = require("canvas");
-const GIFEncoder = require("gifencoder");
+const GIFEncoder = require("gif-encoder-2");
 
 const W = 1200, H = 700, G = 10;
 const FB_ACCESS_TOKEN ="350685531728|62f8ce9f74b12f84c123cc23437a4a32";

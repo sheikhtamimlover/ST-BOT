@@ -1,7 +1,7 @@
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs-extra");
 const path = require("path");
-const GIFEncoder = require("gifencoder");
+const GIFEncoder = require("gif-encoder-2");
 
 // --- Utility functions ---
 function formatMoney(num) {
