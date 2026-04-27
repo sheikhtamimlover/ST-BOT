@@ -674,11 +674,6 @@
       "updater.js":"update to 2.4.79",
       "utils.js": "update to 2.4.79"
     },
-    "deleteFiles": {
-      "config.json": {
-     "showLoginTitle": false
-      }
-      },
       "imageUrl": [
       "https://i.ibb.co.com/SXG8QKKz/image.png"
     ],
