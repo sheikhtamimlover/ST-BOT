@@ -678,6 +678,17 @@
       "https://i.ibb.co.com/SXG8QKKz/image.png"
     ],
     "note": "This update system full terminal/console design has been updated with modern design and new package system.New dashboard added with new UI/UX, animations and file explorer inside.Canvas type issues (discord-generator / gifencoder) fixed using updated versions.Now connected with new STFCA for better performance and stability"
+  },
+  {
+    "version": "2.4.80",
+    "files": {
+      "bot/handler/handlerEvents.js": "from now it will never blocker or force to user for update",
+      "scripts/cmds/beb.js": "update to 2.4.80",
+      "scripts/cmds/update.js": "update to v2.4.80",
+      "updater.js":"update to 2.4.80",
+      "utils.js": "update to 2.4.80"
+    },
+    "note": "stfca has update so stfca pkg version has update for theme set now will be worked. Now beb cmds has update by many thing replied image work and better communication etc, the main update is update system before it was hardcore block user for update from now it will never force and betetr update system with many feature you can go back to old version many mores"
   }
 
 ]
