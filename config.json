@@ -215,7 +215,7 @@
     "notes": "Document here: https://github.com/sheikhtamimlover/fb-chat-api/blob/master/DOCS.md#apisetoptionsoptions "
   },
   "enableTypingIndicator": true,
-  "typingDuration": 2000,
+  "typingDuration": 1000,
   "fcaType": "stfca",
   "notesFcaType": "FCA library to use: 'stfca' for ST-FCA or 'dongdev' for @dongdev/fca-unofficial. Switching will clear cookies and restart bot.",
   "githubIntegration": {
