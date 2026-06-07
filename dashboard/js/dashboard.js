@@ -12,10 +12,15 @@ const state = {
         editorDirty: false,
         autoScroll: true,
         consoleBuffer: [],
+        consoleSeen: new Set(),
         scriptType: 'cmds',
         currentScript: null,
         scriptDirty: false,
         modalResolver: null,
+        staiFiles: [],
+        staiImages: [],
+        staiSuggestItems: [],
+        staiSuggestIndex: -1,
 };
 
 /* ---------- Tabs ---------- */
@@ -25,7 +30,7 @@ function switchTab(name) {
         $$('.nav-link[data-tab]').forEach(l => l.classList.toggle('active', l.dataset.tab === name));
         $('#crumbHere').textContent = ({
                 overview: 'Overview', files: 'Files', console: 'Console',
-                config: 'Config', cookies: 'Cookies', scripts: 'Scripts', fca: 'FCA'
+                stai: 'STAI', config: 'Config', cookies: 'Cookies', scripts: 'Scripts', fca: 'FCA'
         })[name] || 'Dashboard';
         // close mobile sidebar
         $('#sidebar')?.classList.remove('open');
@@ -36,6 +41,7 @@ function switchTab(name) {
         if (name === 'cookies') loadCookies();
         if (name === 'scripts') loadScripts();
         if (name === 'fca') loadFca();
+        if (name === 'stai') staiFocus();
 }
 
 document.addEventListener('click', (e) => {
@@ -131,10 +137,12 @@ async function refreshSystem() {
 let sseSource;
 function consoleConnect() {
         if (sseSource) sseSource.close();
+        consoleFetchHistory();
         sseSource = new EventSource('/api/console-stream');
         sseSource.onopen = () => { $('#streamStatus').textContent = 'connected'; };
         sseSource.onerror = () => {
                 $('#streamStatus').textContent = 'reconnecting…';
+                consoleFetchHistory();
                 setTimeout(consoleConnect, 3000);
                 try { sseSource.close(); } catch {}
         };
@@ -145,6 +153,13 @@ function consoleConnect() {
                         else consoleAppend(data);
                 } catch {}
         };
+}
+
+async function consoleFetchHistory() {
+        try {
+                const data = await api('/api/console-history');
+                if (Array.isArray(data.history)) data.history.forEach(consoleAppend);
+        } catch {}
 }
 
 function consoleClassify(line) {
@@ -161,6 +176,12 @@ function consoleClassify(line) {
 function consoleAppend(entry) {
         const text = (entry && entry.line) || '';
         if (!text) return;
+        const key = entry.id || `${entry.ts || ''}:${text}`;
+        if (state.consoleSeen.has(key)) return;
+        state.consoleSeen.add(key);
+        if (state.consoleSeen.size > 6000) {
+                state.consoleSeen = new Set(Array.from(state.consoleSeen).slice(-5000));
+        }
         // strip ANSI
         const clean = text.replace(/\x1b\[[0-9;]*m/g, '').replace(/\r/g, '');
         const cls = consoleClassify(clean);
@@ -181,7 +202,7 @@ function appendLineTo(container, text, cls, cap) {
         if (state.autoScroll) container.scrollTop = container.scrollHeight;
 }
 
-function consoleClear() { $('#bigConsole').innerHTML = ''; state.consoleBuffer = []; $('#logCount').textContent = '0 lines'; }
+function consoleClear() { $('#bigConsole').innerHTML = ''; state.consoleBuffer = []; state.consoleSeen.clear(); $('#logCount').textContent = '0 lines'; }
 function consoleToggleAuto() { state.autoScroll = !state.autoScroll; $('#consoleAutoBtn').textContent = `Auto-scroll: ${state.autoScroll ? 'ON' : 'OFF'}`; }
 function consoleDownload() {
         const blob = new Blob([state.consoleBuffer.map(l => l.text).join('\n')], { type: 'text/plain' });
@@ -392,38 +413,284 @@ async function saveScript() {
         } catch (e) { toast('Save failed', e.message, 'err'); }
 }
 
-/* ---------- FCA ---------- */
-async function loadFca() {
-        const grid = $('#fcaGrid');
-        grid.innerHTML = '<div class="skeleton" style="width:80%;margin:6px"></div>';
-        try {
-                const r = await api('/api/get-fca-type');
-                const cur = r.fcaType;
-                $('#fcaCurrent').innerHTML = `Current: <code style="color:var(--accent)">${escapeHtml(cur)}</code> → <code>${escapeHtml(r.fcaConfig.packages[cur] || cur)}</code>`;
-                grid.innerHTML = '';
-                for (const [key, pkg] of Object.entries(r.fcaConfig.packages || {})) {
-                        const card = document.createElement('div');
-                        card.className = 'card';
-                        card.style.padding = '14px';
-                        card.innerHTML = `
-                                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-                                        <div>
-                                                <div style="font-weight:700;font-size:14px">${escapeHtml(key)}</div>
-                                                <div style="color:var(--text-2);font-size:12px;font-family:var(--font-mono);margin-top:2px">${escapeHtml(pkg)}</div>
-                                        </div>
-                                        ${key === cur ? '<span class="live-pill"><span class="live-dot"></span>active</span>' : `<button class="btn btn-primary" onclick="switchFca('${escapeHtml(key)}')">Switch</button>`}
-                                </div>`;
-                        grid.appendChild(card);
-                }
-        } catch (e) { grid.innerHTML = `<div style="color:var(--err)">${escapeHtml(e.message)}</div>`; }
+/* ---------- STAI ---------- */
+let staiSuggestTimer;
+
+function staiFocus() {
+        setTimeout(() => $('#staiPrompt')?.focus(), 60);
 }
 
-async function switchFca(key) {
-        const ok = await confirmModal('Switch FCA?', `Switch to ${key}? The bot will restart and clear cookies.`, 'Switch');
-        if (!ok) return;
-        try { await api('/api/switch-fca', { method: 'POST', body: { fcaType: key } }); toast('Switching', `Restarting with ${key}…`, 'warn'); }
-        catch (e) { toast('Failed', e.message, 'err'); }
+function staiSetStatus(text, mode = '') {
+        const el = $('#staiStatus');
+        if (!el) return;
+        el.className = `stai-status ${mode}`.trim();
+        el.innerHTML = `<span></span>${escapeHtml(text)}`;
 }
+
+function staiExt(path) {
+        return (String(path || '').split('.').pop() || 'file').toLowerCase().slice(0, 5);
+}
+
+function staiFileIcon(path) {
+        const ext = staiExt(path);
+        const safe = ext.replace(/[^a-z0-9_-]/g, '');
+        return `<span class="stai-file-ico ${safe}">${escapeHtml(ext.slice(0, 3) || 'file')}</span>`;
+}
+
+function staiAddMessage(role, body, attachments = []) {
+        const wrap = $('#staiMessages');
+        if (!wrap) return null;
+        const row = document.createElement('div');
+        row.className = `stai-message ${role}`;
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.textContent = role === 'user' ? 'ME' : 'ST';
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = body || '';
+        if (attachments.length) {
+                const files = document.createElement('div');
+                files.className = 'stai-attachments';
+                for (const att of attachments) {
+                        const a = document.createElement('a');
+                        a.className = 'stai-attachment';
+                        a.href = att.url || '#';
+                        a.target = '_blank';
+                        a.rel = 'noopener';
+                        a.innerHTML = `${staiFileIcon(att.name || att.path)}<span>${escapeHtml(att.name || att.path || 'attachment')}</span>`;
+                        files.appendChild(a);
+                }
+                bubble.appendChild(files);
+        }
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        wrap.appendChild(row);
+        wrap.scrollTop = wrap.scrollHeight;
+        return row;
+}
+
+function staiRenderSelected() {
+        const wrap = $('#staiSelectedFiles');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        for (const file of state.staiFiles) {
+                const chip = document.createElement('div');
+                chip.className = 'stai-chip';
+                chip.innerHTML = `${staiFileIcon(file)}<span>${escapeHtml(file)}</span><button type="button" aria-label="Remove">&times;</button>`;
+                chip.querySelector('button').onclick = () => {
+                        state.staiFiles = state.staiFiles.filter(item => item !== file);
+                        staiRenderSelected();
+                };
+                wrap.appendChild(chip);
+        }
+}
+
+function staiRenderImages() {
+        const wrap = $('#staiImagePreview');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        for (const item of state.staiImages) {
+                const chip = document.createElement('div');
+                chip.className = 'stai-image-chip';
+                chip.innerHTML = `<img src="${item.preview}" alt=""><span>${escapeHtml(item.file.name)}</span><button type="button" aria-label="Remove">&times;</button>`;
+                chip.querySelector('button').onclick = () => {
+                        URL.revokeObjectURL(item.preview);
+                        state.staiImages = state.staiImages.filter(img => img !== item);
+                        staiRenderImages();
+                };
+                wrap.appendChild(chip);
+        }
+}
+
+function staiAutoGrow() {
+        const el = $('#staiPrompt');
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 170) + 'px';
+}
+
+function staiMentionRange() {
+        const el = $('#staiPrompt');
+        if (!el) return null;
+        const pos = el.selectionStart || 0;
+        const before = el.value.slice(0, pos);
+        const match = before.match(/(^|\s)@([^\s@]*)$/);
+        if (!match) return null;
+        const query = match[2] || '';
+        return { start: pos - query.length - 1, end: pos, query };
+}
+
+async function staiLoadSuggestions(query) {
+        try {
+                const r = await api('/api/stai/files?q=' + encodeURIComponent(query || '') + '&limit=40');
+                state.staiSuggestItems = r.files || [];
+                state.staiSuggestIndex = 0;
+                staiRenderSuggestions();
+        } catch {
+                staiHideSuggestions();
+        }
+}
+
+function staiRenderSuggestions() {
+        const box = $('#staiSuggest');
+        if (!box) return;
+        box.innerHTML = '';
+        if (!state.staiSuggestItems.length) {
+                staiHideSuggestions();
+                return;
+        }
+        state.staiSuggestItems.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = `stai-suggest-item ${index === state.staiSuggestIndex ? 'active' : ''}`;
+                row.innerHTML = `${staiFileIcon(item.path)}<span class="stai-file-path">${escapeHtml(item.path)}</span>`;
+                row.onmousedown = (e) => {
+                        e.preventDefault();
+                        staiPickSuggestion(index);
+                };
+                box.appendChild(row);
+        });
+        box.classList.add('show');
+}
+
+function staiHideSuggestions() {
+        const box = $('#staiSuggest');
+        if (box) box.classList.remove('show');
+        state.staiSuggestItems = [];
+        state.staiSuggestIndex = -1;
+}
+
+function staiPickSuggestion(index = state.staiSuggestIndex) {
+        const item = state.staiSuggestItems[index];
+        if (!item) return;
+        if (!state.staiFiles.includes(item.path)) {
+                state.staiFiles.push(item.path);
+                staiRenderSelected();
+        }
+        const el = $('#staiPrompt');
+        const range = staiMentionRange();
+        if (el && range) {
+                const before = el.value.slice(0, range.start);
+                const after = el.value.slice(range.end);
+                el.value = `${before}@${item.path} ${after}`;
+                const next = before.length + item.path.length + 2;
+                el.focus();
+                el.setSelectionRange(next, next);
+                staiAutoGrow();
+        }
+        staiHideSuggestions();
+}
+
+async function staiSend(promptOverride) {
+        const input = $('#staiPrompt');
+        const prompt = String(promptOverride ?? input?.value ?? '').trim();
+        if (!prompt && !state.staiImages.length) return;
+
+        const filesForSend = [...state.staiFiles];
+        const imagesForSend = [...state.staiImages];
+        const userMeta = [
+                ...filesForSend.map(file => `@${file}`),
+                ...imagesForSend.map(item => `[image:${item.file.name}]`)
+        ].join(' ');
+        staiAddMessage('user', userMeta ? `${prompt || 'Image upload'}\n${userMeta}` : prompt);
+
+        if (!promptOverride && input) {
+                input.value = '';
+                staiAutoGrow();
+        }
+        state.staiFiles = [];
+        state.staiImages = [];
+        staiRenderSelected();
+        staiRenderImages();
+        staiHideSuggestions();
+
+        const form = new FormData();
+        form.append('prompt', prompt || 'Analyze uploaded image');
+        form.append('files', JSON.stringify(filesForSend));
+        imagesForSend.forEach(item => form.append('images', item.file, item.file.name));
+
+        staiSetStatus('Thinking', 'busy');
+        $('#staiSendBtn').disabled = true;
+        try {
+                const response = await fetch('/api/stai/chat', { method: 'POST', body: form });
+                const text = await response.text();
+                let json;
+                try { json = JSON.parse(text); } catch { json = { message: text }; }
+                if (!response.ok || json.success === false) throw new Error(json.message || `HTTP ${response.status}`);
+                staiAddMessage('assistant', json.text || 'No response.', json.attachments || []);
+                staiSetStatus('Ready');
+        } catch (error) {
+                staiAddMessage('assistant', error.message || String(error));
+                staiSetStatus('Error', 'err');
+                toast('STAI failed', error.message || String(error), 'err');
+        } finally {
+                imagesForSend.forEach(item => URL.revokeObjectURL(item.preview));
+                $('#staiSendBtn').disabled = false;
+        }
+}
+
+function staiClear() {
+        state.staiFiles = [];
+        state.staiImages.forEach(item => URL.revokeObjectURL(item.preview));
+        state.staiImages = [];
+        staiRenderSelected();
+        staiRenderImages();
+        $('#staiMessages').innerHTML = '<div class="stai-message assistant"><div class="avatar">ST</div><div class="bubble">STAI memory cleared for this dashboard chat.</div></div>';
+        staiSetStatus('Ready');
+        const form = new FormData();
+        form.append('prompt', '-clear');
+        form.append('files', '[]');
+        fetch('/api/stai/chat', { method: 'POST', body: form }).catch(() => {});
+}
+
+$('#staiForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        staiSend();
+});
+
+$('#staiPrompt')?.addEventListener('input', () => {
+        staiAutoGrow();
+        clearTimeout(staiSuggestTimer);
+        const mention = staiMentionRange();
+        if (!mention) return staiHideSuggestions();
+        staiSuggestTimer = setTimeout(() => staiLoadSuggestions(mention.query), 120);
+});
+
+$('#staiPrompt')?.addEventListener('keydown', (e) => {
+        const suggestOpen = $('#staiSuggest')?.classList.contains('show');
+        if (suggestOpen && ['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(e.key)) {
+                if (e.key === 'Escape') {
+                        e.preventDefault();
+                        staiHideSuggestions();
+                        return;
+                }
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const dir = e.key === 'ArrowDown' ? 1 : -1;
+                        const len = state.staiSuggestItems.length;
+                        state.staiSuggestIndex = (state.staiSuggestIndex + dir + len) % len;
+                        staiRenderSuggestions();
+                        return;
+                }
+                e.preventDefault();
+                staiPickSuggestion();
+                return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                staiSend();
+        }
+});
+
+$('#staiUploadBtn')?.addEventListener('click', () => $('#staiImageInput')?.click());
+$('#staiImageInput')?.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files || []).filter(file => file.type.startsWith('image/')).slice(0, 4);
+        for (const file of files) {
+                state.staiImages.push({ file, preview: URL.createObjectURL(file) });
+        }
+        e.target.value = '';
+        staiRenderImages();
+});
+$('#staiClearBtn')?.addEventListener('click', staiClear);
 
 /* ---------- Restart / Logout ---------- */
 async function restartBot() {
