@@ -13,7 +13,6 @@ const exec = (cmd, options) => new Promise((resolve, reject) => {
 const { log, loading, getText, colors, removeHomeDir } = global.utils;
 const { GoatBot } = global;
 const { configCommands } = GoatBot;
-const { fcaList } = require(`${process.cwd()}/fca.js`);
 
 const regExpCheckPackage = /require(\s+|)\((\s+|)[`'"]([^`'"]+)[`'"](\s+|)\)/g;
 const packageAlready = [];
@@ -26,7 +25,7 @@ let count = 0;
 //  place, the new package is installed, and the old one is removed.
 // ─────────────────────────────────────────────────────────────────
 const packageAliasMap = {
-        "gifencoder": "gif-encoder-2",
+        "gifencoder": "gifencoderv2",
         "discord-image-generation": "discord-image-generation-v2"
 };
 
@@ -81,49 +80,7 @@ async function migratePackage(filePath, fileName, oldName, newName, folder) {
         }
 }
 
-async function ensureFcaPackageInstalled() {
-        const configPath = path.join(process.cwd(), "config.json");
-        if (!existsSync(configPath)) return;
-
-        const total = Object.keys(fcaList).length;
-        let installedCount = 0;
-        const missing = [];
-
-        for (const [key, packageName] of Object.entries(fcaList)) {
-                if (existsSync(`${process.cwd()}/node_modules/${packageName}`)) installedCount++;
-                else missing.push({ key, packageName });
-        }
-
-        if (missing.length === 0) {
-                log.success("FCA", `${colors.cyan(`${installedCount}/${total}`)} packages ready`);
-                return;
-        }
-
-        log.warn("FCA", `Installing ${missing.length} missing package(s)...`);
-
-        for (const { packageName } of missing) {
-                let i = 0;
-                const wait = setInterval(() => {
-                        loading.info("FCA", `${spinner[i % spinner.length]} Installing ${colors.yellow(packageName)}`);
-                        i++;
-                }, 80);
-                try {
-                        await exec(`npm install ${packageName}`, { cwd: process.cwd() });
-                        clearInterval(wait);
-                        process.stderr.write("\r\x1b[K");
-                        log.success("FCA", `Installed ${packageName}`);
-                        installedCount++;
-                } catch (err) {
-                        clearInterval(wait);
-                        process.stderr.write("\r\x1b[K");
-                        log.err("FCA", `${packageName}: ${err.message}`);
-                }
-        }
-        log.success("FCA", `${colors.cyan(`${installedCount}/${total}`)} packages ready`);
-}
-
 module.exports = async function (api, threadModel, userModel, dashBoardModel, globalModel, threadsData, usersData, dashBoardData, globalData, createLine) {
-        await ensureFcaPackageInstalled();
 
         const aliasesData = await globalData.get("setalias", "data", []);
         if (aliasesData) {
