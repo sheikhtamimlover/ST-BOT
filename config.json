@@ -26,9 +26,7 @@
     "updateOnce": true,
     "notes": "Bio update system. When enabled, bot will update user bio on startup. If updateOnce is true, bio will only be updated once and not on every restart. Leave bioText empty to disable."
   },
-  "antiInbox": false,
-  "language": "en",
-  "notesLanguage": "change to your language with ISO 639-1 code, available languages: vi (Vietnamese), en (English)",
+  "antiInbox": true,
   "nickNameBot": "ST | BOT",
   "prefix": "!",
   "usePrefix": {
@@ -133,15 +131,17 @@
   "botStartupNotification": {
     "enable": false,
     "sendToThreads": {
-      "enable": true,
-      "threadIds": []
+      "enable": false,
+      "threadIds": [
+        ""
+      ]
     },
     "sendToAdmin": {
       "enable": false,
       "adminId": ""
     },
-    "message": "🤖 Bot is now online and ready to serve!",
-    "notes": "Bot startup notification settings. sendToThreads.threadIds can contain multiple thread IDs, sendToAdmin.adminId should contain single admin ID for notifications.Duo to fca issue maybe sendtoadmin not work."
+    "message": "🤖 ST-BOT is online and ready!",
+    "notes": "Bot startup notification settings. @msgr thread IDs are sent after E2EE is fully ready."
   },
   "threadApproval": {
     "enable": false,
@@ -200,7 +200,9 @@
     "event": true,
     "read_receipt": false,
     "typ": false,
-    "presence": false
+    "presence": false,
+    "e2eeAll": false,
+    "notes_e2ee": "e2eeAll: if true, all E2EE encrypted events (e2ee_message, e2ee_message_reaction, e2ee_message_edit, etc.) are printed to console when disableAll is false. Set to false to silence E2EE event logs."
   },
   "optionsFca": {
     "forceLogin": true,
@@ -216,8 +218,59 @@
   },
   "enableTypingIndicator": true,
   "typingDuration": 1000,
-  "fcaType": "stfca",
-  "notesFcaType": "FCA library to use: 'stfca' for ST-FCA or 'dongdev' for @dongdev/fca-unofficial. Switching will clear cookies and restart bot.",
+  "e2eeTypingDuration": 3000,
+  "e2ee": {
+    "enable": true,
+    "saveType": "memory",
+    "devicePath": "database/e2ee-device.json",
+    "notes": "End-to-end encryption (E2EE / Labyrinth) for Messenger. Set enable to true to activate. saveType: 'memory' (device keys lost on restart — fast, no files), 'path' (persist device identity keys to devicePath — survives restarts, recommended for production). devicePath is only used when saveType is 'path'. Modeled after the database block."
+  },
+  "stai": {
+    "enable": true,
+    "provider": "openrouter",
+    "openrouter": {
+      "apiKey": "",
+      "model": "google/gemini-2.5-flash",
+      "siteUrl": "https://github.com/sheikhtamimlover/ST-BOT",
+      "title": "STAI",
+      "temperature": 0.45,
+      "maxTokens": 4000,
+      "reasoningEffort": "medium",
+      "notes": "OpenRouter provider — get API key at openrouter.ai. Model can be any OpenRouter model ID, e.g. google/gemini-2.5-flash, openai/gpt-oss-120b, anthropic/claude-3.5-sonnet, etc."
+    },
+    "groq": {
+      "apiKey": "",
+      "model": "qwen/qwen3-32b",
+      "temperature": 0.6,
+      "maxTokens": 1024,
+      "topP": 0.95,
+      "reasoningEffort": "default",
+      "notes": "Groq provider — get API key at console.groq.com. Fast inference. Free tier: 6000 TPM limit — maxProjectContextChars and maxMemoryMessages are kept small. Model examples: qwen/qwen3-32b, llama-3.3-70b-versatile, mixtral-8x7b-32768, gemma2-9b-it. Upgrade to Dev Tier for higher limits.",
+      "maxProjectContextChars": 2000,
+      "maxMemoryMessages": 3
+    },
+    "stfree": {
+      "model": "@cf/openai/gpt-oss-120b",
+      "accountId": "5c0a9ed030088152674e7d33fb7476bc",
+      "apiToken": "2shi71LLxWwN8o9eLpXrtB6dl19R_jBtpXjd63Lr",
+      "notes": "StFree provider — Cloudflare Workers AI free tier. accountId: your Cloudflare account ID. apiToken: your CF API token with AI permission. Model examples: @cf/openai/gpt-oss-120b, @cf/meta/llama-3.1-8b-instruct, @cf/google/gemma-7b-it."
+    },
+    "maxToolRounds": 6,
+    "maxProjectContextChars": 60000,
+    "maxFileChars": 52000,
+    "maxSearchFiles": 800,
+    "maxSearchResults": 60,
+    "maxImages": 2,
+    "maxMemoryMessages": 12,
+    "allowShell": true,
+    "allowFileRead": true,
+    "allowFileWrite": true,
+    "allowApiTools": true,
+    "allowWebSearch": true,
+    "allowMatureLanguage": true,
+    "saveChatHistory": true,
+    "notes": "STAI multi-provider AI agent. Set 'provider' to choose backend: 'openrouter' (openrouter.ai), 'groq' (console.groq.com, fast), or 'stfree' (Cloudflare AI, free tier). Switch at runtime with: !stai -provider groq | !stai -provider openrouter | !stai -provider stfree. Each provider has its own sub-object with apiKey/model settings. STAI is owner-only (role:2) — it can read/write project files, run shell commands, hot-load scripts, and store history."
+  },
   "githubIntegration": {
     "enable": false,
     "repoOwner": "",
