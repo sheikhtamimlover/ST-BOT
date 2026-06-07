@@ -34,6 +34,10 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
                         Live Console
                 </a>
+                <a class="nav-link" data-tab="stai">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l1.7 5.3L19 9l-5.3 1.7L12 16l-1.7-5.3L5 9l5.3-1.7L12 2z"/><path d="M19 15l.9 2.6 2.6.9-2.6.9L19 23l-.9-2.6-2.6-.9 2.6-.9L19 15z"/><path d="M4 14l.7 2.3L7 17l-2.3.7L4 20l-.7-2.3L1 17l2.3-.7L4 14z"/></svg>
+                        STAI Agent
+                </a>
 
                 <div class="nav-section">Configuration</div>
                 <a class="nav-link" data-tab="config">
@@ -213,6 +217,54 @@
                                         <span style="margin-left:auto" id="streamStatus">connecting…</span>
                                 </div>
                                 <div class="console" id="bigConsole"></div>
+                        </div>
+                </section>
+
+                <!-- ===== STAI ===== -->
+                <section class="tab-panel stai-tab" data-panel="stai">
+                        <div class="page-header">
+                                <div>
+                                        <h1 class="page-title">STAI Agent</h1>
+                                        <p class="page-subtitle">Project-aware dashboard chat for ST BOT.</p>
+                                </div>
+                                <div style="display:flex;gap:8px">
+                                        <button class="btn btn-ghost" id="staiClearBtn">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                                Clear
+                                        </button>
+                                </div>
+                        </div>
+                        <div class="stai-shell">
+                                <div class="stai-stars" aria-hidden="true"></div>
+                                <div class="stai-orbit" aria-hidden="true"></div>
+                                <div class="stai-head">
+                                        <div>
+                                                <div class="stai-kicker">STAI</div>
+                                                <h2>Sheikh Tamim project agent</h2>
+                                        </div>
+                                        <span class="stai-status" id="staiStatus"><span></span>Ready</span>
+                                </div>
+                                <div class="stai-messages" id="staiMessages">
+                                        <div class="stai-message assistant">
+                                                <div class="avatar">ST</div>
+                                                <div class="bubble">STAI ready. Ask normally, upload an image, or mention project files with @.</div>
+                                        </div>
+                                </div>
+                                <div class="stai-selected" id="staiSelectedFiles"></div>
+                                <div class="stai-images" id="staiImagePreview"></div>
+                                <form class="stai-composer" id="staiForm">
+                                        <button type="button" class="stai-icon-btn" id="staiUploadBtn" title="Upload image" aria-label="Upload image">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        </button>
+                                        <input type="file" id="staiImageInput" accept="image/*" multiple hidden>
+                                        <div class="stai-input-wrap">
+                                                <textarea id="staiPrompt" rows="1" placeholder="Message STAI..." autocomplete="off"></textarea>
+                                                <div class="stai-suggest" id="staiSuggest"></div>
+                                        </div>
+                                        <button type="submit" class="stai-send" id="staiSendBtn" title="Send" aria-label="Send">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                                        </button>
+                                </form>
                         </div>
                 </section>
 
