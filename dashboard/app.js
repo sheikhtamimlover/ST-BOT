@@ -11,8 +11,6 @@ const http = require("http");
 const { execSync } = require('child_process');
 const server = http.createServer(app);
 
-const { fcaList, defaultFca } = require('../fca.js');
-
 // ————————————————— LIVE CONSOLE STREAM ————————————————— //
 // Tee process.stdout/stderr so every console line is broadcast to
 // connected dashboard clients via Server-Sent Events.
@@ -20,6 +18,7 @@ const __sseClients = new Set();
 const __consoleHistory = [];
 const __HISTORY_MAX = 500;
 const __ANSI_RE = /\x1b\[[0-9;]*m/g;
+global.__dashboardLogSeq = global.__dashboardLogSeq || 0;
 
 function __broadcastLogLine(raw) {
         const text = String(raw).replace(/\r/g, "");
@@ -27,7 +26,7 @@ function __broadcastLogLine(raw) {
         const clean = text.replace(__ANSI_RE, "");
         const lines = clean.split("\n").filter(Boolean);
         for (const line of lines) {
-                const entry = { line, ts: Date.now() };
+                const entry = { id: ++global.__dashboardLogSeq, line, ts: Date.now() };
                 __consoleHistory.push(entry);
                 if (__consoleHistory.length > __HISTORY_MAX) __consoleHistory.shift();
                 const payload = `data: ${JSON.stringify(entry)}\n\n`;
@@ -37,23 +36,31 @@ function __broadcastLogLine(raw) {
         }
 }
 
+global.__dashboardBroadcastLogLine = __broadcastLogLine;
+global.dashboardLogStream = (line) => {
+        if (typeof global.__dashboardBroadcastLogLine === "function")
+                global.__dashboardBroadcastLogLine(line + "\n");
+};
+
 if (!global.__dashboardStdoutPatched) {
         global.__dashboardStdoutPatched = true;
         const _wrapWrite = (stream) => {
                 const orig = stream.write.bind(stream);
                 stream.write = function (chunk, enc, cb) {
-                        try { __broadcastLogLine(chunk); } catch {}
+                        try {
+                                if (typeof global.__dashboardBroadcastLogLine === "function")
+                                        global.__dashboardBroadcastLogLine(chunk);
+                        } catch {}
                         return orig(chunk, enc, cb);
                 };
         };
         _wrapWrite(process.stdout);
         _wrapWrite(process.stderr);
-        // Logger hook (logger/log.js calls global.dashboardLogStream)
-        global.dashboardLogStream = (line) => __broadcastLogLine(line + "\n");
 }
 
 // ————————————————— FS EXPLORER HELPERS ————————————————— //
 const __FX_BLOCKED = new Set(["node_modules", ".git", ".cache", ".upm", ".replit_cache"]);
+const __STAI_UPLOAD_DIR = path.join(process.cwd(), "dashboard", "uploads", "stai");
 function __resolveSafe(rel) {
         const base = process.cwd();
         const cleaned = String(rel || "").replace(/\\/g, "/").replace(/^\/+/, "");
@@ -70,6 +77,88 @@ function __resolveSafe(rel) {
                 throw e;
         }
         return abs;
+}
+
+function __relativeSafe(abs) {
+        const rel = path.relative(process.cwd(), abs);
+        if (rel.startsWith("..") || path.isAbsolute(rel))
+                throw new Error("Path is outside the project directory.");
+        return rel.replace(/\\/g, "/");
+}
+
+async function __listProjectFilesForStai(query = "", limit = 60) {
+        const q = String(query || "").replace(/^@/, "").toLowerCase();
+        const files = [];
+        const walk = async (dir) => {
+                if (files.length >= 2000) return;
+                const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+                for (const entry of entries) {
+                        if (files.length >= 2000) return;
+                        if (__FX_BLOCKED.has(entry.name)) continue;
+                        const abs = path.join(dir, entry.name);
+                        const rel = __relativeSafe(abs);
+                        if ([...__FX_BLOCKED].some(blocked => rel === blocked || rel.startsWith(`${blocked}/`))) continue;
+                        if (entry.isDirectory()) await walk(abs);
+                        else files.push(rel);
+                }
+        };
+        await walk(process.cwd());
+        const scored = files
+                .filter(file => {
+                        if (!q) return true;
+                        const low = file.toLowerCase();
+                        return low.includes(q) || path.basename(low).includes(q);
+                })
+                .sort((a, b) => {
+                        const ab = path.basename(a).toLowerCase();
+                        const bb = path.basename(b).toLowerCase();
+                        if (q && ab === q) return -1;
+                        if (q && bb === q) return 1;
+                        if (q && ab.startsWith(q) !== bb.startsWith(q)) return ab.startsWith(q) ? -1 : 1;
+                        return a.localeCompare(b);
+                })
+                .slice(0, Math.min(Number(limit) || 60, 120));
+        return scored.map(file => ({
+                path: file,
+                name: path.basename(file),
+                ext: path.extname(file).replace(".", "").toLowerCase() || "file"
+        }));
+}
+
+function __splitPromptArgs(input) {
+        const args = [];
+        const re = /"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|`([^`\\]*(?:\\.[^`\\]*)*)`|(\S+)/g;
+        let match;
+        while ((match = re.exec(String(input || "")))) {
+                args.push(match[1] || match[2] || match[3] || match[4]);
+        }
+        return args;
+}
+
+function __captureDashboardReply(captures) {
+        return async function capture(form) {
+                const entry = {
+                        body: "",
+                        attachments: []
+                };
+                if (typeof form === "string") {
+                        entry.body = form;
+                } else if (form && typeof form === "object") {
+                        entry.body = form.body || form.text || "";
+                        const attachments = Array.isArray(form.attachment) ? form.attachment : (form.attachment ? [form.attachment] : []);
+                        entry.attachments = attachments.map(att => {
+                                const filePath = att?.path || att?.fd || "";
+                                const rel = filePath ? __relativeSafe(path.resolve(filePath)) : "";
+                                return {
+                                        path: rel,
+                                        name: rel ? path.basename(rel) : "attachment",
+                                        url: rel ? `/api/stai/download?path=${encodeURIComponent(rel)}` : ""
+                                };
+                        }).filter(item => item.path);
+                }
+                captures.push(entry);
+                return { messageID: `dashboard-stai-${Date.now()}-${captures.length}` };
+        };
 }
 
 function readJsonSafe(filePath, defaults = {}) {
@@ -127,6 +216,7 @@ module.exports = async (api) => {
         app.use("/css", express.static(`${__dirname}/css`));
         app.use("/js", express.static(`${__dirname}/js`));
         app.use("/images", express.static(`${__dirname}/images`));
+        app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
         app.use(fileUpload());
 
@@ -186,6 +276,143 @@ module.exports = async (api) => {
                                 totalUsers: 0,
                                 config: config
                         });
+                }
+        });
+
+        app.get("/api/stai/files", async (req, res) => {
+                try {
+                        const files = await __listProjectFilesForStai(req.query.q || "", req.query.limit || 60);
+                        res.json({ success: true, files });
+                } catch (error) {
+                        console.error("STAI file search error:", error);
+                        res.status(500).json({ success: false, message: error.message });
+                }
+        });
+
+        app.get("/api/stai/download", async (req, res) => {
+                try {
+                        const rel = req.query.path || "";
+                        const abs = __resolveSafe(rel);
+                        const stat = await fs.stat(abs);
+                        if (!stat.isFile()) return res.status(400).json({ success: false, message: "Path is not a file" });
+                        res.download(abs);
+                } catch (error) {
+                        res.status(error.code === "EBADPATH" || error.code === "EBLOCKED" ? 403 : 404).json({
+                                success: false,
+                                message: error.message
+                        });
+                }
+        });
+
+        app.post("/api/stai/chat", async (req, res) => {
+                const uploadedPaths = [];
+                try {
+                        const { STAgent, formatStaiError } = require("../bot/stagent.js");
+                        const prompt = String(req.body?.prompt || "").trim();
+                        if (!prompt) {
+                                return res.status(400).json({ success: false, message: "Prompt is required" });
+                        }
+
+                        let selectedFiles = [];
+                        try {
+                                selectedFiles = JSON.parse(req.body?.files || "[]");
+                        } catch (_) {
+                                selectedFiles = [];
+                        }
+                        selectedFiles = Array.isArray(selectedFiles)
+                                ? selectedFiles.map(file => String(file || "").replace(/^@/, "").replace(/\\/g, "/")).filter(Boolean).slice(0, 20)
+                                : [];
+
+                        const uploads = [];
+                        const rawUploads = req.files?.images || req.files?.image || req.files?.attachments;
+                        const uploadList = rawUploads ? (Array.isArray(rawUploads) ? rawUploads : [rawUploads]) : [];
+                        if (uploadList.length) {
+                                await fs.ensureDir(__STAI_UPLOAD_DIR);
+                                for (const file of uploadList.slice(0, 4)) {
+                                        const ext = path.extname(file.name || "") || (String(file.mimetype || "").includes("png") ? ".png" : ".jpg");
+                                        const safeName = `${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`.replace(/[^a-zA-Z0-9._-]/g, "_");
+                                        const abs = path.join(__STAI_UPLOAD_DIR, safeName);
+                                        await file.mv(abs);
+                                        uploadedPaths.push(abs);
+                                        uploads.push({
+                                                type: "photo",
+                                                mimeType: file.mimetype || "image/jpeg",
+                                                filename: file.name || safeName,
+                                                localPath: __relativeSafe(abs),
+                                                url: `/uploads/stai/${safeName}`
+                                        });
+                                }
+                        }
+
+                        const selectedRefs = selectedFiles
+                                .filter(file => !prompt.includes(`@${file}`))
+                                .map(file => `@${file}`)
+                                .join(" ");
+                        const fullPrompt = selectedRefs
+                                ? `${prompt}\n\nSelected project files: ${selectedRefs}`
+                                : prompt;
+
+                        const captures = [];
+                        const capture = __captureDashboardReply(captures);
+                        const ctx = global.GoatBot?.dashboardContext || {};
+                        const activeApi = ctx.api || api || global.GoatBot?.fcaApi || {
+                                getCurrentUserID: () => global.GoatBot?.botID || "dashboard",
+                                getUserInfo: async () => ({}),
+                                getThreadInfo: async (threadID) => ({ threadID, source: "dashboard" }),
+                                sendMessage: async () => ({}),
+                                unsendMessage: async () => ({}),
+                                setMessageReaction: async () => ({})
+                        };
+
+                        const params = {
+                                api: activeApi,
+                                message: {
+                                        reply: capture,
+                                        send: capture,
+                                        unsend: async () => {},
+                                        reaction: async () => {}
+                                },
+                                event: {
+                                        type: "message",
+                                        senderID: `dashboard:${req.sessionID || req.ip || "web"}`,
+                                        threadID: "dashboard:web",
+                                        messageID: `dashboard-${Date.now()}`,
+                                        body: fullPrompt,
+                                        attachments: uploads,
+                                        isGroup: false
+                                },
+                                args: __splitPromptArgs(fullPrompt),
+                                prefix: global.GoatBot?.config?.prefix || "!",
+                                commandName: "stai",
+                                threadModel: ctx.threadModel || null,
+                                userModel: ctx.userModel || null,
+                                dashBoardModel: ctx.dashBoardModel || null,
+                                globalModel: ctx.globalModel || null,
+                                threadsData: ctx.threadsData || global.db?.threadsData || null,
+                                usersData: ctx.usersData || global.db?.usersData || null,
+                                dashBoardData: ctx.dashBoardData || global.db?.dashBoardData || null,
+                                globalData: ctx.globalData || global.db?.globalData || null,
+                                staiHistoryData: ctx.staiHistoryData || global.staiHistoryData || null,
+                                getLang: key => key
+                        };
+
+                        const agent = new STAgent(params);
+                        await agent.handle(params);
+
+                        const text = captures.map(item => item.body).filter(Boolean).join("\n\n").trim() || "No response.";
+                        const attachments = captures.flatMap(item => item.attachments || []);
+                        res.json({
+                                success: true,
+                                text,
+                                attachments,
+                                selectedFiles,
+                                uploads: uploads.map(item => ({ name: item.filename, url: item.url, type: item.mimeType }))
+                        });
+                } catch (error) {
+                        const formatter = require("../bot/stagent.js").formatStaiError;
+                        const message = formatter ? formatter(error) : error.message;
+                        console.error("STAI dashboard error:", message);
+                        res.status(500).json({ success: false, message });
                 }
         });
 
@@ -662,100 +889,6 @@ module.exports = async (api) => {
                 }
         });
 
-        // Get current FCA type & FCA package list
-        app.get('/api/get-fca-type', (req, res) => {
-                try {
-                        const fcaType = global.GoatBot?.fcaType || (config.fcaType || defaultFca || 'stfca');
-                        res.json({
-                                success: true,
-                                fcaType: fcaType,
-                                fcaConfig: { packages: fcaList, default: defaultFca }
-                        });
-                } catch (error) {
-                        res.status(500).json({
-                                success: false,
-                                message: 'Error getting FCA type: ' + error.message
-                        });
-                }
-        });
-
-        // Switch FCA type endpoint
-        app.post('/api/switch-fca', async (req, res) => {
-                try {
-                        const { fcaType } = req.body;
-
-                        if (!fcaType || !Object.keys(fcaList).includes(fcaType)) {
-                                return res.status(400).json({
-                                        status: 'error',
-                                        message: 'Invalid FCA type. Use one of: ' + Object.keys(fcaList).join(', ')
-                                });
-                        }
-
-                        // Update config.json with new FCA type
-                        const configPath = process.cwd() + '/config.json';
-                        const currentConfig = JSON.parse(await fs.readFile(configPath, 'utf8'));
-                        currentConfig.fcaType = fcaType;
-                        await fs.writeFile(configPath, JSON.stringify(currentConfig, null, 2), 'utf8');
-
-                        // Update app-level and global fcaType
-                        if (!global.GoatBot) global.GoatBot = {};
-                        global.GoatBot.fcaType = fcaType;
-                        global.GoatBot.config.fcaType = fcaType;
-
-                        // Ensure package is installed before restart
-                        const packageName = fcaList[fcaType] || fcaType;
-                        let packageInstalled = true;
-                        try {
-                                require.resolve(packageName);
-                        } catch (err) {
-                                packageInstalled = false;
-                        }
-                        if (!packageInstalled) {
-                                try {
-                                        execSync(`npm install ${packageName}`, {
-                                                stdio: ['ignore', 'inherit', 'inherit'],
-                                                cwd: process.cwd()
-                                        });
-                                } catch (e) {
-                                        return res.status(500).json({
-                                                status: 'error',
-                                                message: `Failed to install ${packageName}: ${e.message}`
-                                        });
-                                }
-                        }
-
-                        // Clear account.txt (write empty string)
-                        const accountPath = process.cwd() + '/account.txt';
-                        await fs.writeFile(accountPath, '', 'utf8');
-
-                        if (fcaType === 'stfca') {
-                                global.stfcaUpdateChecked = false;
-                        }
-
-                        const fcaNames = Object.entries(fcaList).reduce((acc, [key, value]) => {
-                                acc[key] = value;
-                                return acc;
-                        }, {});
-
-                        res.json({
-                                status: 'success',
-                                message: `🔄 Switched to ${packageName}. Bot will restart with cleared cookies.`
-                        });
-
-                        // Restart after sending response
-                        setTimeout(() => {
-                                console.log(`🔄 FCA type switched to ${fcaType}, restarting bot...`);
-                                process.exit(2); // Exit code 2 for restart
-                        }, 1000);
-                } catch (error) {
-                        console.error('Switch FCA type error:', error);
-                        res.status(500).json({
-                                status: 'error',
-                                message: 'Restart failed: ' + error.message
-                        });
-                }
-        });
-
         // setup route - redirect to dashboard
         app.get(["/", "/home"], async (req, res) => {
                 return res.redirect('/dashboard');
@@ -1068,6 +1201,11 @@ module.exports = async (api) => {
         });
 
         // ————————————————— LIVE CONSOLE (SSE) ————————————————— //
+        app.get("/api/console-history", (req, res) => {
+                res.setHeader("Cache-Control", "no-cache");
+                res.json({ history: __consoleHistory.slice(-300) });
+        });
+
         app.get("/api/console-stream", (req, res) => {
                 res.setHeader("Content-Type", "text/event-stream");
                 res.setHeader("Cache-Control", "no-cache, no-transform");
